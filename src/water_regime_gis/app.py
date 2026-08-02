@@ -5,6 +5,9 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
+
+os.environ.setdefault("TK_SILENCE_DEPRECATION", "1")
+
 from tkinter import END, BOTH, LEFT, RIGHT, X, Button, Frame, Label, Tk
 from tkinter.scrolledtext import ScrolledText
 

@@ -27,6 +27,8 @@ python3 scripts/run_app.py
 
 Кнопка `Run QGIS check` запускает `scripts/qgis/check_qgis_context.py` через Python-интерпретатор QGIS, указанный в `configs/project.example.json`.
 
+Кнопка `Проверить AOI` запускает `scripts/check_aoi.py --write-normalized` и создает локальную рабочую копию AOI в `data/interim/`, которую можно открыть в QGIS.
+
 ## CRS
 
 Для тестового AOI выбрана рабочая метрическая CRS `EPSG:32637` (WGS 84 / UTM zone 37N). Исходный GeoJSON хранится в `EPSG:4326`, как обычно для GeoJSON.

@@ -16,6 +16,7 @@ def main() -> int:
     assert any("water-regime-gis" in line for line in lines)
     assert any("EPSG:32637" in line for line in lines)
     assert any("NDVI" in line for line in lines)
+    assert any("ha" in line for line in lines)
     print("App status model: OK")
     return 0
 

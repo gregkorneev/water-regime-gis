@@ -26,7 +26,9 @@
 - Проект теперь развивается как desktop-приложение для Windows и macOS.
 - Первая версия GUI: `python3 scripts/run_app.py`, реализация на `tkinter`.
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
+- Проверка AOI: `python3 scripts/check_aoi.py --write-normalized`; в GUI кнопка `Проверить AOI`.
+- Нормализованная рабочая копия AOI пишется в `data/interim/tula_test_field.normalized.geojson` и не коммитится.
 
 ## Следующий практический шаг
 
-Настроить локальный путь к QGIS Python и проверить запуск `scripts/qgis/check_qgis_context.py` из приложения.
+Настроить локальный путь к QGIS Python и добавить кнопку открытия нормализованного AOI в QGIS.

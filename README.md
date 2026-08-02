@@ -64,6 +64,14 @@ python3 scripts/check_project.py
 
 Скрипт читает `configs/project.example.json` и проверяет наличие обязательных каталогов. Сложная геообработка на первом этапе не выполняется.
 
+Проверить тестовый AOI:
+
+```bash
+python3 scripts/check_aoi.py --write-normalized
+```
+
+Скрипт проверяет GeoJSON, bbox, тип геометрии, замкнутость полигона, примерную площадь и при флаге `--write-normalized` создает рабочую копию в `data/interim/`.
+
 Запустить первую версию desktop-приложения:
 
 ```bash

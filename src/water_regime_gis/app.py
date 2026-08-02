@@ -24,6 +24,7 @@ def status_lines(root: Path, config: dict) -> list[str]:
         f"AOI: {aoi['name']}",
         f"AOI file: {aoi['path']}",
         f"AOI bbox: {aoi['bbox']}",
+        f"AOI area: ~{aoi['area_ha']} ha",
         f"AOI source: OpenStreetMap {aoi['osm']}",
         f"Analysis CRS: {aoi['analysis_crs']}",
         f"Indices: {', '.join(config['satellite']['indices'])}",
@@ -44,8 +45,9 @@ class WaterRegimeApp:
         self._build()
         self.write("Как пользоваться:")
         self.write("1. Нажмите 'Проверить проект' — приложение проверит папки и конфиг.")
-        self.write("2. Нажмите 'Открыть AOI' — откроется папка с тестовым полем Тульской области.")
-        self.write("3. 'Проверить QGIS' заработает после настройки qgis.python_executable в configs/project.example.json.")
+        self.write("2. Нажмите 'Проверить AOI' — приложение проверит тестовое поле и подготовит копию для QGIS.")
+        self.write("3. Нажмите 'Открыть AOI' — откроется папка с тестовым полем Тульской области.")
+        self.write("4. 'Проверить QGIS' заработает после настройки qgis.python_executable в configs/project.example.json.")
         self.write("\nТекущее состояние проекта:")
         self.write("\n".join(status_lines(self.root_path, self.config)))
 
@@ -64,6 +66,7 @@ class WaterRegimeApp:
         actions = Frame(self.window, padx=16, pady=8, bg="#f4f6f8")
         actions.pack(fill=X)
         Button(actions, text="Проверить проект", command=self.run_project_check, width=18).pack(side=LEFT, padx=(0, 8))
+        Button(actions, text="Проверить AOI", command=self.run_aoi_check, width=18).pack(side=LEFT, padx=(0, 8))
         Button(actions, text="Проверить QGIS", command=self.run_qgis_check, width=18).pack(side=LEFT, padx=(0, 8))
         Button(actions, text="Открыть AOI", command=self.open_aoi_folder, width=18).pack(side=LEFT, padx=(0, 8))
         Button(actions, text="Выход", command=self.window.destroy, width=12).pack(side=RIGHT)
@@ -101,6 +104,9 @@ class WaterRegimeApp:
 
     def run_project_check(self) -> None:
         self.run_command([sys.executable, "scripts/check_project.py"])
+
+    def run_aoi_check(self) -> None:
+        self.run_command([sys.executable, "scripts/check_aoi.py", "--write-normalized"])
 
     def run_qgis_check(self) -> None:
         qgis_python = self.config["qgis"].get("python_executable", "")

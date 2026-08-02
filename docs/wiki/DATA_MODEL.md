@@ -21,6 +21,14 @@
 - исходная CRS GeoJSON: `EPSG:4326`;
 - рабочая CRS для расчетов: `EPSG:32637`.
 
+Проверка AOI выполняется командой:
+
+```bash
+python3 scripts/check_aoi.py --write-normalized
+```
+
+При флаге `--write-normalized` создается рабочая копия `data/interim/tula_test_field.normalized.geojson`. Папка `data/interim/` не коммитится, поэтому такие производные файлы остаются локальными.
+
 ## Спутниковые данные
 
 Сырые сцены Sentinel-2 и Landsat хранятся вне git в `data/raw/` или во внешнем каталоге, описанном в конфигурации.

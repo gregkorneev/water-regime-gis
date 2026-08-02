@@ -16,6 +16,22 @@
 Выход:
 
 - нормализованный слой AOI в `data/aoi/`.
+- рабочая копия `data/interim/tula_test_field.normalized.geojson` при запуске `scripts/check_aoi.py --write-normalized`.
+
+Команда:
+
+```bash
+python3 scripts/check_aoi.py --write-normalized
+```
+
+Текущая проверка:
+
+- читает GeoJSON стандартной библиотекой Python;
+- проверяет тип `Polygon`;
+- проверяет замкнутость кольца;
+- считает bbox в `EPSG:4326`;
+- считает примерную площадь в гектарах;
+- проверяет, что bbox попадает в ожидаемые пределы Тульской области.
 
 ## 2. Подготовка спутниковых данных
 

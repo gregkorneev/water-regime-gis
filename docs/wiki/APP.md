@@ -43,6 +43,7 @@ python3 scripts/run_app.py
 Затем в интерфейсе:
 
 - `Проверить проект` — запускает `scripts/check_project.py` и пишет результат в лог;
+- `Проверить AOI` — запускает `scripts/check_aoi.py --write-normalized`, проверяет тестовое поле и создает рабочую копию в `data/interim/`;
 - `Проверить QGIS` — запускает `scripts/qgis/check_qgis_context.py` через настроенный QGIS Python;
 - `Открыть AOI` — открывает папку `data/aoi/` с тестовым полем;
 - `Выход` — закрывает приложение.

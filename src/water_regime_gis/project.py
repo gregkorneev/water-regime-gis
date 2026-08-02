@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 
@@ -39,17 +40,64 @@ def missing_required_dirs(root: Path) -> list[str]:
 
 
 def aoi_summary(root: Path, config: dict) -> dict:
+    feature = load_aoi_feature(root, config)
+    coords = feature["geometry"]["coordinates"][0]
+    bbox = polygon_bbox(coords)
+    return {
+        "path": str(root / config["paths"]["test_aoi"]),
+        "name": feature["properties"].get("name", ""),
+        "osm": f"{feature['properties'].get('source_osm_type')}/{feature['properties'].get('source_osm_id')}",
+        "bbox": bbox,
+        "area_ha": polygon_area_ha(coords),
+        "analysis_crs": feature["properties"].get("analysis_crs", config["qgis"]["target_crs"]),
+    }
+
+
+def load_aoi_feature(root: Path, config: dict) -> dict:
     path = root / config["paths"]["test_aoi"]
     with path.open(encoding="utf-8") as file:
         data = json.load(file)
-    feature = data["features"][0]
-    coords = feature["geometry"]["coordinates"][0]
+    features = data.get("features") or []
+    if not features:
+        raise ValueError(f"AOI file has no features: {path}")
+    return features[0]
+
+
+def polygon_bbox(coords: list[list[float]]) -> list[float]:
     lons = [point[0] for point in coords]
     lats = [point[1] for point in coords]
-    return {
-        "path": str(path),
-        "name": feature["properties"].get("name", ""),
-        "osm": f"{feature['properties'].get('source_osm_type')}/{feature['properties'].get('source_osm_id')}",
-        "bbox": [min(lons), min(lats), max(lons), max(lats)],
-        "analysis_crs": feature["properties"].get("analysis_crs", config["qgis"]["target_crs"]),
-    }
+    return [min(lons), min(lats), max(lons), max(lats)]
+
+
+def polygon_area_ha(coords: list[list[float]]) -> float:
+    lat0 = math.radians(sum(point[1] for point in coords[:-1]) / (len(coords) - 1))
+    meters = []
+    for lon, lat in coords:
+        x = math.radians(lon) * 6_378_137 * math.cos(lat0)
+        y = math.radians(lat) * 6_378_137
+        meters.append((x, y))
+    area = 0.0
+    for (x1, y1), (x2, y2) in zip(meters, meters[1:]):
+        area += x1 * y2 - x2 * y1
+    return round(abs(area) / 20_000, 2)
+
+
+def validate_aoi(root: Path, config: dict) -> list[str]:
+    feature = load_aoi_feature(root, config)
+    geometry = feature.get("geometry", {})
+    if geometry.get("type") != "Polygon":
+        return [f"Expected Polygon, got {geometry.get('type')}"]
+    coords = geometry.get("coordinates", [[]])[0]
+    errors = []
+    if len(coords) < 4:
+        errors.append("Polygon has fewer than 4 coordinate pairs")
+    if coords and coords[0] != coords[-1]:
+        errors.append("Polygon ring is not closed")
+    if errors:
+        return errors
+    bbox = polygon_bbox(coords)
+    if not (36 <= bbox[0] <= bbox[2] <= 40 and 52 <= bbox[1] <= bbox[3] <= 55):
+        errors.append(f"AOI bbox is outside expected Tula Oblast bounds: {bbox}")
+    if polygon_area_ha(coords) <= 0:
+        errors.append("Polygon area is zero")
+    return errors

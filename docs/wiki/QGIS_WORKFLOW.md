@@ -29,6 +29,8 @@ python3 scripts/run_app.py
 
 Кнопка `Проверить AOI` запускает `scripts/check_aoi.py --write-normalized` и создает локальную рабочую копию AOI в `data/interim/`, которую можно открыть в QGIS.
 
+Кнопка `Создать QGIS проект` создает `outputs/maps/water_regime_gis.qgs` со слоем тестового AOI. Кнопка `Открыть QGIS проект` открывает этот файл в QGIS.
+
 ## CRS
 
 Для тестового AOI выбрана рабочая метрическая CRS `EPSG:32637` (WGS 84 / UTM zone 37N). Исходный GeoJSON хранится в `EPSG:4326`, как обычно для GeoJSON.

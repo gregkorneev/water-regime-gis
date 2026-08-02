@@ -86,6 +86,15 @@ python3 scripts/run_app.py
 /Applications/QGIS.app/Contents/MacOS/python
 ```
 
+Демонстрационный сценарий:
+
+1. Запустить приложение.
+2. Нажать `Проверить QGIS`.
+3. Нажать `Создать QGIS проект`.
+4. Нажать `Открыть QGIS проект`.
+
+После этого QGIS откроет проект `outputs/maps/water_regime_gis.qgs` со слоем тестового AOI.
+
 ## Структура документации
 
 Основная проектная wiki находится в `docs/wiki/`.

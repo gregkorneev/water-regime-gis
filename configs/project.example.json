@@ -6,9 +6,10 @@
   },
   "qgis": {
     "target_crs": "EPSG:32637",
-    "project_file": "",
+    "project_file": "outputs/maps/water_regime_gis.qgs",
     "python_executable": "",
-    "script_runner": "scripts/qgis/check_qgis_context.py"
+    "script_runner": "scripts/qgis/check_qgis_context.py",
+    "demo_project_script": "scripts/qgis/create_demo_project.py"
   },
   "paths": {
     "test_aoi": "data/aoi/tula_test_field.geojson",

@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
+
 try:
     from qgis.core import Qgis, QgsApplication
 except Exception as exc:

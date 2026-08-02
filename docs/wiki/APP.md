@@ -46,10 +46,10 @@ python3 scripts/run_app.py
 - `Проверить проект` — запускает `scripts/check_project.py` и пишет результат в лог;
 - `Проверить AOI` — запускает `scripts/check_aoi.py --write-normalized`, проверяет тестовое поле и создает рабочую копию в `data/interim/`;
 - `Проверить QGIS` — запускает `scripts/qgis/check_qgis_context.py` через настроенный QGIS Python;
+- `Создать QGIS проект` — запускает `scripts/qgis/create_demo_project.py`, создает `outputs/maps/water_regime_gis.qgs` и preview `outputs/maps/water_regime_gis_preview.png`;
+- `Открыть QGIS проект` — открывает созданный проект в QGIS;
 - `Открыть AOI` — открывает папку `data/aoi/` с тестовым полем;
 - `Выход` — закрывает приложение.
-
-Если центральная область пустая или плохо читается, нужно обновить код до версии после коммита `Improve app first-use screen`: в ней заданы явные цвета и стартовая инструкция.
 
 ## Упаковка
 

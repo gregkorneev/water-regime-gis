@@ -17,6 +17,7 @@ def main() -> int:
     assert "EPSG:32637" in html
     assert "NDVI" in html
     assert "Проверить AOI" in html
+    assert "Создать QGIS проект" in html
     qgis = qgis_python(load_config(ROOT))
     if qgis:
         assert Path(qgis).exists()

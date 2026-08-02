@@ -40,6 +40,7 @@ docs/wiki/            # проектная wiki
 - `src/water_regime_gis/webapp.py` является текущей первой версией интерфейса.
 - `scripts/run_app.py` запускает локальное веб-приложение из рабочей копии.
 - `scripts/qgis/check_qgis_context.py` проверяет запуск PyQGIS через QGIS Python.
+- `scripts/qgis/create_demo_project.py` создает демонстрационный QGIS-проект `outputs/maps/water_regime_gis.qgs`.
 
 ## Desktop-приложение
 

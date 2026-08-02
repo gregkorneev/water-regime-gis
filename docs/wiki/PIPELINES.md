@@ -119,6 +119,20 @@ python3 scripts/check_app.py
 
 `<qgis-python>` должен быть указан в `configs/project.example.json` как `qgis.python_executable`.
 
+Создание демонстрационного QGIS-проекта:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/create_demo_project.py
+```
+
+Выход:
+
+- `outputs/maps/water_regime_gis.qgs`;
+- `outputs/maps/water_regime_gis_preview.png`;
+- слой `Tula test field AOI`;
+- CRS проекта `EPSG:32637`;
+- простой зеленый стиль AOI.
+
 Новые команды должны фиксировать:
 
 - рабочую директорию;

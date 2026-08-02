@@ -29,7 +29,9 @@
 - Проверка AOI: `python3 scripts/check_aoi.py --write-normalized`; в GUI кнопка `Проверить AOI`.
 - Нормализованная рабочая копия AOI пишется в `data/interim/tula_test_field.normalized.geojson` и не коммитится.
 - QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
+- Демонстрационный QGIS-проект создается командой `/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/create_demo_project.py`.
+- Выходной проект: `outputs/maps/water_regime_gis.qgs`.
 
 ## Следующий практический шаг
 
-Добавить кнопку открытия нормализованного AOI в QGIS.
+Подключить первый DEM-слой или создать демонстрационный аналитический слой поверх AOI.

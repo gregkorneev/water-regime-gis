@@ -42,9 +42,12 @@ python3 scripts/run_app.py
 
 Затем в интерфейсе:
 
-- `Check project` — запускает `scripts/check_project.py`;
-- `Run QGIS check` — запускает `scripts/qgis/check_qgis_context.py` через настроенный QGIS Python;
-- `Open AOI folder` — открывает папку `data/aoi/`.
+- `Проверить проект` — запускает `scripts/check_project.py` и пишет результат в лог;
+- `Проверить QGIS` — запускает `scripts/qgis/check_qgis_context.py` через настроенный QGIS Python;
+- `Открыть AOI` — открывает папку `data/aoi/` с тестовым полем;
+- `Выход` — закрывает приложение.
+
+Если центральная область пустая или плохо читается, нужно обновить код до версии после коммита `Improve app first-use screen`: в ней заданы явные цвета и стартовая инструкция.
 
 ## Упаковка
 

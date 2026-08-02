@@ -40,29 +40,44 @@ class WaterRegimeApp:
         self.window.title("water-regime-gis")
         self.window.geometry("980x640")
         self.window.minsize(820, 520)
+        self.window.configure(bg="#f4f6f8")
         self._build()
+        self.write("Как пользоваться:")
+        self.write("1. Нажмите 'Проверить проект' — приложение проверит папки и конфиг.")
+        self.write("2. Нажмите 'Открыть AOI' — откроется папка с тестовым полем Тульской области.")
+        self.write("3. 'Проверить QGIS' заработает после настройки qgis.python_executable в configs/project.example.json.")
+        self.write("\nТекущее состояние проекта:")
         self.write("\n".join(status_lines(self.root_path, self.config)))
 
     def _build(self) -> None:
-        header = Frame(self.window, padx=16, pady=14)
+        header = Frame(self.window, padx=16, pady=14, bg="#f4f6f8")
         header.pack(fill=X)
-        Label(header, text="water-regime-gis", font=("Arial", 22, "bold")).pack(anchor="w")
+        Label(header, text="water-regime-gis", font=("Arial", 22, "bold"), bg="#f4f6f8", fg="#102030").pack(anchor="w")
         Label(
             header,
-            text="QGIS-oriented control panel for AOI, checks and processing scripts",
+            text="Панель запуска проверок, AOI и будущих QGIS-скриптов",
             font=("Arial", 12),
+            bg="#f4f6f8",
+            fg="#405060",
         ).pack(anchor="w")
 
-        actions = Frame(self.window, padx=16, pady=8)
+        actions = Frame(self.window, padx=16, pady=8, bg="#f4f6f8")
         actions.pack(fill=X)
-        Button(actions, text="Check project", command=self.run_project_check, width=18).pack(side=LEFT, padx=(0, 8))
-        Button(actions, text="Run QGIS check", command=self.run_qgis_check, width=18).pack(side=LEFT, padx=(0, 8))
-        Button(actions, text="Open AOI folder", command=self.open_aoi_folder, width=18).pack(side=LEFT, padx=(0, 8))
-        Button(actions, text="Quit", command=self.window.destroy, width=12).pack(side=RIGHT)
+        Button(actions, text="Проверить проект", command=self.run_project_check, width=18).pack(side=LEFT, padx=(0, 8))
+        Button(actions, text="Проверить QGIS", command=self.run_qgis_check, width=18).pack(side=LEFT, padx=(0, 8))
+        Button(actions, text="Открыть AOI", command=self.open_aoi_folder, width=18).pack(side=LEFT, padx=(0, 8))
+        Button(actions, text="Выход", command=self.window.destroy, width=12).pack(side=RIGHT)
 
-        body = Frame(self.window, padx=16, pady=10)
+        body = Frame(self.window, padx=16, pady=10, bg="#f4f6f8")
         body.pack(fill=BOTH, expand=True)
-        self.log = ScrolledText(body, wrap="word", font=("Menlo", 12))
+        self.log = ScrolledText(
+            body,
+            wrap="word",
+            font=("Menlo", 12),
+            bg="#ffffff",
+            fg="#102030",
+            insertbackground="#102030",
+        )
         self.log.pack(fill=BOTH, expand=True)
 
     def write(self, text: str) -> None:
@@ -91,7 +106,7 @@ class WaterRegimeApp:
         qgis_python = self.config["qgis"].get("python_executable", "")
         script = self.config["qgis"].get("script_runner", "")
         if not qgis_python:
-            self.write("\nQGIS Python is not configured. Set qgis.python_executable in configs/project.example.json.")
+            self.write("\nQGIS Python не настроен. Укажите qgis.python_executable в configs/project.example.json.")
             return
         self.run_command([qgis_python, script])
 

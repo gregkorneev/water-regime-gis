@@ -7,17 +7,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from water_regime_gis.app import status_lines
 from water_regime_gis.project import load_config
+from water_regime_gis.webapp import page
 
 
 def main() -> int:
-    lines = status_lines(ROOT, load_config(ROOT))
-    assert any("water-regime-gis" in line for line in lines)
-    assert any("EPSG:32637" in line for line in lines)
-    assert any("NDVI" in line for line in lines)
-    assert any("ha" in line for line in lines)
-    print("App status model: OK")
+    html = page(ROOT)
+    assert "water-regime-gis" in html
+    assert "EPSG:32637" in html
+    assert "NDVI" in html
+    assert "Проверить AOI" in html
+    print("Web app render: OK")
     return 0
 
 

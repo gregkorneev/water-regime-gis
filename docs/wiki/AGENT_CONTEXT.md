@@ -24,7 +24,7 @@
 - Тестовый AOI: `data/aoi/tula_test_field.geojson`, сельхозполе в Тульской области из OpenStreetMap (`way/78250539`).
 - Рабочая CRS для тестового AOI: `EPSG:32637`.
 - Проект теперь развивается как desktop-приложение для Windows и macOS.
-- Первая версия GUI: `python3 scripts/run_app.py`, реализация на `tkinter`.
+- Первая версия GUI: `python3 scripts/run_app.py`, локальный веб-интерфейс `http://127.0.0.1:8765` на стандартной библиотеке Python.
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - Проверка AOI: `python3 scripts/check_aoi.py --write-normalized`; в GUI кнопка `Проверить AOI`.
 - Нормализованная рабочая копия AOI пишется в `data/interim/tula_test_field.normalized.geojson` и не коммитится.

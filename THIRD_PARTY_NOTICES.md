@@ -2,12 +2,16 @@
 
 Проект `water-regime-gis` распространяется под лицензией MIT.
 
-## Runtime первого интерфейса
+## Runtime текущего интерфейса
 
 - Python standard library — Python Software Foundation License.
-- Tkinter / Tcl-Tk — открытые лицензии Tcl/Tk.
+- Browser runtime — браузер пользователя.
 
-Первая версия интерфейса не добавляет внешних Python-зависимостей.
+Текущая версия интерфейса не добавляет внешних Python-зависимостей.
+
+## Экспериментальный Tkinter-модуль
+
+В репозитории остается черновой модуль `src/water_regime_gis/app.py` на Tkinter / Tcl-Tk. Он не является основным интерфейсом запуска.
 
 ## Геоданные
 

@@ -8,8 +8,7 @@ from pathlib import Path
 
 os.environ.setdefault("TK_SILENCE_DEPRECATION", "1")
 
-from tkinter import END, BOTH, LEFT, RIGHT, X, Button, Frame, Label, Tk
-from tkinter.scrolledtext import ScrolledText
+from tkinter import BOTH, LEFT, RIGHT, X, Button, Canvas, Frame, Scrollbar, Tk
 
 from .project import aoi_summary, load_config, missing_required_dirs, project_root
 
@@ -37,6 +36,7 @@ class WaterRegimeApp:
     def __init__(self, root: Path) -> None:
         self.root_path = root
         self.config = load_config(root)
+        self.lines: list[str] = []
         self.window = Tk()
         self.window.title("water-regime-gis")
         self.window.geometry("980x640")
@@ -54,14 +54,17 @@ class WaterRegimeApp:
     def _build(self) -> None:
         header = Frame(self.window, padx=16, pady=14, bg="#f4f6f8")
         header.pack(fill=X)
-        Label(header, text="water-regime-gis", font=("Arial", 22, "bold"), bg="#f4f6f8", fg="#102030").pack(anchor="w")
-        Label(
-            header,
+        self.header = Canvas(header, height=64, bg="#f4f6f8", highlightthickness=0)
+        self.header.pack(fill=X)
+        self.header.create_text(0, 8, anchor="nw", text="water-regime-gis", fill="#102030", font=("Arial", 26, "bold"))
+        self.header.create_text(
+            0,
+            44,
+            anchor="nw",
             text="Панель запуска проверок, AOI и будущих QGIS-скриптов",
-            font=("Arial", 12),
-            bg="#f4f6f8",
-            fg="#405060",
-        ).pack(anchor="w")
+            fill="#405060",
+            font=("Arial", 14),
+        )
 
         actions = Frame(self.window, padx=16, pady=8, bg="#f4f6f8")
         actions.pack(fill=X)
@@ -73,19 +76,30 @@ class WaterRegimeApp:
 
         body = Frame(self.window, padx=16, pady=10, bg="#f4f6f8")
         body.pack(fill=BOTH, expand=True)
-        self.log = ScrolledText(
+        self.log_scroll = Scrollbar(body)
+        self.log_scroll.pack(side=RIGHT, fill="y")
+        self.log = Canvas(
             body,
-            wrap="word",
-            font=("Menlo", 12),
             bg="#ffffff",
-            fg="#102030",
-            insertbackground="#102030",
+            highlightbackground="#d0d7de",
+            highlightthickness=1,
+            yscrollcommand=self.log_scroll.set,
         )
-        self.log.pack(fill=BOTH, expand=True)
+        self.log.pack(side=LEFT, fill=BOTH, expand=True)
+        self.log_scroll.config(command=self.log.yview)
 
     def write(self, text: str) -> None:
-        self.log.insert(END, text + "\n")
-        self.log.see(END)
+        self.lines.extend(text.splitlines() or [""])
+        self.redraw_log()
+
+    def redraw_log(self) -> None:
+        self.log.delete("all")
+        y = 12
+        for line in self.lines:
+            self.log.create_text(12, y, anchor="nw", text=line, fill="#102030", font=("Menlo", 13))
+            y += 24
+        self.log.configure(scrollregion=(0, 0, 1600, max(y + 12, self.log.winfo_height())))
+        self.log.yview_moveto(1.0)
 
     def run(self) -> None:
         self.window.mainloop()

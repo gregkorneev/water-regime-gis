@@ -23,7 +23,10 @@
 - Базовый конфиг: `configs/project.example.json`.
 - Тестовый AOI: `data/aoi/tula_test_field.geojson`, сельхозполе в Тульской области из OpenStreetMap (`way/78250539`).
 - Рабочая CRS для тестового AOI: `EPSG:32637`.
+- Проект теперь развивается как desktop-приложение для Windows и macOS.
+- Первая версия GUI: `python3 scripts/run_app.py`, реализация на `tkinter`.
+- Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 
 ## Следующий практический шаг
 
-Реализовать минимальную проверку AOI: валидность GeoJSON, тип геометрии, bbox, CRS и подготовку нормализованной копии для QGIS.
+Настроить локальный путь к QGIS Python и проверить запуск `scripts/qgis/check_qgis_context.py` из приложения.

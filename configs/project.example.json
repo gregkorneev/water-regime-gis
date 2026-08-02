@@ -6,7 +6,9 @@
   },
   "qgis": {
     "target_crs": "EPSG:32637",
-    "project_file": ""
+    "project_file": "",
+    "python_executable": "",
+    "script_runner": "scripts/qgis/check_qgis_context.py"
   },
   "paths": {
     "test_aoi": "data/aoi/tula_test_field.geojson",

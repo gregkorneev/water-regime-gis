@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "QGIS-oriented workflows for water regime analysis of agricultural land."
 readme = "README.md"
 requires-python = ">=3.9"
+license = { file = "LICENSE" }
+
+[project.scripts]
+water-regime-gis = "water_regime_gis.app:main"
 
 [tool.water-regime-gis]
 config = "configs/project.example.json"

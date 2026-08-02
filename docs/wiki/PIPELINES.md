@@ -83,6 +83,26 @@ python3 scripts/check_project.py
 - проверяет наличие обязательных каталогов;
 - не читает и не изменяет геоданные.
 
+Запуск desktop-приложения:
+
+```bash
+python3 scripts/run_app.py
+```
+
+Проверка модели интерфейса без открытия окна:
+
+```bash
+python3 scripts/check_app.py
+```
+
+Проверка QGIS/PyQGIS-контекста через приложение или напрямую:
+
+```bash
+<qgis-python> scripts/qgis/check_qgis_context.py
+```
+
+`<qgis-python>` должен быть указан в `configs/project.example.json` как `qgis.python_executable`.
+
 Новые команды должны фиксировать:
 
 - рабочую директорию;

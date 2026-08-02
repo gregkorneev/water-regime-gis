@@ -9,14 +9,16 @@
 1. **Data layer** — локальные файлы GeoTIFF, GeoPackage, CSV, Parquet; в будущем PostGIS.
 2. **Processing layer** — Python, PyQGIS, GDAL/OGR, QGIS Processing, Rasterio/GeoPandas при необходимости.
 3. **Analysis layer** — расчет спектральных индексов, рельефных производных и сравнительных таблиц.
-4. **Visualization layer** — QGIS-проекты, стили, карты, отчеты.
-5. **Knowledge layer** — `docs/wiki/` как человеко- и AI-читаемая документация.
+4. **Application layer** — desktop-интерфейс для Windows/macOS, запуск проверок и QGIS-скриптов.
+5. **Visualization layer** — QGIS-проекты, стили, карты, отчеты.
+6. **Knowledge layer** — `docs/wiki/` как человеко- и AI-читаемая документация.
 
 ## Текущая структура
 
 ```text
 src/                  # будущий Python-пакет проекта
 scripts/              # запускаемые скрипты обработки
+scripts/qgis/         # скрипты, рассчитанные на запуск в QGIS Python
 notebooks/            # исследовательские ноутбуки
 configs/              # конфигурации пайплайнов
 data/aoi/             # границы областей интереса
@@ -35,6 +37,13 @@ docs/wiki/            # проектная wiki
 - `configs/project.example.json` хранит базовые пути, источники данных, список индексов и DEM-продуктов.
 - `src/water_regime_gis/project.py` содержит минимальные функции для поиска корня проекта, чтения JSON-конфига и проверки структуры.
 - `scripts/check_project.py` является первым исполняемым скриптом проекта.
+- `src/water_regime_gis/app.py` является первой версией desktop-интерфейса.
+- `scripts/run_app.py` запускает приложение из рабочей копии.
+- `scripts/qgis/check_qgis_context.py` проверяет запуск PyQGIS через QGIS Python.
+
+## Desktop-приложение
+
+Целевая форма продукта — приложение для Windows и macOS. Первая версия использует `tkinter` из стандартной библиотеки Python, чтобы не добавлять внешние GUI-зависимости и избежать лицензионной сложности на старте.
 
 ## PostGIS
 

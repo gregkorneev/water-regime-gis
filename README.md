@@ -40,13 +40,19 @@ QGIS-ориентированная информационная система 
 ## Базовый стек
 
 - macOS как основная рабочая среда.
+- Windows как целевая платформа приложения.
 - QGIS, PyQGIS и Processing Toolbox.
+- Python `tkinter` для первой версии desktop-интерфейса.
 - GDAL/OGR, Rasterio, GeoPandas, Shapely, PyProj.
 - NumPy, Pandas, PyArrow.
 - GeoTIFF для растровых результатов.
 - GeoPackage для векторных слоев и промежуточных результатов.
 - CSV/Parquet для табличных расчетов.
 - PostGIS как будущий слой хранения и пространственных запросов.
+
+## Лицензия
+
+Код проекта распространяется под лицензией MIT. Первая версия интерфейса использует Python standard library и `tkinter`, без внешних GUI-зависимостей.
 
 ## Первый запуск
 
@@ -57,6 +63,14 @@ python3 scripts/check_project.py
 ```
 
 Скрипт читает `configs/project.example.json` и проверяет наличие обязательных каталогов. Сложная геообработка на первом этапе не выполняется.
+
+Запустить первую версию desktop-приложения:
+
+```bash
+python3 scripts/run_app.py
+```
+
+Приложение показывает параметры проекта, тестовый AOI и запускает проверочные скрипты. Для запуска PyQGIS-скриптов нужно указать путь к QGIS Python в `configs/project.example.json` в поле `qgis.python_executable`.
 
 ## Структура документации
 

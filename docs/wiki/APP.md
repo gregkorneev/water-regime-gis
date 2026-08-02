@@ -1,0 +1,49 @@
+# App
+
+## Назначение
+
+Проект развивается как desktop-приложение для Windows и macOS. Приложение должно быть визуальной оболочкой, из которой запускаются проектные Python-скрипты и QGIS/PyQGIS-скрипты.
+
+## Первая версия
+
+Первая версия реализована на Python `tkinter`:
+
+- файл приложения: `src/water_regime_gis/app.py`;
+- запуск из репозитория: `python3 scripts/run_app.py`;
+- проверка модели интерфейса без открытия окна: `python3 scripts/check_app.py`;
+- первый QGIS-скрипт: `scripts/qgis/check_qgis_context.py`.
+
+## Почему tkinter
+
+`tkinter` входит в стандартную библиотеку Python и доступен на macOS и Windows. Это самый простой открытый вариант для первой версии без добавления внешних GUI-зависимостей и без лицензионной сложности Qt.
+
+## Лицензирование
+
+Код проекта распространяется под лицензией MIT. Используемые компоненты первой версии:
+
+- Python standard library;
+- Tkinter / Tcl-Tk.
+
+Сведения о сторонних лицензиях фиксируются в `THIRD_PARTY_NOTICES.md`.
+
+## Запуск QGIS-скриптов
+
+Приложение запускает QGIS/PyQGIS-скрипты через путь `qgis.python_executable` из `configs/project.example.json`.
+
+Пока путь не задан, кнопка QGIS-проверки выводит сообщение о необходимости настройки.
+
+Минимальная идея запуска:
+
+```bash
+python3 scripts/run_app.py
+```
+
+Затем в интерфейсе:
+
+- `Check project` — запускает `scripts/check_project.py`;
+- `Run QGIS check` — запускает `scripts/qgis/check_qgis_context.py` через настроенный QGIS Python;
+- `Open AOI folder` — открывает папку `data/aoi/`.
+
+## Упаковка
+
+Упаковка в `.app` для macOS и `.exe` для Windows пока не реализована. Ее нужно добавлять после стабилизации первого интерфейса и выбора инструмента сборки.

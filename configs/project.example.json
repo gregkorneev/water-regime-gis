@@ -5,10 +5,11 @@
     "description": "Базовый контур проекта без реальных геоданных и сложной обработки."
   },
   "qgis": {
-    "target_crs": "",
+    "target_crs": "EPSG:32637",
     "project_file": ""
   },
   "paths": {
+    "test_aoi": "data/aoi/tula_test_field.geojson",
     "aoi": "data/aoi",
     "raw": "data/raw",
     "interim": "data/interim",

@@ -1,0 +1,85 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+pip-wheel-metadata/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# QGIS
+*.qgz~
+*.qgs~
+*.qgd
+*.qgd-shm
+*.qgd-wal
+*.qml~
+*.sld~
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+cache/
+.cache/
+
+# Local configs
+configs/local.*
+configs/*.local.*
+
+# Geo data: keep directories, avoid committing heavy data by default
+data/raw/**
+data/interim/**
+data/processed/**
+outputs/rasters/**
+outputs/maps/**
+outputs/reports/**
+
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!outputs/rasters/.gitkeep
+!outputs/maps/.gitkeep
+!outputs/reports/.gitkeep
+
+# Common heavy raster / remote-sensing formats
+*.tif
+*.tiff
+*.vrt
+*.img
+*.jp2
+*.hdf
+*.nc
+*.grib
+*.grb
+*.las
+*.laz
+*.mbtiles
+
+# Small AOI/config examples may be committed intentionally.
+!docs/**
+!configs/**

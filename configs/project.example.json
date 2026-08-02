@@ -1,0 +1,27 @@
+{
+  "project": {
+    "name": "water-regime-gis",
+    "stage": "stage-1",
+    "description": "Базовый контур проекта без реальных геоданных и сложной обработки."
+  },
+  "qgis": {
+    "target_crs": "",
+    "project_file": ""
+  },
+  "paths": {
+    "aoi": "data/aoi",
+    "raw": "data/raw",
+    "interim": "data/interim",
+    "processed": "data/processed",
+    "maps": "outputs/maps",
+    "reports": "outputs/reports",
+    "rasters": "outputs/rasters"
+  },
+  "satellite": {
+    "sources": ["sentinel-2", "landsat"],
+    "indices": ["NDVI", "NDMI", "NDWI", "MNDWI", "SAVI", "NDRE"]
+  },
+  "dem": {
+    "products": ["slope", "aspect", "flow_accumulation", "watersheds"]
+  }
+}

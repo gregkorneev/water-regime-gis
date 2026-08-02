@@ -80,6 +80,12 @@ python3 scripts/run_app.py
 
 Приложение откроется в браузере по локальному адресу `http://127.0.0.1:8765`. Оно показывает параметры проекта, тестовый AOI и запускает проверочные скрипты. Для запуска PyQGIS-скриптов нужно указать путь к QGIS Python в `configs/project.example.json` в поле `qgis.python_executable`.
 
+На macOS приложение автоматически пробует найти QGIS wrapper:
+
+```text
+/Applications/QGIS.app/Contents/MacOS/python
+```
+
 ## Структура документации
 
 Основная проектная wiki находится в `docs/wiki/`.

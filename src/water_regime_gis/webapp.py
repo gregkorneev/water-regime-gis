@@ -34,6 +34,21 @@ def run_command(root: Path, command: list[str]) -> tuple[int, str]:
     return process.returncode, output or "(no output)"
 
 
+def qgis_python(config: dict) -> str:
+    configured = config["qgis"].get("python_executable", "")
+    if configured:
+        return configured
+    candidates = [
+        "/Applications/QGIS.app/Contents/MacOS/python",
+        "/Applications/QGIS.app/Contents/MacOS/bin/python",
+        "/Applications/QGIS.app/Contents/MacOS/python3.12",
+    ]
+    for candidate in candidates:
+        if Path(candidate).exists():
+            return candidate
+    return ""
+
+
 def page(root: Path, output: str = "") -> str:
     config = load_config(root)
     aoi = aoi_summary(root, config)
@@ -87,11 +102,11 @@ class Handler(BaseHTTPRequestHandler):
             _, output = run_command(root, [sys.executable, "scripts/check_aoi.py", "--write-normalized"])
         elif path == "/run/check-qgis":
             config = load_config(root)
-            qgis_python = config["qgis"].get("python_executable", "")
-            if qgis_python:
-                _, output = run_command(root, [qgis_python, config["qgis"]["script_runner"]])
+            qgis = qgis_python(config)
+            if qgis:
+                _, output = run_command(root, [qgis, config["qgis"]["script_runner"]])
             else:
-                output = "QGIS Python не настроен. Укажите qgis.python_executable в configs/project.example.json."
+                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
         elif path == "/open-aoi":
             open_path(root / load_config(root)["paths"]["aoi"])
             output = "Папка AOI открыта."

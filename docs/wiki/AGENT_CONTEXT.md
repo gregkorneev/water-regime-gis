@@ -28,7 +28,8 @@
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - Проверка AOI: `python3 scripts/check_aoi.py --write-normalized`; в GUI кнопка `Проверить AOI`.
 - Нормализованная рабочая копия AOI пишется в `data/interim/tula_test_field.normalized.geojson` и не коммитится.
+- QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
 
 ## Следующий практический шаг
 
-Настроить локальный путь к QGIS Python и добавить кнопку открытия нормализованного AOI в QGIS.
+Добавить кнопку открытия нормализованного AOI в QGIS.

@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
-from water_regime_gis.webapp import page
+from water_regime_gis.webapp import page, qgis_python
 
 
 def main() -> int:
@@ -17,6 +17,9 @@ def main() -> int:
     assert "EPSG:32637" in html
     assert "NDVI" in html
     assert "Проверить AOI" in html
+    qgis = qgis_python(load_config(ROOT))
+    if qgis:
+        assert Path(qgis).exists()
     print("Web app render: OK")
     return 0
 

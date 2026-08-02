@@ -94,3 +94,15 @@
 Причина:
 
 - системный Tk на macOS нестабильно отображает текст в темной теме, а локальный веб-интерфейс дает предсказуемый визуал без внешних зависимостей.
+
+## 2026-08-02 — QGIS Python на macOS запускается через wrapper
+
+Решение:
+
+- использовать `/Applications/QGIS.app/Contents/MacOS/python` как основной автообнаруживаемый QGIS Python на macOS;
+- не использовать напрямую `/Applications/QGIS.app/Contents/MacOS/python3.12`, потому что без wrapper не задан `PYTHONHOME`;
+- исправить проверочный PyQGIS-скрипт на `Qgis.QGIS_VERSION`.
+
+Причина:
+
+- wrapper QGIS корректно настраивает окружение встроенного Python и позволяет импортировать `qgis.core`.

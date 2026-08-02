@@ -33,7 +33,7 @@
 
 Приложение запускает QGIS/PyQGIS-скрипты через путь `qgis.python_executable` из `configs/project.example.json`.
 
-Пока путь не задан, кнопка QGIS-проверки выводит сообщение о необходимости настройки.
+На macOS приложение также пробует автоматически найти `/Applications/QGIS.app/Contents/MacOS/python`. Это wrapper QGIS, который настраивает `PYTHONHOME` для встроенного Python.
 
 Минимальная идея запуска:
 

@@ -22,6 +22,13 @@ WMS_CACHE_TTL_SECONDS = 300
 WMS_CACHE_MAX_ITEMS = 256
 WMS_CACHE: OrderedDict[str, tuple[float, str, bytes]] = OrderedDict()
 WMS_CACHE_LOCK = threading.Lock()
+BOOTSTRAP_STATE = {
+    "running": False,
+    "started_at": "",
+    "finished_at": "",
+    "steps": [],
+}
+BOOTSTRAP_LOCK = threading.Lock()
 
 STYLE = """
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef3f1;color:#14231f}
@@ -34,11 +41,12 @@ h1{margin:0;font-size:34px;letter-spacing:0}.sub{color:#53645f;margin-top:6px;fo
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.btn{display:inline-block;background:#176b5b;color:white;text-decoration:none;border-radius:7px;padding:11px 14px;font-weight:700}
 .map{height:360px;border:1px solid #d8e0dd;border-radius:8px;overflow:hidden;background:#dce7e3}.form{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.form input{padding:10px;border:1px solid #bdcac5;border-radius:7px;min-width:150px}.form button{border:0;cursor:pointer}
 .result-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.hint{color:#60716c;font-size:14px;margin:8px 0 0}
+.status-list{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.status-item{background:#f8fbfa;border:1px solid #dbe5e1;border-radius:8px;padding:12px}.status-ok{color:#176b5b}.status-run{color:#8a5a00}.status-fail{color:#a33425}
 .btn.secondary{background:#42526a}.btn.muted{background:#68757f}
 pre{white-space:pre-wrap;background:#101816;color:#d8f5e9;border-radius:8px;padding:14px;min-height:180px;overflow:auto}
 .preview{width:100%;border:1px solid #d8e0dd;border-radius:8px;margin-top:12px;background:#f8fbfa}
 table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px solid #edf1ef}td:first-child{color:#60716c;width:160px}
-@media(max-width:860px){.grid,.kpi{grid-template-columns:1fr}.top{display:block}}
+@media(max-width:860px){.grid,.kpi,.status-list{grid-template-columns:1fr}.top{display:block}}
 """
 
 
@@ -48,6 +56,68 @@ def run_command(root: Path, command: list[str]) -> tuple[int, str]:
     process = subprocess.run(command, cwd=root, text=True, capture_output=True, env=env)
     output = "\n".join(part for part in (process.stdout.strip(), process.stderr.strip()) if part)
     return process.returncode, output or "(no output)"
+
+
+def start_bootstrap(root: Path) -> None:
+    with BOOTSTRAP_LOCK:
+        if BOOTSTRAP_STATE["running"]:
+            return
+    thread = threading.Thread(target=bootstrap_system, args=(root,), daemon=True)
+    thread.start()
+
+
+def bootstrap_system(root: Path) -> None:
+    config = load_config(root)
+    with BOOTSTRAP_LOCK:
+        BOOTSTRAP_STATE["running"] = True
+        BOOTSTRAP_STATE["started_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        BOOTSTRAP_STATE["finished_at"] = ""
+        BOOTSTRAP_STATE["steps"] = []
+
+    for label, command in [
+        ("Проверка структуры", [sys.executable, "scripts/check_project.py"]),
+        ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
+    ]:
+        code, output = run_command(root, command)
+        record_bootstrap_step(label, code, output)
+        if code:
+            finish_bootstrap()
+            return
+
+    qgis = qgis_python(config)
+    if not qgis:
+        record_bootstrap_step("Проверка геодвижка", 1, "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск.")
+        finish_bootstrap()
+        return
+
+    for label, command in [
+        ("Проверка геодвижка", [qgis, config["qgis"]["script_runner"]]),
+        ("Проверка кадастровых данных", [qgis, config["qgis"]["nspd_plugin_check_script"]]),
+    ]:
+        code, output = run_command(root, command)
+        record_bootstrap_step(label, code, output)
+        if code:
+            finish_bootstrap()
+            return
+
+    finish_bootstrap()
+
+
+def record_bootstrap_step(label: str, code: int, output: str) -> None:
+    with BOOTSTRAP_LOCK:
+        BOOTSTRAP_STATE["steps"].append(
+            {
+                "label": label,
+                "status": "OK" if code == 0 else "FAILED",
+                "message": public_output(label, output, code),
+            }
+        )
+
+
+def finish_bootstrap() -> None:
+    with BOOTSTRAP_LOCK:
+        BOOTSTRAP_STATE["running"] = False
+        BOOTSTRAP_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
 def qgis_python(config: dict) -> str:
@@ -87,6 +157,7 @@ def page(root: Path, output: str = "") -> str:
     escaped_output = html.escape(output or "Нажмите кнопку, чтобы запустить проверку.")
     preview = root / "outputs/maps/water_regime_gis_preview.png"
     preview_html = '<img class="preview" src="/preview.png" alt="preview результата">' if preview.exists() else ""
+    system_html = system_panel(root, config)
     results_html = result_panel(root, config)
     return f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -98,6 +169,7 @@ def page(root: Path, output: str = "") -> str:
   <div class="tile"><div class="label">Поле</div><div class="value">{'выбрано' if field['selected'] else 'не выбрано'}</div></div>
   <div class="tile"><div class="label">Рабочая CRS</div><div class="value">{html.escape(field['analysis_crs'])}</div></div>
 </section>
+{system_html}
 <section class="panel">
   <h2>Выбор поля</h2>
   <div id="map" class="map"></div>
@@ -175,6 +247,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/result.json":
             self.send_file(root / load_config(root)["paths"]["latest_report"], "application/json")
+            return
+        if path == "/status.json":
+            self.send_json(system_status(root, load_config(root)))
             return
         if path == "/download/field.geojson":
             self.send_download(root / load_config(root)["paths"]["selected_field_area"], "selected_field_area.geojson", "application/geo+json")
@@ -264,6 +339,14 @@ class Handler(BaseHTTPRequestHandler):
         body = path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_json(self, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -380,6 +463,20 @@ def format_step(label: str, code: int, output: str) -> str:
 
 def public_output(label: str, output: str, code: int) -> str:
     if code:
+        if label == "Проверка структуры":
+            return "Не найдены необходимые рабочие папки проекта."
+        if label == "Подготовка кадастрового модуля":
+            return "Не удалось подготовить кадастровый модуль. Проверьте интернет-соединение и повторите запуск."
+        if label == "Проверка геодвижка":
+            return "Геодвижок недоступен. Установите QGIS 3.40+ и перезапустите панель."
+        if label == "Проверка кадастровых данных":
+            return "Кадастровый модуль недоступен. Панель попробует подготовить его при следующем запуске."
+        if label == "Выбор поля":
+            return "Не удалось сохранить выбранную точку поля."
+        if label == "Уточнение контура":
+            return "Не удалось уточнить кадастровый контур. Повторите позже."
+        if label == "Подготовка результата":
+            return "Не удалось подготовить карту результата."
         return output
     if label == "Проверка структуры":
         return "Структура проекта готова."
@@ -406,6 +503,81 @@ def public_output(label: str, output: str, code: int) -> str:
                 lines.append(f"CRS результата: {line.split(':', 1)[1].strip()}.")
         return "\n".join(lines) or "Карта результата подготовлена."
     return output
+
+
+def system_panel(root: Path, config: dict) -> str:
+    status = system_status(root, config)
+    steps = status["steps"]
+    items = []
+    for step in steps:
+        state = step["status"]
+        css = "status-ok" if state == "OK" else "status-run" if state == "RUNNING" else "status-fail"
+        text = "готово" if state == "OK" else "выполняется" if state == "RUNNING" else "требует внимания"
+        items.append(
+            '<div class="status-item">'
+            f'<div class="label">{html.escape(step["label"])}</div>'
+            f'<div class="value {css}">{html.escape(text)}</div>'
+            f'<div class="hint">{html.escape(step.get("message", ""))}</div>'
+            "</div>"
+        )
+    finished = f'<p class="hint">Последняя автоподготовка: {html.escape(status["finished_at"])}</p>' if status["finished_at"] else ""
+    return f"""
+<section class="panel">
+  <h2>Готовность системы</h2>
+  <div class="status-list">{''.join(items)}</div>
+  {finished}
+</section>"""
+
+
+def system_status(root: Path, config: dict) -> dict:
+    with BOOTSTRAP_LOCK:
+        state = {
+            "running": BOOTSTRAP_STATE["running"],
+            "started_at": BOOTSTRAP_STATE["started_at"],
+            "finished_at": BOOTSTRAP_STATE["finished_at"],
+            "steps": list(BOOTSTRAP_STATE["steps"]),
+        }
+
+    steps = state["steps"]
+    if not steps:
+        steps = lightweight_status(root, config)
+        if state["running"]:
+            steps.insert(0, {"label": "Автоподготовка", "status": "RUNNING", "message": "Выполняется."})
+    return {
+        "running": state["running"],
+        "started_at": state["started_at"],
+        "finished_at": state["finished_at"],
+        "steps": steps,
+    }
+
+
+def lightweight_status(root: Path, config: dict) -> list[dict]:
+    missing = missing_required_dirs(root)
+    qgis = qgis_python(config)
+    plugin_dir = nspd_plugin_dir(config)
+    field = selected_field_summary(root, config)
+    return [
+        {
+            "label": "Структура",
+            "status": "OK" if not missing else "FAILED",
+            "message": "Структура проекта готова." if not missing else "Не найдены рабочие папки.",
+        },
+        {
+            "label": "Геодвижок",
+            "status": "OK" if qgis else "FAILED",
+            "message": "Геодвижок найден." if qgis else "Установите QGIS 3.40+ и перезапустите панель.",
+        },
+        {
+            "label": "Кадастровый модуль",
+            "status": "OK" if plugin_dir.exists() else "RUNNING",
+            "message": "Кадастровый модуль готов." if plugin_dir.exists() else "Будет установлен автоматически.",
+        },
+        {
+            "label": "Поле",
+            "status": "OK" if field["selected"] else "RUNNING",
+            "message": "Поле выбрано." if field["selected"] else "Выберите точку на карте.",
+        },
+    ]
 
 
 def result_panel(root: Path, config: dict) -> str:
@@ -479,14 +651,22 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
 
 
 def nspd_ca_bundle(config: dict) -> Path:
+    plugin_dir = nspd_plugin_dir(config)
+    cert = plugin_dir / "certs/nspd-ca-bundle.pem"
+    if cert.exists():
+        return cert
+    return plugin_dir / "certs/nspd-ca-bundle.pem"
+
+
+def nspd_plugin_dir(config: dict) -> Path:
     plugin_id = config["nspd"]["plugin_id"]
     plugin_name = config["nspd"]["plugin_name"]
     base = Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
     for name in (plugin_id, plugin_name):
-        cert = base / name / "certs/nspd-ca-bundle.pem"
-        if cert.exists():
-            return cert
-    return base / plugin_id / "certs/nspd-ca-bundle.pem"
+        plugin = base / name
+        if plugin.exists():
+            return plugin
+    return base / plugin_id
 
 
 def get_wms_cache(key: str) -> tuple[str, bytes] | None:
@@ -517,6 +697,7 @@ def main() -> int:
     server = ThreadingHTTPServer(("127.0.0.1", 8765), Handler)
     url = "http://127.0.0.1:8765"
     print(f"water-regime-gis app: {url}")
+    start_bootstrap(root)
     webbrowser.open(url)
     try:
         server.serve_forever()

@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
-from water_regime_gis.webapp import page, qgis_python
+from water_regime_gis.webapp import page, qgis_python, system_status
 
 
 def main() -> int:
@@ -20,9 +20,14 @@ def main() -> int:
     assert "Сохранить выбранное поле" in html
     assert "Подготовить результат" in html
     assert "Проверить систему" in html
+    assert "Готовность системы" in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
-    qgis = qgis_python(load_config(ROOT))
+    config = load_config(ROOT)
+    status = system_status(ROOT, config)
+    assert "steps" in status
+    assert status["steps"]
+    qgis = qgis_python(config)
     if qgis:
         assert Path(qgis).exists()
     print("Web app render: OK")

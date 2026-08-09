@@ -45,6 +45,9 @@
 - Рабочая CRS для выбранного поля: `EPSG:32637`.
 - Проект теперь развивается как desktop-приложение для Windows и macOS.
 - Первая версия GUI: `python3 scripts/run_app.py`, локальный веб-интерфейс `http://127.0.0.1:8765` на стандартной библиотеке Python.
+- При старте панели автоматически запускается bootstrap: проверка структуры, автоустановка НСПД-плагина, проверка PyQGIS и проверка кадастрового модуля.
+- Блок `Готовность системы` показывает пользователю статус bootstrap без необходимости открывать QGIS или читать терминал.
+- `/status.json` отдает машинный статус bootstrap для будущего desktop-shell или агентов.
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
 - Внутри PyQGIS-скриптов использовать prefix `/Applications/QGIS.app`; prefix `/Applications/QGIS.app/Contents/MacOS` ломает загрузку WMS-провайдера.

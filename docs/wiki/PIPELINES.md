@@ -137,6 +137,15 @@ python3 scripts/check_project.py
 python3 scripts/run_app.py
 ```
 
+При старте приложение автоматически запускает bootstrap-пайплайн:
+
+- `scripts/check_project.py`;
+- `scripts/install_nspd_plugin.py`;
+- `scripts/qgis/check_qgis_context.py`;
+- `scripts/qgis/check_nspd_plugin.py`.
+
+Состояние bootstrap-пайплайна отображается в панели и отдается как JSON через `/status.json`.
+
 Основной пользовательский сценарий из панели:
 
 - `Сохранить выбранное поле`;

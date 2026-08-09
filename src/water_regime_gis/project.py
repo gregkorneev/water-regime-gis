@@ -53,8 +53,43 @@ def aoi_summary(root: Path, config: dict) -> dict:
     }
 
 
+def selected_field_summary(root: Path, config: dict) -> dict:
+    area_path = root / config["paths"]["selected_field_area"]
+    point_path = root / config["paths"]["selected_field_point"]
+    if not area_path.exists() or not point_path.exists():
+        return {
+            "selected": False,
+            "name": "Поле не выбрано",
+            "path": area_path,
+            "point_path": point_path,
+            "lon": "",
+            "lat": "",
+            "area_ha": "",
+            "analysis_crs": config["qgis"]["target_crs"],
+        }
+
+    feature = _first_feature(area_path)
+    point = _first_feature(point_path)
+    coords = feature["geometry"]["coordinates"][0]
+    lon, lat = point["geometry"]["coordinates"]
+    return {
+        "selected": True,
+        "name": feature["properties"].get("name", "Selected field"),
+        "path": area_path,
+        "point_path": point_path,
+        "lon": lon,
+        "lat": lat,
+        "area_ha": polygon_area_ha(coords),
+        "analysis_crs": feature["properties"].get("analysis_crs", config["qgis"]["target_crs"]),
+    }
+
+
 def load_aoi_feature(root: Path, config: dict) -> dict:
     path = root / config["paths"]["test_aoi"]
+    return _first_feature(path)
+
+
+def _first_feature(path: Path) -> dict:
     with path.open(encoding="utf-8") as file:
         data = json.load(file)
     features = data.get("features") or []

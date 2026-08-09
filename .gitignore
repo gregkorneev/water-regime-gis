@@ -83,3 +83,6 @@ outputs/reports/**
 # Small AOI/config examples may be committed intentionally.
 !docs/**
 !configs/**
+
+# Local user selections from the app.
+data/aoi/selected_field_*.geojson

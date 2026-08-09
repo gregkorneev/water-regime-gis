@@ -6,32 +6,32 @@
 
 ## Планируемые пайплайны
 
-## 1. Подготовка AOI
+## 1. Выбор поля
 
 Вход:
 
-- `data/aoi/tula_test_field.geojson`;
+- точка, выбранная пользователем на карте;
 - целевой CRS `EPSG:32637`.
 
 Выход:
 
-- нормализованный слой AOI в `data/aoi/`.
-- рабочая копия `data/interim/tula_test_field.normalized.geojson` при запуске `scripts/check_aoi.py --write-normalized`.
+- `data/aoi/selected_field_point.geojson`;
+- `data/aoi/selected_field_area.geojson`.
 
 Команда:
 
 ```bash
-python3 scripts/check_aoi.py --write-normalized
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/select_field_point.py --lon 38.107 --lat 53.84
 ```
 
-Текущая проверка:
+Текущая логика:
 
-- читает GeoJSON стандартной библиотекой Python;
-- проверяет тип `Polygon`;
-- проверяет замкнутость кольца;
-- считает bbox в `EPSG:4326`;
-- считает примерную площадь в гектарах;
-- проверяет, что bbox попадает в ожидаемые пределы Тульской области.
+- принимает координаты точки в `EPSG:4326`;
+- через PyQGIS перепроецирует точку в рабочую CRS;
+- строит временный буфер вокруг точки;
+- сохраняет точку и рабочую область как GeoJSON.
+
+До подключения источника реальных границ полей буфер является временной рабочей областью, а не научно подтвержденной границей поля.
 
 ## 2. Подготовка спутниковых данных
 
@@ -129,9 +129,10 @@ python3 scripts/check_app.py
 
 - `outputs/maps/water_regime_gis.qgs`;
 - `outputs/maps/water_regime_gis_preview.png`;
-- слой `Tula test field AOI`;
+- слой `Selected field point`;
+- слой `Selected field working area`;
 - CRS проекта `EPSG:32637`;
-- простой зеленый стиль AOI.
+- простой зеленый стиль рабочей области.
 
 Новые команды должны фиксировать:
 

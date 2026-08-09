@@ -32,7 +32,8 @@ def main() -> int:
 
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     project_path = ROOT / config["qgis"]["project_file"]
-    aoi_path = ROOT / config["paths"]["test_aoi"]
+    aoi_path = ROOT / config["paths"]["selected_field_area"]
+    point_path = ROOT / config["paths"]["selected_field_point"]
     project_path.parent.mkdir(parents=True, exist_ok=True)
 
     app = QgsApplication([], False)
@@ -45,11 +46,19 @@ def main() -> int:
             print(f"CRS is not valid: {config['qgis']['target_crs']}")
             return 1
         project.setCrs(crs)
-        project.setTitle("water-regime-gis demo")
+        project.setTitle("water-regime-gis")
 
-        layer = QgsVectorLayer(str(aoi_path), "Tula test field AOI", "ogr")
+        if not aoi_path.exists() or not point_path.exists():
+            print("Selected field does not exist yet. Choose a point on the map in the app first.")
+            return 1
+
+        layer = QgsVectorLayer(str(aoi_path), "Selected field working area", "ogr")
         if not layer.isValid():
             print(f"Layer is not valid: {aoi_path}")
+            return 1
+        point_layer = QgsVectorLayer(str(point_path), "Selected field point", "ogr")
+        if not point_layer.isValid():
+            print(f"Layer is not valid: {point_path}")
             return 1
 
         symbol = QgsFillSymbol.createSimple(
@@ -62,6 +71,7 @@ def main() -> int:
         symbol.setColor(QColor(46, 125, 50, 70))
         layer.setRenderer(QgsSingleSymbolRenderer(symbol))
         project.addMapLayer(layer)
+        project.addMapLayer(point_layer)
 
         if not project.write(str(project_path)):
             print(f"Failed to write QGIS project: {project_path}")
@@ -75,6 +85,7 @@ def main() -> int:
         print(f"Project: {project_path}")
         print(f"Preview: {preview_path}")
         print(f"Layer: {aoi_path}")
+        print(f"Point: {point_path}")
         print(f"Project CRS: {project.crs().authid()}")
         return 0
     finally:

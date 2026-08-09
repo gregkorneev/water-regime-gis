@@ -9,10 +9,14 @@
     "project_file": "outputs/maps/water_regime_gis.qgs",
     "python_executable": "",
     "script_runner": "scripts/qgis/check_qgis_context.py",
-    "demo_project_script": "scripts/qgis/create_demo_project.py"
+    "demo_project_script": "scripts/qgis/create_demo_project.py",
+    "select_field_script": "scripts/qgis/select_field_point.py",
+    "field_buffer_meters": 500
   },
   "paths": {
     "test_aoi": "data/aoi/tula_test_field.geojson",
+    "selected_field_point": "data/aoi/selected_field_point.geojson",
+    "selected_field_area": "data/aoi/selected_field_area.geojson",
     "aoi": "data/aoi",
     "raw": "data/raw",
     "interim": "data/interim",

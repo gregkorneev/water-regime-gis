@@ -7,9 +7,9 @@ import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
-from .project import aoi_summary, load_config, missing_required_dirs, project_root
+from .project import load_config, missing_required_dirs, project_root, selected_field_summary
 
 
 STYLE = """
@@ -21,6 +21,7 @@ h1{margin:0;font-size:34px;letter-spacing:0}.sub{color:#53645f;margin-top:6px;fo
 .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.tile{background:#f8fbfa;border:1px solid #dbe5e1;border-radius:8px;padding:14px}
 .label{color:#60716c;font-size:13px}.value{font-size:18px;font-weight:700;margin-top:5px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.btn{display:inline-block;background:#176b5b;color:white;text-decoration:none;border-radius:7px;padding:11px 14px;font-weight:700}
+.map{height:360px;border:1px solid #d8e0dd;border-radius:8px;overflow:hidden;background:#dce7e3}.form{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.form input{padding:10px;border:1px solid #bdcac5;border-radius:7px;min-width:150px}.form button{border:0;cursor:pointer}
 .btn.secondary{background:#42526a}.btn.muted{background:#68757f}
 pre{white-space:pre-wrap;background:#101816;color:#d8f5e9;border-radius:8px;padding:14px;min-height:180px;overflow:auto}
 .preview{width:100%;border:1px solid #d8e0dd;border-radius:8px;margin-top:12px;background:#f8fbfa}
@@ -54,18 +55,19 @@ def qgis_python(config: dict) -> str:
 
 def page(root: Path, output: str = "") -> str:
     config = load_config(root)
-    aoi = aoi_summary(root, config)
+    field = selected_field_summary(root, config)
     missing = missing_required_dirs(root)
     project_file = root / config["qgis"]["project_file"]
     rows = {
         "Project": config["project"]["name"],
         "Stage": config["project"]["stage"],
-        "AOI": aoi["name"],
-        "AOI file": aoi["path"],
+        "Selected field": field["name"],
+        "Field point": field["point_path"],
+        "Working area": field["path"],
         "QGIS project": project_file,
-        "AOI source": f"OpenStreetMap {aoi['osm']}",
-        "BBox": aoi["bbox"],
-        "Analysis CRS": aoi["analysis_crs"],
+        "Point lon": field["lon"],
+        "Point lat": field["lat"],
+        "Analysis CRS": field["analysis_crs"],
         "Indices": ", ".join(config["satellite"]["indices"]),
     }
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
@@ -80,12 +82,20 @@ def page(root: Path, output: str = "") -> str:
 <section class="top"><div><h1>water-regime-gis</h1><div class="sub">Панель запуска проверок, AOI и будущих QGIS-скриптов</div></div></section>
 <section class="kpi">
   <div class="tile"><div class="label">Структура</div><div class="value">{html.escape(status)}</div></div>
-  <div class="tile"><div class="label">Площадь AOI</div><div class="value">~{aoi['area_ha']} га</div></div>
-  <div class="tile"><div class="label">Рабочая CRS</div><div class="value">{html.escape(aoi['analysis_crs'])}</div></div>
+  <div class="tile"><div class="label">Поле</div><div class="value">{'выбрано' if field['selected'] else 'не выбрано'}</div></div>
+  <div class="tile"><div class="label">Рабочая CRS</div><div class="value">{html.escape(field['analysis_crs'])}</div></div>
+</section>
+<section class="panel">
+  <h2>Выбор поля</h2>
+  <div id="map" class="map"></div>
+  <form class="form" action="/run/select-field" method="get">
+    <input id="lat" name="lat" placeholder="Широта" value="{html.escape(str(field['lat']))}" required>
+    <input id="lon" name="lon" placeholder="Долгота" value="{html.escape(str(field['lon']))}" required>
+    <button class="btn" type="submit">Сохранить точку через QGIS</button>
+  </form>
 </section>
 <div class="actions">
   <a class="btn" href="/run/check-project">Проверить проект</a>
-  <a class="btn" href="/run/check-aoi">Проверить AOI</a>
   <a class="btn secondary" href="/run/check-qgis">Проверить QGIS</a>
   <a class="btn secondary" href="/run/create-demo-project">Создать QGIS проект</a>
   <a class="btn muted" href="/open-qgis-project">Открыть QGIS проект</a>
@@ -95,6 +105,23 @@ def page(root: Path, output: str = "") -> str:
   <div class="panel"><h2>Состояние</h2><table>{table}</table></div>
   <div class="panel"><h2>Лог</h2><pre>{escaped_output}</pre>{preview_html}</div>
 </section>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const latInput = document.getElementById("lat");
+const lonInput = document.getElementById("lon");
+const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
+const map = L.map("map").setView(start, {13 if field['selected'] else 11});
+L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}}).addTo(map);
+let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
+map.on("click", (event) => {{
+  const p = event.latlng;
+  latInput.value = p.lat.toFixed(7);
+  lonInput.value = p.lng.toFixed(7);
+  if (marker) marker.setLatLng(p);
+  else marker = L.marker(p).addTo(map);
+}});
+</script>
 </main></body></html>"""
 
 
@@ -103,15 +130,26 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         root = self.root_path
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
+        query = parse_qs(parsed.query)
         output = ""
         if path == "/preview.png":
             self.send_file(root / "outputs/maps/water_regime_gis_preview.png", "image/png")
             return
         if path == "/run/check-project":
             _, output = run_command(root, [sys.executable, "scripts/check_project.py"])
-        elif path == "/run/check-aoi":
-            _, output = run_command(root, [sys.executable, "scripts/check_aoi.py", "--write-normalized"])
+        elif path == "/run/select-field":
+            config = load_config(root)
+            qgis = qgis_python(config)
+            lon = (query.get("lon") or [""])[0]
+            lat = (query.get("lat") or [""])[0]
+            if not qgis:
+                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+            elif not lon or not lat:
+                output = "Выберите точку на карте или введите широту и долготу."
+            else:
+                _, output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
         elif path == "/run/check-qgis":
             config = load_config(root)
             qgis = qgis_python(config)

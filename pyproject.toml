@@ -7,7 +7,7 @@ requires-python = ">=3.9"
 license = { file = "LICENSE" }
 
 [project.scripts]
-water-regime-gis = "water_regime_gis.app:main"
+water-regime-gis = "water_regime_gis.webapp:main"
 
 [tool.water-regime-gis]
 config = "configs/project.example.json"

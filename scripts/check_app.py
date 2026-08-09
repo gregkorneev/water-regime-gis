@@ -91,6 +91,8 @@ def main() -> int:
         assert not nspd_plugin_metadata(plugin_dir)["valid"]
         (plugin_dir / "metadata.txt").write_text("[general]\nname=test\nversion=1.2\n", encoding="utf-8")
         assert nspd_plugin_metadata(plugin_dir)["valid"]
+        assert not nspd_plugin_metadata(plugin_dir, "other-plugin")["valid"]
+        assert nspd_plugin_metadata(plugin_dir, "test")["valid"]
         assert nspd_plugin_metadata(plugin_dir)["version"] == "1.2"
     job = job_status()
     assert "steps" in job

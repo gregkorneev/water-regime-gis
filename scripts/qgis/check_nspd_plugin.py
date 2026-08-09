@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import configparser
 import json
 import os
 from pathlib import Path
@@ -30,7 +31,7 @@ def main() -> int:
         matches = []
         for plugins_dir in plugin_paths:
             for candidate in (plugins_dir / plugin_id, plugins_dir / plugin_name):
-                if (candidate / "metadata.txt").exists():
+                if metadata_valid(candidate / "metadata.txt", plugin_name):
                     matches.append(candidate)
 
         print("NSPD plugin check")
@@ -48,6 +49,17 @@ def main() -> int:
         return 1
     finally:
         app.exitQgis()
+
+
+def metadata_valid(path: Path, expected_name: str) -> bool:
+    if not path.exists():
+        return False
+    parser = configparser.ConfigParser()
+    try:
+        parser.read(path, encoding="utf-8")
+    except configparser.Error:
+        return False
+    return parser.has_section("general") and parser["general"].get("name") == expected_name
 
 
 if __name__ == "__main__":

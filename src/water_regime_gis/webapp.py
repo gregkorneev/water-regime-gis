@@ -301,18 +301,20 @@ def qgis_version(qgis_app: Path) -> str:
     return str(data.get("CFBundleShortVersionString") or data.get("CFBundleVersion") or "")
 
 
-def nspd_plugin_metadata(plugin: Path) -> dict:
+def nspd_plugin_metadata(plugin: Path, expected_name: str = "") -> dict:
     metadata_path = plugin / "metadata.txt"
     if not metadata_path.exists():
-        return {"valid": False, "version": "", "description": ""}
+        return {"valid": False, "name": "", "version": "", "description": ""}
     parser = configparser.ConfigParser()
     try:
         parser.read(metadata_path, encoding="utf-8")
     except configparser.Error:
-        return {"valid": False, "version": "", "description": ""}
+        return {"valid": False, "name": "", "version": "", "description": ""}
     section = parser["general"] if parser.has_section("general") else {}
+    name = section.get("name", "")
     return {
-        "valid": bool(section.get("name")),
+        "valid": bool(name) and (not expected_name or name == expected_name),
+        "name": name,
         "version": section.get("version", ""),
         "description": section.get("description", ""),
     }
@@ -322,7 +324,7 @@ def environment_status(root: Path, config: dict) -> dict:
     qgis = qgis_python(config)
     qgis_app = qgis_app_path(qgis) if qgis else Path("/Applications/QGIS.app")
     plugin = nspd_plugin_dir(config)
-    plugin_metadata = nspd_plugin_metadata(plugin)
+    plugin_metadata = nspd_plugin_metadata(plugin, config["nspd"]["plugin_name"])
     return {
         "qgis": {
             "found": bool(qgis),

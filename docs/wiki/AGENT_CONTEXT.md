@@ -66,6 +66,7 @@
 - `/run/select-field`, `/run/check-system` и `/run/prepare-result` сохранены как синхронный fallback.
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
+- Если в конфиге указан `qgis.python_executable`, панель считает QGIS найденным только при существующем файле по этому пути.
 - Внутри PyQGIS-скриптов использовать prefix `/Applications/QGIS.app`; prefix `/Applications/QGIS.app/Contents/MacOS` ломает загрузку WMS-провайдера.
 - QGIS-проект и preview создаются скрыто из панели через `/run/prepare-result`.
 - Выходной проект: `outputs/maps/water_regime_gis.qgs`.

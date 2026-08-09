@@ -269,7 +269,7 @@ def format_job_steps(steps: list[dict]) -> str:
 def qgis_python(config: dict) -> str:
     configured = config["qgis"].get("python_executable", "")
     if configured:
-        return configured
+        return configured if Path(configured).exists() else ""
     candidates = [
         "/Applications/QGIS.app/Contents/MacOS/python",
         "/Applications/QGIS.app/Contents/MacOS/bin/python",

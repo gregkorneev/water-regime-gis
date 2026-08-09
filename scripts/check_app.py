@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,14 +69,21 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as temp:
         temp_root = Path(temp)
         (temp_root / "configs").mkdir()
-        (temp_root / "configs/project.example.json").write_text(
-            (ROOT / "configs/project.example.json").read_text(encoding="utf-8"),
-            encoding="utf-8",
-        )
+        temp_config = json.loads((ROOT / "configs/project.example.json").read_text(encoding="utf-8"))
+        (temp_root / "configs/project.example.json").write_text(json.dumps(temp_config), encoding="utf-8")
         temp_readiness = readiness_status(temp_root, load_config(temp_root))
         assert not temp_readiness["can_prepare_result"]
         assert "Сначала выберите точку поля" in temp_readiness["reasons"]["prepare_result"] or not temp_readiness["can_select_field"]
         assert "btn disabled" in page(temp_root)
+        temp_config["qgis"]["python_executable"] = "/tmp/water-regime-gis-missing-qgis-python"
+        (temp_root / "configs/project.example.json").write_text(json.dumps(temp_config), encoding="utf-8")
+        missing_qgis = load_config(temp_root)
+        assert qgis_python(missing_qgis) == ""
+        missing_environment = environment_status(temp_root, missing_qgis)
+        assert not missing_environment["qgis"]["found"]
+        assert missing_environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
+        assert not readiness_status(temp_root, missing_qgis)["can_select_field"]
+        assert "Скачать QGIS" in page(temp_root)
     job = job_status()
     assert "steps" in job
     assert "current_step" in job

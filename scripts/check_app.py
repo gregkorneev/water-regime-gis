@@ -12,6 +12,7 @@ from water_regime_gis.project import load_config
 import water_regime_gis.webapp as webapp
 from water_regime_gis.webapp import (
     COMMAND_TIMEOUT_SECONDS,
+    QGIS_DOWNLOAD_URL,
     environment_status,
     find_available_port,
     format_job_steps,
@@ -36,6 +37,7 @@ def main() -> int:
     assert "Среда" in html
     assert 'id="system-status"' in html
     assert 'id="environment-table"' in html
+    assert 'id="environment-action"' in html
     assert 'id="select-field-button"' in html
     assert 'id="prepare-action"' in html
     assert 'id="run-log"' in html
@@ -56,6 +58,7 @@ def main() -> int:
     assert status["steps"]
     environment = environment_status(ROOT, config)
     assert "qgis" in environment
+    assert environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
     assert "nspd_plugin" in environment
     assert "artifacts" in environment
     readiness = readiness_status(ROOT, config)

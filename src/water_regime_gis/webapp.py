@@ -23,6 +23,7 @@ from .project import load_config, missing_required_dirs, project_root, selected_
 WMS_CACHE_TTL_SECONDS = 300
 WMS_CACHE_MAX_ITEMS = 256
 COMMAND_TIMEOUT_SECONDS = 180
+QGIS_DOWNLOAD_URL = "https://www.qgis.org/download/"
 WMS_CACHE: OrderedDict[str, tuple[float, str, bytes]] = OrderedDict()
 WMS_CACHE_LOCK = threading.Lock()
 BOOTSTRAP_STATE = {
@@ -310,6 +311,7 @@ def environment_status(root: Path, config: dict) -> dict:
             "app": str(qgis_app) if qgis_app.exists() else "",
             "version": qgis_version(qgis_app),
             "install_hint": "" if qgis else "Установите QGIS в /Applications/QGIS.app и перезапустите панель.",
+            "download_url": QGIS_DOWNLOAD_URL,
         },
         "nspd_plugin": {
             "found": (plugin / "metadata.txt").exists(),
@@ -457,6 +459,7 @@ map.on("click", (event) => {{
 }});
 const systemStatus = document.getElementById("system-status");
 const environmentTable = document.getElementById("environment-table");
+const environmentAction = document.getElementById("environment-action");
 const selectFieldButton = document.getElementById("select-field-button");
 const prepareAction = document.getElementById("prepare-action");
 const runLog = document.getElementById("run-log");
@@ -506,6 +509,9 @@ function renderEnvironmentStatus(payload) {{
     ["Результаты", artifacts.preview && artifacts.report ? "готовы" : "пока не подготовлены"],
   ];
   environmentTable.innerHTML = rows.map((row) => `<tr><td>${{escapeText(row[0])}}</td><td>${{escapeText(row[1])}}</td></tr>`).join("");
+  if (environmentAction) {{
+    environmentAction.innerHTML = qgis.found ? "" : `<a class="btn secondary" href="${{escapeText(qgis.download_url || "https://www.qgis.org/download/")}}" target="_blank" rel="noopener">Скачать QGIS</a>`;
+  }}
 }}
 function refreshEnvironmentStatus() {{
   fetch("/environment.json")
@@ -939,10 +945,16 @@ def environment_panel(root: Path, config: dict) -> str:
         "Результаты": result_state,
     }
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
+    action = (
+        ""
+        if qgis["found"]
+        else f'<p id="environment-action" class="hint"><a class="btn secondary" href="{html.escape(qgis["download_url"])}" target="_blank" rel="noopener">Скачать QGIS</a></p>'
+    )
     return f"""
 <section class="panel">
   <h2>Среда</h2>
   <table id="environment-table">{table}</table>
+  {action if action else '<p id="environment-action" class="hint"></p>'}
 </section>"""
 
 

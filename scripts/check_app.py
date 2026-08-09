@@ -25,6 +25,8 @@ def main() -> int:
     assert "/status.json" in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
+    assert (ROOT / "launch_panel.command").exists()
+    assert (ROOT / "scripts/build_macos_app.py").exists()
     config = load_config(ROOT)
     status = system_status(ROOT, config)
     assert "steps" in status

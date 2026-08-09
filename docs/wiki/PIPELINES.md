@@ -137,6 +137,12 @@ python3 scripts/check_project.py
 launch_panel.command
 ```
 
+Сборка локального macOS `.app`:
+
+```bash
+python3 scripts/build_macos_app.py
+```
+
 Запасной запуск из терминала:
 
 ```bash

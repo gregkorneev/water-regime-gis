@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
+import water_regime_gis.webapp as webapp
 from water_regime_gis.webapp import (
+    COMMAND_TIMEOUT_SECONDS,
     environment_status,
     find_available_port,
     format_job_steps,
@@ -75,6 +77,15 @@ def main() -> int:
     assert "steps" in job
     assert "current_step" in job
     assert "Шаг: RUNNING" in format_job_steps([{"label": "Шаг", "status": "RUNNING", "message": "Выполняется."}])
+    assert COMMAND_TIMEOUT_SECONDS > 0
+    old_timeout = webapp.COMMAND_TIMEOUT_SECONDS
+    try:
+        webapp.COMMAND_TIMEOUT_SECONDS = 0.01
+        code, output = webapp.run_command(ROOT, [sys.executable, "-c", "import time; time.sleep(1)"])
+        assert code == 124
+        assert "timed out" in output
+    finally:
+        webapp.COMMAND_TIMEOUT_SECONDS = old_timeout
     assert isinstance(find_available_port(start=8765, attempts=2), int)
     qgis = qgis_python(config)
     if qgis:

@@ -22,6 +22,7 @@ from .project import load_config, missing_required_dirs, project_root, selected_
 
 WMS_CACHE_TTL_SECONDS = 300
 WMS_CACHE_MAX_ITEMS = 256
+COMMAND_TIMEOUT_SECONDS = 180
 WMS_CACHE: OrderedDict[str, tuple[float, str, bytes]] = OrderedDict()
 WMS_CACHE_LOCK = threading.Lock()
 BOOTSTRAP_STATE = {
@@ -68,7 +69,10 @@ table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px sol
 def run_command(root: Path, command: list[str]) -> tuple[int, str]:
     env = os.environ.copy()
     env.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
-    process = subprocess.run(command, cwd=root, text=True, capture_output=True, env=env)
+    try:
+        process = subprocess.run(command, cwd=root, text=True, capture_output=True, env=env, timeout=COMMAND_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        return 124, f"Command timed out after {COMMAND_TIMEOUT_SECONDS} seconds."
     output = "\n".join(part for part in (process.stdout.strip(), process.stderr.strip()) if part)
     return process.returncode, output or "(no output)"
 
@@ -876,6 +880,8 @@ def format_step(label: str, code: int, output: str) -> str:
 
 def public_output(label: str, output: str, code: int) -> str:
     if code:
+        if code == 124:
+            return "Операция выполнялась слишком долго и была остановлена. Повторите действие позже."
         if label == "Проверка структуры":
             return "Не найдены необходимые рабочие папки проекта."
         if label == "Подготовка кадастрового модуля":

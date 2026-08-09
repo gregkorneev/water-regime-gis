@@ -21,6 +21,7 @@ from water_regime_gis.webapp import (
     page,
     qgis_python,
     readiness_status,
+    nspd_plugin_metadata,
     system_status,
 )
 
@@ -61,6 +62,7 @@ def main() -> int:
     assert "qgis" in environment
     assert environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
     assert "nspd_plugin" in environment
+    assert "version" in environment["nspd_plugin"]
     assert "artifacts" in environment
     readiness = readiness_status(ROOT, config)
     assert "can_select_field" in readiness
@@ -84,6 +86,12 @@ def main() -> int:
         assert missing_environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
         assert not readiness_status(temp_root, missing_qgis)["can_select_field"]
         assert "Скачать QGIS" in page(temp_root)
+        plugin_dir = temp_root / "plugin"
+        plugin_dir.mkdir()
+        assert not nspd_plugin_metadata(plugin_dir)["valid"]
+        (plugin_dir / "metadata.txt").write_text("[general]\nname=test\nversion=1.2\n", encoding="utf-8")
+        assert nspd_plugin_metadata(plugin_dir)["valid"]
+        assert nspd_plugin_metadata(plugin_dir)["version"] == "1.2"
     job = job_status()
     assert "steps" in job
     assert "current_step" in job

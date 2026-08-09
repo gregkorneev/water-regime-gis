@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import configparser
 import json
 import os
 import plistlib
@@ -300,10 +301,28 @@ def qgis_version(qgis_app: Path) -> str:
     return str(data.get("CFBundleShortVersionString") or data.get("CFBundleVersion") or "")
 
 
+def nspd_plugin_metadata(plugin: Path) -> dict:
+    metadata_path = plugin / "metadata.txt"
+    if not metadata_path.exists():
+        return {"valid": False, "version": "", "description": ""}
+    parser = configparser.ConfigParser()
+    try:
+        parser.read(metadata_path, encoding="utf-8")
+    except configparser.Error:
+        return {"valid": False, "version": "", "description": ""}
+    section = parser["general"] if parser.has_section("general") else {}
+    return {
+        "valid": bool(section.get("name")),
+        "version": section.get("version", ""),
+        "description": section.get("description", ""),
+    }
+
+
 def environment_status(root: Path, config: dict) -> dict:
     qgis = qgis_python(config)
     qgis_app = qgis_app_path(qgis) if qgis else Path("/Applications/QGIS.app")
     plugin = nspd_plugin_dir(config)
+    plugin_metadata = nspd_plugin_metadata(plugin)
     return {
         "qgis": {
             "found": bool(qgis),
@@ -314,9 +333,11 @@ def environment_status(root: Path, config: dict) -> dict:
             "download_url": QGIS_DOWNLOAD_URL,
         },
         "nspd_plugin": {
-            "found": (plugin / "metadata.txt").exists(),
+            "found": plugin_metadata["valid"],
             "path": str(plugin),
             "name": config["nspd"]["plugin_name"],
+            "version": plugin_metadata["version"],
+            "description": plugin_metadata["description"],
             "url": config["nspd"]["plugin_url"],
         },
         "artifacts": {
@@ -505,7 +526,7 @@ function renderEnvironmentStatus(payload) {{
   const rows = [
     ["QGIS", qgisText],
     ["Скрытый запуск", qgis.found ? "готов к работе" : qgis.install_hint],
-    ["Кадастровый модуль", plugin.found ? "готов" : "будет установлен автоматически"],
+    ["Кадастровый модуль", plugin.found ? `готов${{plugin.version ? " " + plugin.version : ""}}` : "будет установлен автоматически"],
     ["Результаты", artifacts.preview && artifacts.report ? "готовы" : "пока не подготовлены"],
   ];
   environmentTable.innerHTML = rows.map((row) => `<tr><td>${{escapeText(row[0])}}</td><td>${{escapeText(row[1])}}</td></tr>`).join("");
@@ -936,7 +957,7 @@ def environment_panel(root: Path, config: dict) -> str:
     plugin = status["nspd_plugin"]
     artifacts = status["artifacts"]
     qgis_state = "найден" if qgis["found"] else "не найден"
-    plugin_state = "готов" if plugin["found"] else "будет установлен автоматически"
+    plugin_state = f"готов {plugin['version']}" if plugin["found"] and plugin["version"] else "готов" if plugin["found"] else "будет установлен автоматически"
     result_state = "готовы" if artifacts["preview"] and artifacts["report"] else "пока не подготовлены"
     rows = {
         "QGIS": f"{qgis_state}{' ' + qgis['version'] if qgis['version'] else ''}",

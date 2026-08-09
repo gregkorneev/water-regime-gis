@@ -18,6 +18,7 @@ from qgis.core import (
     QgsMapRendererCustomPainterJob,
     QgsMapSettings,
     QgsProject,
+    QgsRasterLayer,
     QgsSingleSymbolRenderer,
     QgsVectorLayer,
 )
@@ -72,6 +73,7 @@ def main() -> int:
         layer.setRenderer(QgsSingleSymbolRenderer(symbol))
         project.addMapLayer(layer)
         project.addMapLayer(point_layer)
+        add_nspd_parcels_layer(project, config)
 
         if not project.write(str(project_path)):
             print(f"Failed to write QGIS project: {project_path}")
@@ -113,6 +115,24 @@ def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path) -> 
     job.waitForFinished()
     painter.end()
     image.save(str(output), "PNG")
+
+
+def add_nspd_parcels_layer(project: QgsProject, config: dict) -> None:
+    nspd = config.get("nspd", {})
+    layer_id = nspd.get("parcels_wms_layer_id", 36048)
+    name = nspd.get("parcels_wms_name", "Земельные участки из ЕГРН")
+    uri = (
+        "contextualWMSLegend=0&crs=EPSG:3857&dpiMode=7&featureCount=10&format=image/png"
+        "&http-header:referer=https://nspd.gov.ru/map?active_layers%3D%E8%B3%90"
+        f"&layers={layer_id}&styles="
+        "&IgnoreGetMapUrl=1"
+        f"&url=https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms"
+    )
+    layer = QgsRasterLayer(uri, name, "wms")
+    if layer.isValid():
+        project.addMapLayer(layer)
+    else:
+        print("NSPD parcels WMS layer was not added: QGIS marked it invalid. Install/check the Rosreestr NSPD plugin.")
 
 
 if __name__ == "__main__":

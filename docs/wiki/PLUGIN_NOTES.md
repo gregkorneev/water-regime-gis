@@ -1,5 +1,26 @@
 # Plugin Notes
 
+## Rosreestr NSPD Search
+
+Выбран как первый источник кадастровых границ.
+
+- QGIS plugin: `rosreestr-search-qgis-plugin`;
+- страница: `https://plugins.qgis.org/plugins/rosreestr-search-qgis-plugin-master/`;
+- репозиторий: `https://github.com/matmatamat/rosreestr-search-qgis-plugin`;
+- назначение: поиск по Публичной кадастровой карте НСПД и загрузка слоев НСПД;
+- актуальная проверенная по каталогу QGIS версия на 2026-08-09: 2.5;
+- минимальная версия QGIS для 2.5: 3.40.
+
+В проект добавлен скрипт проверки:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/check_nspd_plugin.py
+```
+
+На macOS 2026-08-09 в рабочем профиле QGIS плагин не был найден. После установки через QGIS Plugin Manager проверку нужно запустить повторно.
+
+Важно: слой `Земельные участки из ЕГРН` из НСПД подключается как WMS. Он полезен для визуального контроля границ, но для расчетов нужен векторный полигон конкретного участка.
+
 ## Observearth
 
 Observearth рассматривается как возможный QGIS-плагин для работы со спутниковыми данными. Перед включением в обязательный стек нужно проверить:

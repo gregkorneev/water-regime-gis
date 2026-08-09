@@ -18,6 +18,8 @@ def main() -> int:
     assert "NDVI" in html
     assert "Выбор поля" in html
     assert "Сохранить точку через QGIS" in html
+    assert "Проверить плагин НСПД" in html
+    assert "Страница плагина НСПД" in html
     assert "Создать QGIS проект" in html
     qgis = qgis_python(load_config(ROOT))
     if qgis:

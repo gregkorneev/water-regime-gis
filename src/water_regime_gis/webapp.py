@@ -97,6 +97,8 @@ def page(root: Path, output: str = "") -> str:
 <div class="actions">
   <a class="btn" href="/run/check-project">Проверить проект</a>
   <a class="btn secondary" href="/run/check-qgis">Проверить QGIS</a>
+  <a class="btn secondary" href="/run/check-nspd-plugin">Проверить плагин НСПД</a>
+  <a class="btn muted" href="/open-nspd-plugin">Страница плагина НСПД</a>
   <a class="btn secondary" href="/run/create-demo-project">Создать QGIS проект</a>
   <a class="btn muted" href="/open-qgis-project">Открыть QGIS проект</a>
   <a class="btn muted" href="/open-aoi">Открыть AOI</a>
@@ -157,6 +159,13 @@ class Handler(BaseHTTPRequestHandler):
                 _, output = run_command(root, [qgis, config["qgis"]["script_runner"]])
             else:
                 output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+        elif path == "/run/check-nspd-plugin":
+            config = load_config(root)
+            qgis = qgis_python(config)
+            if qgis:
+                _, output = run_command(root, [qgis, config["qgis"]["nspd_plugin_check_script"]])
+            else:
+                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
         elif path == "/run/create-demo-project":
             config = load_config(root)
             qgis = qgis_python(config)
@@ -175,6 +184,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/open-aoi":
             open_path(root / load_config(root)["paths"]["aoi"])
             output = "Папка AOI открыта."
+        elif path == "/open-nspd-plugin":
+            webbrowser.open(load_config(root)["nspd"]["plugin_url"])
+            output = "Страница плагина НСПД открыта в браузере."
         elif path != "/":
             self.send_error(404)
             return

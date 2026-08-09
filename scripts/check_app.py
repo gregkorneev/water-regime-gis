@@ -21,6 +21,8 @@ def main() -> int:
     assert "Подготовить результат" in html
     assert "Проверить систему" in html
     assert "Готовность системы" in html
+    assert 'id="system-status"' in html
+    assert "/status.json" in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
     config = load_config(ROOT)

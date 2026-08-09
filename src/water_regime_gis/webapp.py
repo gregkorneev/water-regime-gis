@@ -38,7 +38,7 @@ h1{margin:0;font-size:34px;letter-spacing:0}.sub{color:#53645f;margin-top:6px;fo
 .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.panel{background:white;border:1px solid #d8e0dd;border-radius:8px;padding:18px}
 .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.tile{background:#f8fbfa;border:1px solid #dbe5e1;border-radius:8px;padding:14px}
 .label{color:#60716c;font-size:13px}.value{font-size:18px;font-weight:700;margin-top:5px}
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.btn{display:inline-block;background:#176b5b;color:white;text-decoration:none;border-radius:7px;padding:11px 14px;font-weight:700}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.btn{display:inline-block;background:#176b5b;color:white;text-decoration:none;border-radius:7px;padding:11px 14px;font-weight:700}.btn.disabled{background:#8d9a95;cursor:not-allowed}
 .map{height:360px;border:1px solid #d8e0dd;border-radius:8px;overflow:hidden;background:#dce7e3}.form{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.form input{padding:10px;border:1px solid #bdcac5;border-radius:7px;min-width:150px}.form button{border:0;cursor:pointer}
 .result-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.hint{color:#60716c;font-size:14px;margin:8px 0 0}
 .status-list{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.status-item{background:#f8fbfa;border:1px solid #dbe5e1;border-radius:8px;padding:12px}.status-ok{color:#176b5b}.status-run{color:#8a5a00}.status-fail{color:#a33425}
@@ -159,6 +159,11 @@ def page(root: Path, output: str = "") -> str:
     preview_html = '<img class="preview" src="/preview.png" alt="preview результата">' if preview.exists() else ""
     system_html = system_panel(root, config)
     results_html = result_panel(root, config)
+    prepare_action = (
+        '<a class="btn" href="/run/prepare-result">Подготовить результат</a>'
+        if field["selected"]
+        else '<span class="btn disabled" title="Сначала выберите точку поля">Подготовить результат</span>'
+    )
     return f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>water-regime-gis</title><style>{STYLE}</style></head>
@@ -180,7 +185,7 @@ def page(root: Path, output: str = "") -> str:
   </form>
 </section>
 <div class="actions">
-  <a class="btn" href="/run/prepare-result">Подготовить результат</a>
+  {prepare_action}
   <a class="btn secondary" href="/run/check-system">Проверить систему</a>
 </div>
 <section class="grid">
@@ -229,6 +234,35 @@ map.on("click", (event) => {{
   if (marker) marker.setLatLng(p);
   else marker = L.marker(p).addTo(map);
 }});
+const systemStatus = document.getElementById("system-status");
+function statusText(status) {{
+  if (status === "OK") return "готово";
+  if (status === "RUNNING") return "выполняется";
+  return "требует внимания";
+}}
+function statusClass(status) {{
+  if (status === "OK") return "status-ok";
+  if (status === "RUNNING") return "status-run";
+  return "status-fail";
+}}
+function renderSystemStatus(payload) {{
+  if (!systemStatus || !payload || !Array.isArray(payload.steps)) return;
+  systemStatus.innerHTML = payload.steps.map((step) => `
+    <div class="status-item">
+      <div class="label">${{step.label || ""}}</div>
+      <div class="value ${{statusClass(step.status)}}">${{statusText(step.status)}}</div>
+      <div class="hint">${{step.message || ""}}</div>
+    </div>
+  `).join("");
+}}
+function refreshSystemStatus() {{
+  fetch("/status.json")
+    .then((response) => response.ok ? response.json() : null)
+    .then(renderSystemStatus)
+    .catch(() => {{}});
+}}
+refreshSystemStatus();
+setInterval(refreshSystemStatus, 3000);
 </script>
 </main></body></html>"""
 
@@ -524,7 +558,7 @@ def system_panel(root: Path, config: dict) -> str:
     return f"""
 <section class="panel">
   <h2>Готовность системы</h2>
-  <div class="status-list">{''.join(items)}</div>
+  <div id="system-status" class="status-list">{''.join(items)}</div>
   {finished}
 </section>"""
 

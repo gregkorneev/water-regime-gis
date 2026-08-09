@@ -120,16 +120,17 @@ def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path) -> 
 
 
 def add_nspd_parcels_layer(project: QgsProject, config: dict) -> None:
-    install_nspd_request_hook(config)
     nspd = config.get("nspd", {})
     layer_id = nspd.get("parcels_wms_layer_id", 36048)
     name = nspd.get("parcels_wms_name", "Земельные участки из ЕГРН")
+    wms_url = nspd.get("local_wms_proxy_url") or f"https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms"
+    if wms_url.startswith("https://nspd.gov.ru/"):
+        install_nspd_request_hook(config)
     uri = (
         "contextualWMSLegend=0&crs=EPSG:3857&dpiMode=7&featureCount=10&format=image/png"
-        "&http-header:referer=https://nspd.gov.ru/map?active_layers%3D%E8%B3%90"
         f"&layers={layer_id}&styles="
         "&IgnoreGetMapUrl=1"
-        f"&url=https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms"
+        f"&url={wms_url}"
     )
     layer = QgsRasterLayer(uri, name, "wms")
     if layer.isValid():

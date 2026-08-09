@@ -157,6 +157,7 @@ def start_panel_job(root: Path, kind: str) -> dict:
     labels = {
         "check-system": "Проверка системы",
         "prepare-result": "Подготовка результата",
+        "repair-environment": "Восстановление среды",
         "select-field": "Выбор поля",
     }
     if kind not in labels:
@@ -432,6 +433,7 @@ def page(root: Path, output: str = "") -> str:
 </section>
 <div class="actions">
   <span id="prepare-action">{prepare_action}</span>
+  <a class="btn secondary" href="/run/check-system" data-job="repair-environment">Восстановить среду</a>
   <a class="btn secondary" href="/run/check-system" data-job="check-system">Проверить систему</a>
 </div>
 <section class="grid">

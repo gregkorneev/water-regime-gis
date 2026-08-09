@@ -35,6 +35,7 @@ def main() -> int:
     assert "Сохранить выбранное поле" in html
     assert "Подготовить результат" in html
     assert "Проверить систему" in html
+    assert "Восстановить среду" in html
     assert "Готовность системы" in html
     assert "Среда" in html
     assert 'id="system-status"' in html
@@ -49,6 +50,7 @@ def main() -> int:
     assert "/job/start" in html
     assert "/job/status" in html
     assert "refreshPanelState" in html
+    assert 'data-job="repair-environment"' in html
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html

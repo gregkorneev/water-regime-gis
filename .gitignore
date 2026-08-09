@@ -37,6 +37,7 @@ htmlcov/
 *.qgd-wal
 *.qml~
 *.sld~
+symbology-style.db
 
 # Logs and temporary files
 *.log

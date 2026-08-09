@@ -13,14 +13,17 @@ from qgis.PyQt.QtNetwork import QNetworkRequest, QSslCertificate
 from qgis.core import (
     Qgis,
     QgsApplication,
+    QgsBookmark,
     QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
     QgsFillSymbol,
     QgsMapRendererCustomPainterJob,
     QgsMapSettings,
+    QgsMarkerSymbol,
     QgsNetworkAccessManager,
     QgsProject,
     QgsRasterLayer,
+    QgsReferencedRectangle,
     QgsSingleSymbolRenderer,
     QgsVectorLayer,
 )
@@ -73,9 +76,14 @@ def main() -> int:
         )
         symbol.setColor(QColor(46, 125, 50, 70))
         layer.setRenderer(QgsSingleSymbolRenderer(symbol))
+        osm_layer = add_osm_layer(project)
+        nspd_layer = add_nspd_parcels_layer(project, config)
         project.addMapLayer(layer)
         project.addMapLayer(point_layer)
-        add_nspd_parcels_layer(project, config)
+        set_point_style(point_layer)
+        set_start_extent(project, layer)
+        add_field_bookmark(project, layer)
+        order_layers(project, [point_layer, layer, nspd_layer, osm_layer])
 
         if not project.write(str(project_path)):
             print(f"Failed to write QGIS project: {project_path}")
@@ -119,7 +127,17 @@ def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path) -> 
     image.save(str(output), "PNG")
 
 
-def add_nspd_parcels_layer(project: QgsProject, config: dict) -> None:
+def add_osm_layer(project: QgsProject) -> QgsRasterLayer | None:
+    uri = "type=xyz&url=https://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=0"
+    layer = QgsRasterLayer(uri, "OpenStreetMap", "wms")
+    if layer.isValid():
+        project.addMapLayer(layer)
+        return layer
+    print("OpenStreetMap XYZ layer was not added: QGIS marked it invalid.")
+    return None
+
+
+def add_nspd_parcels_layer(project: QgsProject, config: dict) -> QgsRasterLayer | None:
     nspd = config.get("nspd", {})
     layer_id = nspd.get("parcels_wms_layer_id", 36048)
     name = nspd.get("parcels_wms_name", "Земельные участки из ЕГРН")
@@ -135,8 +153,55 @@ def add_nspd_parcels_layer(project: QgsProject, config: dict) -> None:
     layer = QgsRasterLayer(uri, name, "wms")
     if layer.isValid():
         project.addMapLayer(layer)
+        return layer
     else:
         print("NSPD parcels WMS layer was not added: QGIS marked it invalid. Install/check the Rosreestr NSPD plugin.")
+        return None
+
+
+def set_point_style(layer: QgsVectorLayer) -> None:
+    symbol = QgsMarkerSymbol.createSimple(
+        {
+            "name": "circle",
+            "color": "255,87,34,255",
+            "outline_color": "255,255,255,255",
+            "outline_width": "0.8",
+            "size": "4",
+        }
+    )
+    layer.setRenderer(QgsSingleSymbolRenderer(symbol))
+
+
+def set_start_extent(project: QgsProject, layer: QgsVectorLayer) -> None:
+    transform = QgsCoordinateTransform(layer.crs(), project.crs(), project)
+    extent = transform.transformBoundingBox(layer.extent())
+    extent.scale(1.35)
+    referenced_extent = QgsReferencedRectangle(extent, project.crs())
+    project.viewSettings().setDefaultViewExtent(referenced_extent)
+    project.viewSettings().setPresetFullExtent(referenced_extent)
+
+
+def add_field_bookmark(project: QgsProject, layer: QgsVectorLayer) -> None:
+    transform = QgsCoordinateTransform(layer.crs(), project.crs(), project)
+    extent = transform.transformBoundingBox(layer.extent())
+    extent.scale(1.35)
+    bookmark = QgsBookmark()
+    bookmark.setName("Selected field")
+    bookmark.setGroup("water-regime-gis")
+    bookmark.setExtent(QgsReferencedRectangle(extent, project.crs()))
+    project.bookmarkManager().addBookmark(bookmark)
+
+
+def order_layers(project: QgsProject, layers: list[object | None]) -> None:
+    root = project.layerTreeRoot()
+    for layer in reversed(layers):
+        if layer is None:
+            continue
+        node = root.findLayer(layer.id())
+        if node:
+            clone = node.clone()
+            root.insertChildNode(0, clone)
+            root.removeChildNode(node)
 
 
 def install_nspd_request_hook(config: dict) -> None:

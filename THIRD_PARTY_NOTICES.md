@@ -7,6 +7,7 @@
 - Python standard library — Python Software Foundation License.
 - Browser runtime — браузер пользователя.
 - Leaflet — BSD 2-Clause License, используется в локальном веб-интерфейсе для выбора точки на карте через CDN.
+- OpenStreetMap — используется как картографическая подложка в веб-интерфейсе и QGIS-проекте; данные OSM распространяются на условиях Open Database License (ODbL).
 
 Текущая версия интерфейса не добавляет внешних Python-зависимостей.
 

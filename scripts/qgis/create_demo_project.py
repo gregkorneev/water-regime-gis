@@ -141,7 +141,8 @@ def add_nspd_parcels_layer(project: QgsProject, config: dict) -> QgsRasterLayer 
     nspd = config.get("nspd", {})
     layer_id = nspd.get("parcels_wms_layer_id", 36048)
     name = nspd.get("parcels_wms_name", "Земельные участки из ЕГРН")
-    wms_url = nspd.get("local_wms_proxy_url") or f"https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms"
+    app_url = os.environ.get("WATER_REGIME_GIS_APP_URL", "").rstrip("/")
+    wms_url = f"{app_url}/nspd/wms" if app_url else nspd.get("local_wms_proxy_url") or f"https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms"
     if wms_url.startswith("https://nspd.gov.ru/"):
         install_nspd_request_hook(config)
     uri = (

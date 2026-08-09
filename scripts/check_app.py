@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
-from water_regime_gis.webapp import page, qgis_python, system_status
+from water_regime_gis.webapp import find_available_port, page, qgis_python, system_status
 
 
 def main() -> int:
@@ -29,6 +29,7 @@ def main() -> int:
     status = system_status(ROOT, config)
     assert "steps" in status
     assert status["steps"]
+    assert isinstance(find_available_port(start=8765, attempts=2), int)
     qgis = qgis_python(config)
     if qgis:
         assert Path(qgis).exists()

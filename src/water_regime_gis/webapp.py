@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import socket
 import ssl
 import subprocess
 import sys
@@ -29,6 +30,7 @@ BOOTSTRAP_STATE = {
     "steps": [],
 }
 BOOTSTRAP_LOCK = threading.Lock()
+DEFAULT_PORT = 8765
 
 STYLE = """
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef3f1;color:#14231f}
@@ -56,6 +58,18 @@ def run_command(root: Path, command: list[str]) -> tuple[int, str]:
     process = subprocess.run(command, cwd=root, text=True, capture_output=True, env=env)
     output = "\n".join(part for part in (process.stdout.strip(), process.stderr.strip()) if part)
     return process.returncode, output or "(no output)"
+
+
+def find_available_port(host: str = "127.0.0.1", start: int = DEFAULT_PORT, attempts: int = 20) -> int:
+    for port in range(start, start + attempts):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                probe.bind((host, port))
+            except OSError:
+                continue
+            return port
+    raise OSError(f"No free port found from {start} to {start + attempts - 1}")
 
 
 def start_bootstrap(root: Path) -> None:
@@ -728,8 +742,10 @@ def set_wms_cache(key: str, content_type: str, body: bytes) -> None:
 def main() -> int:
     root = project_root()
     Handler.root_path = root
-    server = ThreadingHTTPServer(("127.0.0.1", 8765), Handler)
-    url = "http://127.0.0.1:8765"
+    port = find_available_port()
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    url = f"http://127.0.0.1:{port}"
+    os.environ["WATER_REGIME_GIS_APP_URL"] = url
     print(f"water-regime-gis app: {url}")
     start_bootstrap(root)
     webbrowser.open(url)

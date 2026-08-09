@@ -92,7 +92,11 @@ def request_feature_info(config: dict, lon: float, lat: float) -> dict:
         "STYLES": "",
         "FORMAT": "image/png",
     }
-    proxy = config["nspd"].get("local_wms_proxy_url", "")
+    proxy = os.environ.get("WATER_REGIME_GIS_APP_URL", "").rstrip("/")
+    if proxy:
+        proxy = f"{proxy}/nspd/wms"
+    else:
+        proxy = config["nspd"].get("local_wms_proxy_url", "")
     if proxy:
         parsed = urlparse(proxy)
         url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{urlencode(params)}"

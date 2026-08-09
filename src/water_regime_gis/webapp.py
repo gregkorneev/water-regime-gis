@@ -5,7 +5,10 @@ import os
 import ssl
 import subprocess
 import sys
+import threading
+import time
 import webbrowser
+from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -13,6 +16,11 @@ from urllib.request import Request, urlopen
 
 from .project import load_config, missing_required_dirs, project_root, selected_field_summary
 
+
+WMS_CACHE_TTL_SECONDS = 300
+WMS_CACHE_MAX_ITEMS = 256
+WMS_CACHE: OrderedDict[str, tuple[float, str, bytes]] = OrderedDict()
+WMS_CACHE_LOCK = threading.Lock()
 
 STYLE = """
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef3f1;color:#14231f}
@@ -230,6 +238,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_HEAD(self) -> None:
+        if urlparse(self.path).path == "/":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            return
+        self.send_error(404)
+
     def send_file(self, path: Path, content_type: str) -> None:
         if not path.exists():
             self.send_error(404)
@@ -242,6 +258,17 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_nspd_wms(self, root: Path, query: str) -> None:
+        cached = get_wms_cache(query)
+        if cached:
+            content_type, body = cached
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("X-WRG-Cache", "hit")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         config = load_config(root)
         layer_id = config["nspd"]["parcels_wms_layer_id"]
         url = f"https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms?{query}"
@@ -254,18 +281,24 @@ class Handler(BaseHTTPRequestHandler):
         )
         cert = nspd_ca_bundle(config)
         context = ssl.create_default_context(cafile=str(cert)) if cert.exists() else ssl.create_default_context()
-        try:
-            with urlopen(request, timeout=20, context=context) as response:
-                body = response.read()
-                content_type = response.headers.get("Content-Type", "image/png")
-        except Exception as exc:
-            body = f"NSPD WMS error: {exc}".encode("utf-8")
-            content_type = "text/plain; charset=utf-8"
-            self.send_response(502)
-        else:
-            self.send_response(200)
+        for attempt in range(2):
+            try:
+                with urlopen(request, timeout=20, context=context) as response:
+                    body = response.read()
+                    content_type = response.headers.get("Content-Type", "image/png")
+                set_wms_cache(query, content_type, body)
+                self.send_response(200)
+                break
+            except Exception as exc:
+                if attempt == 0:
+                    time.sleep(0.5)
+                    continue
+                body = f"NSPD WMS error: {exc}".encode("utf-8")
+                content_type = "text/plain; charset=utf-8"
+                self.send_response(502)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-WRG-Cache", "miss")
         self.end_headers()
         self.wfile.write(body)
 
@@ -300,6 +333,28 @@ def nspd_ca_bundle(config: dict) -> Path:
         if cert.exists():
             return cert
     return base / plugin_id / "certs/nspd-ca-bundle.pem"
+
+
+def get_wms_cache(key: str) -> tuple[str, bytes] | None:
+    now = time.time()
+    with WMS_CACHE_LOCK:
+        cached = WMS_CACHE.get(key)
+        if not cached:
+            return None
+        created, content_type, body = cached
+        if now - created > WMS_CACHE_TTL_SECONDS:
+            WMS_CACHE.pop(key, None)
+            return None
+        WMS_CACHE.move_to_end(key)
+        return content_type, body
+
+
+def set_wms_cache(key: str, content_type: str, body: bytes) -> None:
+    with WMS_CACHE_LOCK:
+        WMS_CACHE[key] = (time.time(), content_type, body)
+        WMS_CACHE.move_to_end(key)
+        while len(WMS_CACHE) > WMS_CACHE_MAX_ITEMS:
+            WMS_CACHE.popitem(last=False)
 
 
 def main() -> int:

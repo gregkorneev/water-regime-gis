@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import html
 import os
+import ssl
 import subprocess
 import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
 
 from .project import load_config, missing_required_dirs, project_root, selected_field_summary
 
@@ -115,7 +117,32 @@ const lonInput = document.getElementById("lon");
 const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
 const map = L.map("map").setView(start, {13 if field['selected'] else 11});
 L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}}).addTo(map);
+L.tileLayer.wms("/nspd/wms", {{
+  layers: "36048",
+  format: "image/png",
+  transparent: true,
+  version: "1.3.0",
+  attribution: "НСПД"
+}}).addTo(map);
 let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
+let selectedLayer = null;
+const selectedStyle = {{color: "#f57c00", weight: 3, fillColor: "#ffd54f", fillOpacity: 0.24}};
+const hoverStyle = {{color: "#00a6a6", weight: 5, fillColor: "#80cbc4", fillOpacity: 0.34}};
+fetch("/selected-field-area.geojson")
+  .then((response) => response.ok ? response.json() : null)
+  .then((geojson) => {{
+    if (!geojson) return;
+    selectedLayer = L.geoJSON(geojson, {{
+      style: selectedStyle,
+      onEachFeature: (_feature, layer) => {{
+        layer.on("mouseover", () => layer.setStyle(hoverStyle));
+        layer.on("mouseout", () => layer.setStyle(selectedStyle));
+        layer.on("click", () => selectedLayer.bringToFront());
+      }}
+    }}).addTo(map);
+    selectedLayer.bringToFront();
+  }})
+  .catch(() => {{}});
 map.on("click", (event) => {{
   const p = event.latlng;
   latInput.value = p.lat.toFixed(7);
@@ -138,6 +165,12 @@ class Handler(BaseHTTPRequestHandler):
         output = ""
         if path == "/preview.png":
             self.send_file(root / "outputs/maps/water_regime_gis_preview.png", "image/png")
+            return
+        if path == "/selected-field-area.geojson":
+            self.send_file(root / load_config(root)["paths"]["selected_field_area"], "application/geo+json")
+            return
+        if path == "/nspd/wms":
+            self.send_nspd_wms(root, parsed.query)
             return
         if path == "/run/check-project":
             _, output = run_command(root, [sys.executable, "scripts/check_project.py"])
@@ -208,6 +241,34 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_nspd_wms(self, root: Path, query: str) -> None:
+        config = load_config(root)
+        layer_id = config["nspd"]["parcels_wms_layer_id"]
+        url = f"https://nspd.gov.ru/api/aeggis/v3/{layer_id}/wms?{query}"
+        request = Request(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126.0 Safari/537.36",
+                "Referer": "https://nspd.gov.ru/map?active_layers=%E8%B3%90",
+            },
+        )
+        cert = nspd_ca_bundle(config)
+        context = ssl.create_default_context(cafile=str(cert)) if cert.exists() else ssl.create_default_context()
+        try:
+            with urlopen(request, timeout=20, context=context) as response:
+                body = response.read()
+                content_type = response.headers.get("Content-Type", "image/png")
+        except Exception as exc:
+            body = f"NSPD WMS error: {exc}".encode("utf-8")
+            content_type = "text/plain; charset=utf-8"
+            self.send_response(502)
+        else:
+            self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def log_message(self, format: str, *args: object) -> None:
         return
 
@@ -228,6 +289,17 @@ def open_qgis_project(path: Path) -> None:
         os.startfile(path)  # type: ignore[attr-defined]
     else:
         subprocess.Popen(["qgis", str(path)])
+
+
+def nspd_ca_bundle(config: dict) -> Path:
+    plugin_id = config["nspd"]["plugin_id"]
+    plugin_name = config["nspd"]["plugin_name"]
+    base = Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
+    for name in (plugin_id, plugin_name):
+        cert = base / name / "certs/nspd-ca-bundle.pem"
+        if cert.exists():
+            return cert
+    return base / plugin_id / "certs/nspd-ca-bundle.pem"
 
 
 def main() -> int:

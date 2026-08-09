@@ -20,6 +20,8 @@ def main() -> int:
     assert "Сохранить точку через QGIS" in html
     assert "Проверить плагин НСПД" in html
     assert "Страница плагина НСПД" in html
+    assert "/nspd/wms" in html
+    assert "/selected-field-area.geojson" in html
     assert "Создать QGIS проект" in html
     qgis = qgis_python(load_config(ROOT))
     if qgis:

@@ -18,6 +18,7 @@
     "plugin_id": "rosreestr-search-qgis-plugin-master",
     "plugin_name": "rosreestr-search-qgis-plugin",
     "plugin_url": "https://plugins.qgis.org/plugins/rosreestr-search-qgis-plugin-master/",
+    "plugin_download_url": "https://plugins.qgis.org/plugins/rosreestr-search-qgis-plugin-master/version/2.5/download/",
     "parcels_wms_layer_id": 36048,
     "parcels_wms_name": "Земельные участки из ЕГРН",
     "local_wms_proxy_url": "http://127.0.0.1:8765/nspd/wms"

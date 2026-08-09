@@ -24,6 +24,10 @@
 - Тестовый AOI `data/aoi/tula_test_field.geojson` остается примером данных, но основной пользовательский сценарий больше не привязан к нему.
 - Пользователь выбирает поле точкой на карте в локальном веб-интерфейсе.
 - Выбор точки обрабатывается QGIS-скриптом `scripts/qgis/select_field_point.py`.
+- Пользовательский сценарий не должен открывать QGIS. QGIS работает как скрытый headless-движок, управляемый из панели.
+- Основные кнопки панели: `Сохранить выбранное поле`, `Проверить систему`, `Подготовить результат`.
+- Кнопка `Подготовить результат` запускает проверку структуры, автоустановку НСПД-плагина, проверку PyQGIS/НСПД и создание результата/preview.
+- НСПД-плагин автоматически устанавливается скриптом `scripts/install_nspd_plugin.py`.
 - Скрипт создает локальные некоммитимые слои `data/aoi/selected_field_point.geojson` и `data/aoi/selected_field_area.geojson`.
 - На первом шаге граница поля моделируется буфером вокруг выбранной точки; позже этот шаг нужно заменить на поиск реального контура по слою границ полей.
 - Первый выбранный источник реальных границ: Росреестр/НСПД через QGIS-плагин `rosreestr-search-qgis-plugin`.
@@ -42,7 +46,7 @@
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
 - Внутри PyQGIS-скриптов использовать prefix `/Applications/QGIS.app`; prefix `/Applications/QGIS.app/Contents/MacOS` ломает загрузку WMS-провайдера.
-- Демонстрационный QGIS-проект создается командой `/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/create_demo_project.py` после выбора точки поля.
+- QGIS-проект и preview создаются скрыто из панели через `/run/prepare-result`.
 - Выходной проект: `outputs/maps/water_regime_gis.qgs`.
 
 ## Следующий практический шаг

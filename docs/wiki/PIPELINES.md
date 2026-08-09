@@ -130,6 +130,25 @@ python3 scripts/check_project.py
 python3 scripts/run_app.py
 ```
 
+Основной пользовательский сценарий из панели:
+
+- `Сохранить выбранное поле`;
+- `Проверить систему`;
+- `Подготовить результат`.
+
+`Проверить систему` запускает:
+
+- `scripts/check_project.py`;
+- `scripts/install_nspd_plugin.py`;
+- `scripts/qgis/check_qgis_context.py`;
+- `scripts/qgis/check_nspd_plugin.py`.
+
+`Подготовить результат` дополнительно запускает:
+
+- `scripts/qgis/create_demo_project.py`.
+
+Пользователь не открывает QGIS вручную: QGIS работает как скрытый PyQGIS-движок.
+
 Проверка модели интерфейса без открытия окна:
 
 ```bash

@@ -17,12 +17,11 @@ def main() -> int:
     assert "EPSG:32637" in html
     assert "NDVI" in html
     assert "Выбор поля" in html
-    assert "Сохранить точку через QGIS" in html
-    assert "Проверить плагин НСПД" in html
-    assert "Страница плагина НСПД" in html
+    assert "Сохранить выбранное поле" in html
+    assert "Подготовить результат" in html
+    assert "Проверить систему" in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
-    assert "Создать QGIS проект" in html
     qgis = qgis_python(load_config(ROOT))
     if qgis:
         assert Path(qgis).exists()

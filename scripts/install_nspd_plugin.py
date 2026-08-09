@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import tempfile
+import zipfile
+from pathlib import Path
+from urllib.request import urlretrieve
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONFIG = ROOT / "configs/project.example.json"
+
+
+def main() -> int:
+    config = json.loads(CONFIG.read_text(encoding="utf-8"))
+    nspd = config["nspd"]
+    plugin_dir = qgis_profile_plugins() / nspd["plugin_id"]
+    metadata = plugin_dir / "metadata.txt"
+
+    if metadata.exists():
+        print("NSPD plugin: OK")
+        print(f"Installed: {plugin_dir}")
+        return 0
+
+    qgis_profile_plugins().mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="water-regime-gis-nspd-") as tmp:
+        archive = Path(tmp) / "nspd-plugin.zip"
+        urlretrieve(nspd["plugin_download_url"], archive)
+        with zipfile.ZipFile(archive) as file:
+            file.extractall(qgis_profile_plugins())
+
+    if not metadata.exists():
+        print("NSPD plugin install: FAILED")
+        print(f"Expected: {metadata}")
+        return 1
+
+    print("NSPD plugin install: OK")
+    print(f"Installed: {plugin_dir}")
+    return 0
+
+
+def qgis_profile_plugins() -> Path:
+    return Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

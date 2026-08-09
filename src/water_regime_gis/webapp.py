@@ -74,7 +74,7 @@ def page(root: Path, output: str = "") -> str:
         "Selected field": field["name"],
         "Field point": field["point_path"],
         "Working area": field["path"],
-        "QGIS project": project_file,
+        "Result project": project_file,
         "Point lon": field["lon"],
         "Point lat": field["lat"],
         "Analysis CRS": field["analysis_crs"],
@@ -89,7 +89,7 @@ def page(root: Path, output: str = "") -> str:
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>water-regime-gis</title><style>{STYLE}</style></head>
 <body><main class="shell">
-<section class="top"><div><h1>water-regime-gis</h1><div class="sub">Панель запуска проверок, AOI и будущих QGIS-скриптов</div></div></section>
+<section class="top"><div><h1>water-regime-gis</h1><div class="sub">Панель выбора поля, кадастровых границ и результатов обработки</div></div></section>
 <section class="kpi">
   <div class="tile"><div class="label">Структура</div><div class="value">{html.escape(status)}</div></div>
   <div class="tile"><div class="label">Поле</div><div class="value">{'выбрано' if field['selected'] else 'не выбрано'}</div></div>
@@ -101,17 +101,12 @@ def page(root: Path, output: str = "") -> str:
   <form class="form" action="/run/select-field" method="get">
     <input id="lat" name="lat" placeholder="Широта" value="{html.escape(str(field['lat']))}" required>
     <input id="lon" name="lon" placeholder="Долгота" value="{html.escape(str(field['lon']))}" required>
-    <button class="btn" type="submit">Сохранить точку через QGIS</button>
+    <button class="btn" type="submit">Сохранить выбранное поле</button>
   </form>
 </section>
 <div class="actions">
-  <a class="btn" href="/run/check-project">Проверить проект</a>
-  <a class="btn secondary" href="/run/check-qgis">Проверить QGIS</a>
-  <a class="btn secondary" href="/run/check-nspd-plugin">Проверить плагин НСПД</a>
-  <a class="btn muted" href="/open-nspd-plugin">Страница плагина НСПД</a>
-  <a class="btn secondary" href="/run/create-demo-project">Создать QGIS проект</a>
-  <a class="btn muted" href="/open-qgis-project">Открыть QGIS проект</a>
-  <a class="btn muted" href="/open-aoi">Открыть AOI</a>
+  <a class="btn" href="/run/prepare-result">Подготовить результат</a>
+  <a class="btn secondary" href="/run/check-system">Проверить систему</a>
 </div>
 <section class="grid">
   <div class="panel"><h2>Состояние</h2><table>{table}</table></div>
@@ -182,6 +177,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/run/check-project":
             _, output = run_command(root, [sys.executable, "scripts/check_project.py"])
+        elif path == "/run/check-system":
+            output = run_workflow(root, create_project=False)
+        elif path == "/run/prepare-result":
+            output = run_workflow(root, create_project=True)
         elif path == "/run/select-field":
             config = load_config(root)
             qgis = qgis_python(config)
@@ -214,20 +213,6 @@ class Handler(BaseHTTPRequestHandler):
                 _, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
             else:
                 output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
-        elif path == "/open-qgis-project":
-            config = load_config(root)
-            project_file = root / config["qgis"]["project_file"]
-            if project_file.exists():
-                open_qgis_project(project_file)
-                output = f"QGIS project opened: {project_file}"
-            else:
-                output = "QGIS project does not exist yet. Нажмите 'Создать QGIS проект'."
-        elif path == "/open-aoi":
-            open_path(root / load_config(root)["paths"]["aoi"])
-            output = "Папка AOI открыта."
-        elif path == "/open-nspd-plugin":
-            webbrowser.open(load_config(root)["nspd"]["plugin_url"])
-            output = "Страница плагина НСПД открыта в браузере."
         elif path != "/":
             self.send_error(404)
             return
@@ -306,22 +291,47 @@ class Handler(BaseHTTPRequestHandler):
         return
 
 
-def open_path(path: Path) -> None:
-    if sys.platform == "darwin":
-        subprocess.Popen(["open", path])
-    elif os.name == "nt":
-        os.startfile(path)  # type: ignore[attr-defined]
-    else:
-        subprocess.Popen(["xdg-open", path])
+def run_workflow(root: Path, create_project: bool) -> str:
+    config = load_config(root)
+    parts = []
+
+    for label, command in [
+        ("Проверка структуры", [sys.executable, "scripts/check_project.py"]),
+        ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
+    ]:
+        code, output = run_command(root, command)
+        parts.append(format_step(label, code, output))
+        if code:
+            return "\n\n".join(parts)
+
+    qgis = qgis_python(config)
+    if not qgis:
+        parts.append("Геодвижок: FAILED\nQGIS не найден. Установите QGIS 3.40+ и повторите запуск.")
+        return "\n\n".join(parts)
+
+    for label, command in [
+        ("Проверка геодвижка", [qgis, config["qgis"]["script_runner"]]),
+        ("Проверка кадастровых данных", [qgis, config["qgis"]["nspd_plugin_check_script"]]),
+    ]:
+        code, output = run_command(root, command)
+        parts.append(format_step(label, code, output))
+        if code:
+            return "\n\n".join(parts)
+
+    if create_project:
+        field = selected_field_summary(root, config)
+        if not field["selected"]:
+            parts.append("Подготовка результата: FAILED\nСначала выберите точку поля на карте и нажмите 'Сохранить выбранное поле'.")
+            return "\n\n".join(parts)
+        code, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
+        parts.append(format_step("Подготовка результата", code, output))
+
+    return "\n\n".join(parts)
 
 
-def open_qgis_project(path: Path) -> None:
-    if sys.platform == "darwin":
-        subprocess.Popen(["open", "-a", "QGIS", path])
-    elif os.name == "nt":
-        os.startfile(path)  # type: ignore[attr-defined]
-    else:
-        subprocess.Popen(["qgis", str(path)])
+def format_step(label: str, code: int, output: str) -> str:
+    status = "OK" if code == 0 else "FAILED"
+    return f"{label}: {status}\n{output}"
 
 
 def nspd_ca_bundle(config: dict) -> Path:

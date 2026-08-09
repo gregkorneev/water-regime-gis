@@ -95,6 +95,7 @@ python3 scripts/run_app.py
 4. Нажать `Подготовить результат`.
 
 После этого панель покажет preview результата. QGIS-проект `outputs/maps/water_regime_gis.qgs` создается скрыто, без ручного открытия QGIS пользователем.
+В блоке `Результаты` доступны скачивание preview-карты, GeoJSON-контура выбранной области и JSON-отчета `outputs/reports/latest_result.json`.
 
 ## Структура документации
 

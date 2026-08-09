@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import json
 import os
 import ssl
 import subprocess
@@ -32,6 +33,7 @@ h1{margin:0;font-size:34px;letter-spacing:0}.sub{color:#53645f;margin-top:6px;fo
 .label{color:#60716c;font-size:13px}.value{font-size:18px;font-weight:700;margin-top:5px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.btn{display:inline-block;background:#176b5b;color:white;text-decoration:none;border-radius:7px;padding:11px 14px;font-weight:700}
 .map{height:360px;border:1px solid #d8e0dd;border-radius:8px;overflow:hidden;background:#dce7e3}.form{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.form input{padding:10px;border:1px solid #bdcac5;border-radius:7px;min-width:150px}.form button{border:0;cursor:pointer}
+.result-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.hint{color:#60716c;font-size:14px;margin:8px 0 0}
 .btn.secondary{background:#42526a}.btn.muted{background:#68757f}
 pre{white-space:pre-wrap;background:#101816;color:#d8f5e9;border-radius:8px;padding:14px;min-height:180px;overflow:auto}
 .preview{width:100%;border:1px solid #d8e0dd;border-radius:8px;margin-top:12px;background:#f8fbfa}
@@ -67,24 +69,22 @@ def page(root: Path, output: str = "") -> str:
     config = load_config(root)
     field = selected_field_summary(root, config)
     missing = missing_required_dirs(root)
-    project_file = root / config["qgis"]["project_file"]
     rows = {
-        "Project": config["project"]["name"],
-        "Stage": config["project"]["stage"],
-        "Selected field": field["name"],
-        "Field point": field["point_path"],
-        "Working area": field["path"],
-        "Result project": project_file,
-        "Point lon": field["lon"],
-        "Point lat": field["lat"],
-        "Analysis CRS": field["analysis_crs"],
-        "Indices": ", ".join(config["satellite"]["indices"]),
+        "Проект": config["project"]["name"],
+        "Этап": config["project"]["stage"],
+        "Поле": field["name"],
+        "Контур": "подготовлен" if field["selected"] else "не выбран",
+        "Долгота": field["lon"],
+        "Широта": field["lat"],
+        "Рабочая CRS": field["analysis_crs"],
+        "Индексы": ", ".join(config["satellite"]["indices"]),
     }
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
     status = "OK" if not missing else ", ".join(missing)
     escaped_output = html.escape(output or "Нажмите кнопку, чтобы запустить проверку.")
     preview = root / "outputs/maps/water_regime_gis_preview.png"
-    preview_html = '<img class="preview" src="/preview.png" alt="QGIS preview">' if preview.exists() else ""
+    preview_html = '<img class="preview" src="/preview.png" alt="preview результата">' if preview.exists() else ""
+    results_html = result_panel(root, config)
     return f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>water-regime-gis</title><style>{STYLE}</style></head>
@@ -112,6 +112,7 @@ def page(root: Path, output: str = "") -> str:
   <div class="panel"><h2>Состояние</h2><table>{table}</table></div>
   <div class="panel"><h2>Лог</h2><pre>{escaped_output}</pre>{preview_html}</div>
 </section>
+{results_html}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -169,6 +170,18 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/preview.png":
             self.send_file(root / "outputs/maps/water_regime_gis_preview.png", "image/png")
             return
+        if path == "/result.json":
+            self.send_file(root / load_config(root)["paths"]["latest_report"], "application/json")
+            return
+        if path == "/download/field.geojson":
+            self.send_download(root / load_config(root)["paths"]["selected_field_area"], "selected_field_area.geojson", "application/geo+json")
+            return
+        if path == "/download/preview.png":
+            self.send_download(root / "outputs/maps/water_regime_gis_preview.png", "water_regime_gis_preview.png", "image/png")
+            return
+        if path == "/download/report.json":
+            self.send_download(root / load_config(root)["paths"]["latest_report"], "latest_result.json", "application/json")
+            return
         if path == "/selected-field-area.geojson":
             self.send_file(root / load_config(root)["paths"]["selected_field_area"], "application/geo+json")
             return
@@ -187,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
             lon = (query.get("lon") or [""])[0]
             lat = (query.get("lat") or [""])[0]
             if not qgis:
-                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+                output = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
             elif not lon or not lat:
                 output = "Выберите точку на карте или введите широту и долготу."
             else:
@@ -198,21 +211,21 @@ class Handler(BaseHTTPRequestHandler):
             if qgis:
                 _, output = run_command(root, [qgis, config["qgis"]["script_runner"]])
             else:
-                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+                output = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
         elif path == "/run/check-nspd-plugin":
             config = load_config(root)
             qgis = qgis_python(config)
             if qgis:
                 _, output = run_command(root, [qgis, config["qgis"]["nspd_plugin_check_script"]])
             else:
-                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+                output = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
         elif path == "/run/create-demo-project":
             config = load_config(root)
             qgis = qgis_python(config)
             if qgis:
                 _, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
             else:
-                output = "QGIS Python не найден. Укажите qgis.python_executable в configs/project.example.json."
+                output = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
         elif path != "/":
             self.send_error(404)
             return
@@ -238,6 +251,18 @@ class Handler(BaseHTTPRequestHandler):
         body = path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_download(self, path: Path, filename: str, content_type: str) -> None:
+        if not path.exists():
+            self.send_error(404)
+            return
+        body = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -300,13 +325,13 @@ def run_workflow(root: Path, create_project: bool) -> str:
         ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
     ]:
         code, output = run_command(root, command)
-        parts.append(format_step(label, code, output))
+        parts.append(format_step(label, code, public_output(label, output, code)))
         if code:
             return "\n\n".join(parts)
 
     qgis = qgis_python(config)
     if not qgis:
-        parts.append("Геодвижок: FAILED\nQGIS не найден. Установите QGIS 3.40+ и повторите запуск.")
+        parts.append("Геодвижок: FAILED\nГеодвижок не найден. Установите QGIS 3.40+ и повторите запуск.")
         return "\n\n".join(parts)
 
     for label, command in [
@@ -314,7 +339,7 @@ def run_workflow(root: Path, create_project: bool) -> str:
         ("Проверка кадастровых данных", [qgis, config["qgis"]["nspd_plugin_check_script"]]),
     ]:
         code, output = run_command(root, command)
-        parts.append(format_step(label, code, output))
+        parts.append(format_step(label, code, public_output(label, output, code)))
         if code:
             return "\n\n".join(parts)
 
@@ -324,7 +349,9 @@ def run_workflow(root: Path, create_project: bool) -> str:
             parts.append("Подготовка результата: FAILED\nСначала выберите точку поля на карте и нажмите 'Сохранить выбранное поле'.")
             return "\n\n".join(parts)
         code, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
-        parts.append(format_step("Подготовка результата", code, output))
+        parts.append(format_step("Подготовка результата", code, public_output("Подготовка результата", output, code)))
+        if code == 0:
+            write_result_report(root, config, "\n\n".join(parts))
 
     return "\n\n".join(parts)
 
@@ -332,6 +359,97 @@ def run_workflow(root: Path, create_project: bool) -> str:
 def format_step(label: str, code: int, output: str) -> str:
     status = "OK" if code == 0 else "FAILED"
     return f"{label}: {status}\n{output}"
+
+
+def public_output(label: str, output: str, code: int) -> str:
+    if code:
+        return output
+    if label == "Проверка структуры":
+        return "Структура проекта готова."
+    if label == "Подготовка кадастрового модуля":
+        return "Кадастровый модуль готов."
+    if label == "Проверка геодвижка":
+        return "Геодвижок доступен."
+    if label == "Проверка кадастровых данных":
+        return "Кадастровые данные доступны."
+    if label == "Подготовка результата":
+        lines = []
+        for line in output.splitlines():
+            if line.startswith("Preview:"):
+                lines.append("Карта результата подготовлена.")
+            elif line.startswith("Project CRS:"):
+                lines.append(f"CRS результата: {line.split(':', 1)[1].strip()}.")
+        return "\n".join(lines) or "Карта результата подготовлена."
+    return output
+
+
+def result_panel(root: Path, config: dict) -> str:
+    report_path = root / config["paths"]["latest_report"]
+    preview_path = root / "outputs/maps/water_regime_gis_preview.png"
+    field_path = root / config["paths"]["selected_field_area"]
+    if not report_path.exists() and not preview_path.exists():
+        return ""
+
+    rows = []
+    if report_path.exists():
+        try:
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            report = {}
+        rows.extend(
+            [
+                ("Статус", report.get("status", "готово")),
+                ("Время подготовки", report.get("created_at", "")),
+                ("Площадь области", f"{report.get('field', {}).get('area_ha', '')} га"),
+                ("CRS", report.get("field", {}).get("analysis_crs", "")),
+            ]
+        )
+    else:
+        rows.append(("Статус", "preview готов"))
+
+    table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows if str(v))
+    links = []
+    if preview_path.exists():
+        links.append('<a class="btn secondary" href="/download/preview.png">Скачать preview</a>')
+    if field_path.exists():
+        links.append('<a class="btn secondary" href="/download/field.geojson">Скачать контур</a>')
+    if report_path.exists():
+        links.append('<a class="btn muted" href="/download/report.json">Скачать отчет JSON</a>')
+    actions = "".join(links)
+    return f"""
+<section class="panel">
+  <h2>Результаты</h2>
+  <table>{table}</table>
+  <div class="result-actions">{actions}</div>
+  <p class="hint">Все данные подготовлены автоматически. Открывать внешние программы для этого не нужно.</p>
+</section>"""
+
+
+def write_result_report(root: Path, config: dict, log: str) -> None:
+    field = selected_field_summary(root, config)
+    paths = {
+        "preview": (root / "outputs/maps/water_regime_gis_preview.png", "/download/preview.png"),
+        "field_area": (root / config["paths"]["selected_field_area"], "/download/field.geojson"),
+    }
+    report = {
+        "status": "OK",
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "field": {
+            "name": field["name"],
+            "lon": field["lon"],
+            "lat": field["lat"],
+            "area_ha": field["area_ha"],
+            "analysis_crs": field["analysis_crs"],
+        },
+        "artifacts": {
+            name: {"url": url, "exists": path.exists(), "size_bytes": path.stat().st_size if path.exists() else 0}
+            for name, (path, url) in paths.items()
+        },
+        "log": log,
+    }
+    report_path = root / config["paths"]["latest_report"]
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def nspd_ca_bundle(config: dict) -> Path:

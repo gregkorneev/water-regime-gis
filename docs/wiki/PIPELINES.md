@@ -149,6 +149,12 @@ python3 scripts/run_app.py
 
 Пользователь не открывает QGIS вручную: QGIS работает как скрытый PyQGIS-движок.
 
+После успешной подготовки панель создает и показывает пользовательские артефакты:
+
+- preview-карту `/download/preview.png`;
+- контур выбранной области `/download/field.geojson`;
+- JSON-отчет `/download/report.json`, локально `outputs/reports/latest_result.json`.
+
 Проверка модели интерфейса без открытия окна:
 
 ```bash

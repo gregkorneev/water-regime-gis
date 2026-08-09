@@ -32,6 +32,7 @@
     "interim": "data/interim",
     "processed": "data/processed",
     "maps": "outputs/maps",
+    "latest_report": "outputs/reports/latest_result.json",
     "reports": "outputs/reports",
     "rasters": "outputs/rasters"
   },

@@ -149,6 +149,12 @@ python3 scripts/build_macos_app.py
 python3 scripts/check_macos_app.py
 ```
 
+Headless E2E-проверка панели:
+
+```bash
+python3 scripts/check_panel_e2e.py
+```
+
 Запасной запуск из терминала:
 
 ```bash

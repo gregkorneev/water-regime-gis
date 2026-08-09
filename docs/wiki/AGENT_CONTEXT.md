@@ -50,6 +50,7 @@
 - На macOS добавлен пользовательский launcher `launch_panel.command`, который можно открыть двойным кликом.
 - Добавлен сборщик локальной оболочки `dist/Water Regime GIS.app`: `python3 scripts/build_macos_app.py`.
 - Добавлена проверка локальной macOS-оболочки: `python3 scripts/check_macos_app.py`.
+- Добавлена headless E2E-проверка панели: `python3 scripts/check_panel_e2e.py`.
 - Сгенерированная папка `dist/` игнорируется git и не коммитится.
 - Если порт `8765` занят, панель автоматически выбирает следующий свободный порт.
 - Текущий URL панели передается скрытым QGIS-скриптам через `WATER_REGIME_GIS_APP_URL`.

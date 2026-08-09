@@ -1176,9 +1176,10 @@ def main() -> int:
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}"
     os.environ["WATER_REGIME_GIS_APP_URL"] = url
-    print(f"water-regime-gis app: {url}")
+    print(f"water-regime-gis app: {url}", flush=True)
     start_bootstrap(root)
-    webbrowser.open(url)
+    if os.environ.get("WATER_REGIME_GIS_NO_BROWSER") != "1":
+        webbrowser.open(url)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

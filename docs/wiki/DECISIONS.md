@@ -310,11 +310,11 @@
 
 Решение:
 
-- добавить `/job/start` для запуска `check-system` и `prepare-result`;
+- добавить `/job/start` для запуска `select-field`, `check-system` и `prepare-result`;
 - добавить `/job/status` для чтения текущей или последней задачи;
 - обновлять лог панели без ожидания полной загрузки страницы;
 - после успешной фоновой подготовки результата один раз обновлять страницу, чтобы показать новые артефакты;
-- оставить `/run/check-system` и `/run/prepare-result` как синхронный fallback.
+- оставить `/run/select-field`, `/run/check-system` и `/run/prepare-result` как синхронный fallback.
 
 Причина:
 

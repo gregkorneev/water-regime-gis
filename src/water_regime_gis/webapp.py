@@ -148,9 +148,12 @@ def start_panel_job(root: Path, kind: str) -> dict:
     labels = {
         "check-system": "Проверка системы",
         "prepare-result": "Подготовка результата",
+        "select-field": "Выбор поля",
     }
     if kind not in labels:
         return {"started": False, "error": "Неизвестная задача.", "job": job_status()}
+    if kind == "select-field":
+        return {"started": False, "error": "Укажите координаты выбранной точки.", "job": job_status()}
     if kind == "prepare-result":
         config = load_config(root)
         if not selected_field_summary(root, config)["selected"]:
@@ -174,8 +177,40 @@ def start_panel_job(root: Path, kind: str) -> dict:
     return {"started": True, "job": job_status()}
 
 
+def start_select_field_job(root: Path, lon: str, lat: str) -> dict:
+    if not lon or not lat:
+        return {"started": False, "error": "Выберите точку на карте.", "job": job_status()}
+    with JOB_LOCK:
+        if JOB_STATE["running"]:
+            return {"started": False, "error": "Задача уже выполняется.", "job": dict(JOB_STATE)}
+        JOB_STATE.update(
+            {
+                "running": True,
+                "kind": "select-field",
+                "label": "Выбор поля",
+                "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                "finished_at": "",
+                "status": "RUNNING",
+                "output": "Выбор поля запущен. Панель обновит лог автоматически.",
+            }
+        )
+    thread = threading.Thread(target=run_select_field_job, args=(root, lon, lat), daemon=True)
+    thread.start()
+    return {"started": True, "job": job_status()}
+
+
 def run_panel_job(root: Path, kind: str) -> None:
     output = run_workflow(root, create_project=kind == "prepare-result")
+    failed = "FAILED" in output
+    with JOB_LOCK:
+        JOB_STATE["running"] = False
+        JOB_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        JOB_STATE["status"] = "FAILED" if failed else "OK"
+        JOB_STATE["output"] = output
+
+
+def run_select_field_job(root: Path, lon: str, lat: str) -> None:
+    output = select_field(root, lon, lat)
     failed = "FAILED" in output
     with JOB_LOCK:
         JOB_STATE["running"] = False
@@ -339,6 +374,10 @@ function renderJob(payload) {{
   const job = payload && payload.job ? payload.job : payload;
   if (!job || !runLog) return;
   if (job.output) runLog.textContent = job.output;
+  if (!job.running && job.kind === "select-field" && sessionStorage.getItem("wrgJobStarted") === "select-field") {{
+    sessionStorage.removeItem("wrgJobStarted");
+    setTimeout(() => window.location.reload(), 800);
+  }}
   if (!job.running && job.kind === "prepare-result" && sessionStorage.getItem("wrgJobStarted") === "prepare-result") {{
     sessionStorage.removeItem("wrgJobStarted");
     setTimeout(() => window.location.reload(), 800);
@@ -369,6 +408,20 @@ document.querySelectorAll("[data-job]").forEach((button) => {{
       }});
   }});
 }});
+document.querySelector(".form").addEventListener("submit", (event) => {{
+  event.preventDefault();
+  const params = new URLSearchParams({{kind: "select-field", lat: latInput.value, lon: lonInput.value}});
+  fetch(`/job/start?${{params.toString()}}`)
+    .then((response) => response.ok ? response.json() : null)
+    .then((payload) => {{
+      if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", "select-field");
+      renderJob(payload);
+      pollJob();
+    }})
+    .catch(() => {{
+      event.target.submit();
+    }});
+}});
 </script>
 </main></body></html>"""
 
@@ -396,7 +449,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/job/start":
             kind = (query.get("kind") or [""])[0]
-            self.send_json(start_panel_job(root, kind))
+            if kind == "select-field":
+                self.send_json(start_select_field_job(root, (query.get("lon") or [""])[0], (query.get("lat") or [""])[0]))
+            else:
+                self.send_json(start_panel_job(root, kind))
             return
         if path == "/download/field.geojson":
             self.send_download(root / load_config(root)["paths"]["selected_field_area"], "selected_field_area.geojson", "application/geo+json")
@@ -420,26 +476,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/run/prepare-result":
             output = run_workflow(root, create_project=True)
         elif path == "/run/select-field":
-            config = load_config(root)
-            qgis = qgis_python(config)
             lon = (query.get("lon") or [""])[0]
             lat = (query.get("lat") or [""])[0]
-            if not qgis:
-                output = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
-            elif not lon or not lat:
-                output = "Выберите точку на карте или введите широту и долготу."
-            else:
-                select_code, select_output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
-                if select_code:
-                    output = format_step("Выбор поля", select_code, public_output("Выбор поля", select_output, select_code))
-                else:
-                    boundary_code, boundary_output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
-                    output = "\n\n".join(
-                        [
-                            format_step("Выбор поля", 0, public_output("Выбор поля", select_output, 0)),
-                            format_step("Уточнение контура", boundary_code, public_output("Уточнение контура", boundary_output, boundary_code)),
-                        ]
-                    )
+            output = select_field(root, lon, lat)
         elif path == "/run/check-qgis":
             config = load_config(root)
             qgis = qgis_python(config)
@@ -601,6 +640,27 @@ def run_workflow(root: Path, create_project: bool) -> str:
             write_result_report(root, config, "\n\n".join(parts))
 
     return "\n\n".join(parts)
+
+
+def select_field(root: Path, lon: str, lat: str) -> str:
+    config = load_config(root)
+    qgis = qgis_python(config)
+    if not qgis:
+        return "Выбор поля: FAILED\nГеодвижок недоступен. Установите QGIS 3.40+ и перезапустите панель."
+    if not lon or not lat:
+        return "Выбор поля: FAILED\nВыберите точку на карте или введите широту и долготу."
+
+    select_code, select_output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
+    if select_code:
+        return format_step("Выбор поля", select_code, public_output("Выбор поля", select_output, select_code))
+
+    boundary_code, boundary_output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
+    return "\n\n".join(
+        [
+            format_step("Выбор поля", 0, public_output("Выбор поля", select_output, 0)),
+            format_step("Уточнение контура", boundary_code, public_output("Уточнение контура", boundary_output, boundary_code)),
+        ]
+    )
 
 
 def format_step(label: str, code: int, output: str) -> str:

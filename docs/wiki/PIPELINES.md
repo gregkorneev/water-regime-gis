@@ -169,12 +169,12 @@ python3 scripts/run_app.py
 
 `Подготовить результат` визуально недоступен, пока поле не выбрано.
 
-В обычном браузерном сценарии `Проверить систему` и `Подготовить результат` стартуют как фоновые задачи:
+В обычном браузерном сценарии `Сохранить выбранное поле`, `Проверить систему` и `Подготовить результат` стартуют как фоновые задачи:
 
-- старт: `/job/start?kind=check-system` или `/job/start?kind=prepare-result`;
+- старт: `/job/start?kind=select-field&lat=...&lon=...`, `/job/start?kind=check-system` или `/job/start?kind=prepare-result`;
 - статус и лог: `/job/status`.
 
-Старые синхронные адреса `/run/check-system` и `/run/prepare-result` оставлены как fallback без JavaScript и для прямой диагностики.
+Старые синхронные адреса `/run/select-field`, `/run/check-system` и `/run/prepare-result` оставлены как fallback без JavaScript и для прямой диагностики.
 
 `Проверить систему` запускает:
 

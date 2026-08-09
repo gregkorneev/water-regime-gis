@@ -55,8 +55,8 @@
 - `/status.json` отдает машинный статус bootstrap для будущего desktop-shell или агентов.
 - Веб-панель опрашивает `/status.json` каждые 3 секунды и обновляет статус готовности без перезагрузки страницы.
 - `Подготовить результат` визуально недоступен до выбора точки поля.
-- `Проверить систему` и `Подготовить результат` в обычном UI запускаются как фоновые задачи через `/job/start`; лог читается через `/job/status`.
-- `/run/check-system` и `/run/prepare-result` сохранены как синхронный fallback.
+- `Сохранить выбранное поле`, `Проверить систему` и `Подготовить результат` в обычном UI запускаются как фоновые задачи через `/job/start`; лог читается через `/job/status`.
+- `/run/select-field`, `/run/check-system` и `/run/prepare-result` сохранены как синхронный fallback.
 - Код проекта распространяется под MIT; сведения о сторонних лицензиях в `THIRD_PARTY_NOTICES.md`.
 - QGIS найден на macOS в `/Applications/QGIS.app`; для PyQGIS использовать wrapper `/Applications/QGIS.app/Contents/MacOS/python`.
 - Внутри PyQGIS-скриптов использовать prefix `/Applications/QGIS.app`; prefix `/Applications/QGIS.app/Contents/MacOS` ломает загрузку WMS-провайдера.

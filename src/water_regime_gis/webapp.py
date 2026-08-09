@@ -398,11 +398,11 @@ def page(root: Path, output: str = "") -> str:
   <form class="form" action="/run/select-field" method="get">
     <input id="lat" name="lat" placeholder="Широта" value="{html.escape(str(field['lat']))}" required>
     <input id="lon" name="lon" placeholder="Долгота" value="{html.escape(str(field['lon']))}" required>
-    <button class="{select_button_class}" type="submit" title="{html.escape(select_title)}"{select_disabled}>Сохранить выбранное поле</button>
+    <button id="select-field-button" class="{select_button_class}" type="submit" title="{html.escape(select_title)}"{select_disabled}>Сохранить выбранное поле</button>
   </form>
 </section>
 <div class="actions">
-  {prepare_action}
+  <span id="prepare-action">{prepare_action}</span>
   <a class="btn secondary" href="/run/check-system" data-job="check-system">Проверить систему</a>
 </div>
 <section class="grid">
@@ -452,7 +452,17 @@ map.on("click", (event) => {{
   else marker = L.marker(p).addTo(map);
 }});
 const systemStatus = document.getElementById("system-status");
+const environmentTable = document.getElementById("environment-table");
+const selectFieldButton = document.getElementById("select-field-button");
+const prepareAction = document.getElementById("prepare-action");
 const runLog = document.getElementById("run-log");
+function escapeText(value) {{
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}}
 function statusText(status) {{
   if (status === "OK") return "готово";
   if (status === "RUNNING") return "выполняется";
@@ -479,8 +489,55 @@ function refreshSystemStatus() {{
     .then(renderSystemStatus)
     .catch(() => {{}});
 }}
-refreshSystemStatus();
-setInterval(refreshSystemStatus, 3000);
+function renderEnvironmentStatus(payload) {{
+  if (!environmentTable || !payload) return;
+  const qgis = payload.qgis || {{}};
+  const plugin = payload.nspd_plugin || {{}};
+  const artifacts = payload.artifacts || {{}};
+  const qgisText = `${{qgis.found ? "найден" : "не найден"}}${{qgis.version ? " " + qgis.version : ""}}`;
+  const rows = [
+    ["QGIS", qgisText],
+    ["Скрытый запуск", qgis.found ? "готов к работе" : qgis.install_hint],
+    ["Кадастровый модуль", plugin.found ? "готов" : "будет установлен автоматически"],
+    ["Результаты", artifacts.preview && artifacts.report ? "готовы" : "пока не подготовлены"],
+  ];
+  environmentTable.innerHTML = rows.map((row) => `<tr><td>${{escapeText(row[0])}}</td><td>${{escapeText(row[1])}}</td></tr>`).join("");
+}}
+function refreshEnvironmentStatus() {{
+  fetch("/environment.json")
+    .then((response) => response.ok ? response.json() : null)
+    .then(renderEnvironmentStatus)
+    .catch(() => {{}});
+}}
+function renderReadinessStatus(payload) {{
+  if (!payload) return;
+  const reasons = payload.reasons || {{}};
+  if (selectFieldButton) {{
+    selectFieldButton.disabled = !payload.can_select_field;
+    selectFieldButton.className = payload.can_select_field ? "btn" : "btn disabled";
+    selectFieldButton.title = reasons.select_field || "";
+  }}
+  if (prepareAction) {{
+    if (payload.can_prepare_result) {{
+      prepareAction.innerHTML = '<a class="btn" href="/run/prepare-result" data-job="prepare-result">Подготовить результат</a>';
+    }} else {{
+      prepareAction.innerHTML = `<span class="btn disabled" title="${{escapeText(reasons.prepare_result || "")}}">Подготовить результат</span>`;
+    }}
+  }}
+}}
+function refreshReadinessStatus() {{
+  fetch("/readiness.json")
+    .then((response) => response.ok ? response.json() : null)
+    .then(renderReadinessStatus)
+    .catch(() => {{}});
+}}
+function refreshPanelState() {{
+  refreshSystemStatus();
+  refreshEnvironmentStatus();
+  refreshReadinessStatus();
+}}
+refreshPanelState();
+setInterval(refreshPanelState, 3000);
 function renderJob(payload) {{
   if (payload && payload.error && runLog) {{
     runLog.textContent = payload.error;
@@ -507,21 +564,21 @@ function pollJob() {{
     }})
     .catch(() => {{}});
 }}
-document.querySelectorAll("[data-job]").forEach((button) => {{
-  button.addEventListener("click", (event) => {{
-    event.preventDefault();
-    const kind = button.getAttribute("data-job");
-    fetch(`/job/start?kind=${{encodeURIComponent(kind)}}`)
-      .then((response) => response.ok ? response.json() : null)
-      .then((payload) => {{
-        if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", kind);
-        renderJob(payload);
-        pollJob();
-      }})
-      .catch(() => {{
-        window.location.href = button.getAttribute("href");
-      }});
-  }});
+document.addEventListener("click", (event) => {{
+  const button = event.target.closest("[data-job]");
+  if (!button) return;
+  event.preventDefault();
+  const kind = button.getAttribute("data-job");
+  fetch(`/job/start?kind=${{encodeURIComponent(kind)}}`)
+    .then((response) => response.ok ? response.json() : null)
+    .then((payload) => {{
+      if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", kind);
+      renderJob(payload);
+      pollJob();
+    }})
+    .catch(() => {{
+      window.location.href = button.getAttribute("href");
+    }});
 }});
 document.querySelector(".form").addEventListener("submit", (event) => {{
   event.preventDefault();
@@ -879,7 +936,7 @@ def environment_panel(root: Path, config: dict) -> str:
     return f"""
 <section class="panel">
   <h2>Среда</h2>
-  <table>{table}</table>
+  <table id="environment-table">{table}</table>
 </section>"""
 
 

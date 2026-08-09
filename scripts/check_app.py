@@ -33,10 +33,16 @@ def main() -> int:
     assert "Готовность системы" in html
     assert "Среда" in html
     assert 'id="system-status"' in html
+    assert 'id="environment-table"' in html
+    assert 'id="select-field-button"' in html
+    assert 'id="prepare-action"' in html
     assert 'id="run-log"' in html
     assert "/status.json" in html
+    assert "/environment.json" in html
+    assert "/readiness.json" in html
     assert "/job/start" in html
     assert "/job/status" in html
+    assert "refreshPanelState" in html
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html

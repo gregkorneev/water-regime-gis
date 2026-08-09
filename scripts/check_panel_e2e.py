@@ -4,10 +4,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
+import tempfile
 from pathlib import Path
+from typing import Optional
 from urllib.request import urlopen
 
 
@@ -16,34 +19,70 @@ URL_RE = re.compile(r"water-regime-gis app: (http://127\.0\.0\.1:\d+)")
 
 
 def main() -> int:
+    config = json.loads((ROOT / "configs/project.example.json").read_text(encoding="utf-8"))
+    paths = snapshot_paths(config)
     env = os.environ.copy()
     env["WATER_REGIME_GIS_NO_BROWSER"] = "1"
-    process = subprocess.Popen(
-        [sys.executable, "scripts/run_app.py"],
-        cwd=ROOT,
-        env=env,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    try:
-        url = read_url(process)
-        get_json(url, "/readiness.json")
-        start_job(url, "/job/start?kind=repair-environment")
-        start_job(url, "/job/start?kind=select-field&lon=38.1361306&lat=53.8413983")
-        start_job(url, "/job/start?kind=prepare-result")
-        for path in ("/download/preview.png", "/download/field.geojson", "/download/report.json"):
-            with urlopen(url + path, timeout=20) as response:
-                assert response.status == 200
-                assert response.read(1)
-        print("panel e2e: OK")
-        return 0
-    finally:
-        process.terminate()
+    with tempfile.TemporaryDirectory(prefix="water-regime-gis-e2e-") as tmp:
+        backup = backup_paths(paths, Path(tmp))
+        process = subprocess.Popen(
+            [sys.executable, "scripts/run_app.py"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
         try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
+            url = read_url(process)
+            get_json(url, "/readiness.json")
+            start_job(url, "/job/start?kind=repair-environment")
+            start_job(url, "/job/start?kind=select-field&lon=38.1361306&lat=53.8413983")
+            start_job(url, "/job/start?kind=prepare-result")
+            for path in ("/download/preview.png", "/download/field.geojson", "/download/report.json"):
+                with urlopen(url + path, timeout=20) as response:
+                    assert response.status == 200
+                    assert response.read(1)
+            print("panel e2e: OK")
+            return 0
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            restore_paths(backup)
+
+
+def snapshot_paths(config: dict) -> list[Path]:
+    return [
+        ROOT / config["paths"]["selected_field_point"],
+        ROOT / config["paths"]["selected_field_area"],
+        ROOT / config["paths"]["latest_report"],
+        ROOT / "outputs/maps/water_regime_gis_preview.png",
+        ROOT / "outputs/maps/water_regime_gis.qgs",
+    ]
+
+
+def backup_paths(paths: list[Path], backup_dir: Path) -> dict[Path, Optional[Path]]:
+    backup: dict[Path, Optional[Path]] = {}
+    for index, path in enumerate(paths):
+        if path.exists():
+            copy = backup_dir / f"{index}-{path.name}"
+            shutil.copy2(path, copy)
+            backup[path] = copy
+        else:
+            backup[path] = None
+    return backup
+
+
+def restore_paths(backup: dict[Path, Optional[Path]]) -> None:
+    for path, copy in backup.items():
+        if copy is None:
+            path.unlink(missing_ok=True)
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(copy, path)
 
 
 def read_url(process: subprocess.Popen) -> str:

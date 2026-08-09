@@ -22,7 +22,10 @@ def main() -> int:
     assert "Проверить систему" in html
     assert "Готовность системы" in html
     assert 'id="system-status"' in html
+    assert 'id="run-log"' in html
     assert "/status.json" in html
+    assert "/job/start" in html
+    assert "/job/status" in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
     assert (ROOT / "launch_panel.command").exists()

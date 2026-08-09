@@ -169,6 +169,13 @@ python3 scripts/run_app.py
 
 `Подготовить результат` визуально недоступен, пока поле не выбрано.
 
+В обычном браузерном сценарии `Проверить систему` и `Подготовить результат` стартуют как фоновые задачи:
+
+- старт: `/job/start?kind=check-system` или `/job/start?kind=prepare-result`;
+- статус и лог: `/job/status`.
+
+Старые синхронные адреса `/run/check-system` и `/run/prepare-result` оставлены как fallback без JavaScript и для прямой диагностики.
+
 `Проверить систему` запускает:
 
 - `scripts/check_project.py`;

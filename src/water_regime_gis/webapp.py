@@ -30,6 +30,16 @@ BOOTSTRAP_STATE = {
     "steps": [],
 }
 BOOTSTRAP_LOCK = threading.Lock()
+JOB_STATE = {
+    "running": False,
+    "kind": "",
+    "label": "",
+    "started_at": "",
+    "finished_at": "",
+    "status": "",
+    "output": "",
+}
+JOB_LOCK = threading.Lock()
 DEFAULT_PORT = 8765
 
 STYLE = """
@@ -134,6 +144,51 @@ def finish_bootstrap() -> None:
         BOOTSTRAP_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
+def start_panel_job(root: Path, kind: str) -> dict:
+    labels = {
+        "check-system": "Проверка системы",
+        "prepare-result": "Подготовка результата",
+    }
+    if kind not in labels:
+        return {"started": False, "error": "Неизвестная задача.", "job": job_status()}
+    if kind == "prepare-result":
+        config = load_config(root)
+        if not selected_field_summary(root, config)["selected"]:
+            return {"started": False, "error": "Сначала выберите точку поля.", "job": job_status()}
+    with JOB_LOCK:
+        if JOB_STATE["running"]:
+            return {"started": False, "error": "Задача уже выполняется.", "job": dict(JOB_STATE)}
+        JOB_STATE.update(
+            {
+                "running": True,
+                "kind": kind,
+                "label": labels[kind],
+                "started_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                "finished_at": "",
+                "status": "RUNNING",
+                "output": f"{labels[kind]} запущена. Панель обновит лог автоматически.",
+            }
+        )
+    thread = threading.Thread(target=run_panel_job, args=(root, kind), daemon=True)
+    thread.start()
+    return {"started": True, "job": job_status()}
+
+
+def run_panel_job(root: Path, kind: str) -> None:
+    output = run_workflow(root, create_project=kind == "prepare-result")
+    failed = "FAILED" in output
+    with JOB_LOCK:
+        JOB_STATE["running"] = False
+        JOB_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        JOB_STATE["status"] = "FAILED" if failed else "OK"
+        JOB_STATE["output"] = output
+
+
+def job_status() -> dict:
+    with JOB_LOCK:
+        return dict(JOB_STATE)
+
+
 def qgis_python(config: dict) -> str:
     configured = config["qgis"].get("python_executable", "")
     if configured:
@@ -168,13 +223,15 @@ def page(root: Path, output: str = "") -> str:
     }
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
     status = "OK" if not missing else ", ".join(missing)
-    escaped_output = html.escape(output or "Нажмите кнопку, чтобы запустить проверку.")
+    latest_job = job_status()
+    visible_output = output or latest_job.get("output") or "Нажмите кнопку, чтобы запустить проверку."
+    escaped_output = html.escape(visible_output)
     preview = root / "outputs/maps/water_regime_gis_preview.png"
     preview_html = '<img class="preview" src="/preview.png" alt="preview результата">' if preview.exists() else ""
     system_html = system_panel(root, config)
     results_html = result_panel(root, config)
     prepare_action = (
-        '<a class="btn" href="/run/prepare-result">Подготовить результат</a>'
+        '<a class="btn" href="/run/prepare-result" data-job="prepare-result">Подготовить результат</a>'
         if field["selected"]
         else '<span class="btn disabled" title="Сначала выберите точку поля">Подготовить результат</span>'
     )
@@ -200,11 +257,11 @@ def page(root: Path, output: str = "") -> str:
 </section>
 <div class="actions">
   {prepare_action}
-  <a class="btn secondary" href="/run/check-system">Проверить систему</a>
+  <a class="btn secondary" href="/run/check-system" data-job="check-system">Проверить систему</a>
 </div>
 <section class="grid">
   <div class="panel"><h2>Состояние</h2><table>{table}</table></div>
-  <div class="panel"><h2>Лог</h2><pre>{escaped_output}</pre>{preview_html}</div>
+  <div class="panel"><h2>Лог</h2><pre id="run-log">{escaped_output}</pre>{preview_html}</div>
 </section>
 {results_html}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -249,6 +306,7 @@ map.on("click", (event) => {{
   else marker = L.marker(p).addTo(map);
 }});
 const systemStatus = document.getElementById("system-status");
+const runLog = document.getElementById("run-log");
 function statusText(status) {{
   if (status === "OK") return "готово";
   if (status === "RUNNING") return "выполняется";
@@ -277,6 +335,40 @@ function refreshSystemStatus() {{
 }}
 refreshSystemStatus();
 setInterval(refreshSystemStatus, 3000);
+function renderJob(payload) {{
+  const job = payload && payload.job ? payload.job : payload;
+  if (!job || !runLog) return;
+  if (job.output) runLog.textContent = job.output;
+  if (!job.running && job.kind === "prepare-result" && sessionStorage.getItem("wrgJobStarted") === "prepare-result") {{
+    sessionStorage.removeItem("wrgJobStarted");
+    setTimeout(() => window.location.reload(), 800);
+  }}
+}}
+function pollJob() {{
+  fetch("/job/status")
+    .then((response) => response.ok ? response.json() : null)
+    .then((payload) => {{
+      renderJob(payload);
+      if (payload && payload.running) setTimeout(pollJob, 1500);
+    }})
+    .catch(() => {{}});
+}}
+document.querySelectorAll("[data-job]").forEach((button) => {{
+  button.addEventListener("click", (event) => {{
+    event.preventDefault();
+    const kind = button.getAttribute("data-job");
+    fetch(`/job/start?kind=${{encodeURIComponent(kind)}}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {{
+        if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", kind);
+        renderJob(payload);
+        pollJob();
+      }})
+      .catch(() => {{
+        window.location.href = button.getAttribute("href");
+      }});
+  }});
+}});
 </script>
 </main></body></html>"""
 
@@ -298,6 +390,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/status.json":
             self.send_json(system_status(root, load_config(root)))
+            return
+        if path == "/job/status":
+            self.send_json(job_status())
+            return
+        if path == "/job/start":
+            kind = (query.get("kind") or [""])[0]
+            self.send_json(start_panel_job(root, kind))
             return
         if path == "/download/field.geojson":
             self.send_download(root / load_config(root)["paths"]["selected_field_area"], "selected_field_area.geojson", "application/geo+json")

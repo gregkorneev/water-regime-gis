@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +16,7 @@ from water_regime_gis.webapp import (
     job_status,
     page,
     qgis_python,
+    readiness_status,
     system_status,
 )
 
@@ -48,6 +50,21 @@ def main() -> int:
     assert "qgis" in environment
     assert "nspd_plugin" in environment
     assert "artifacts" in environment
+    readiness = readiness_status(ROOT, config)
+    assert "can_select_field" in readiness
+    assert "can_prepare_result" in readiness
+    assert "reasons" in readiness
+    with tempfile.TemporaryDirectory() as temp:
+        temp_root = Path(temp)
+        (temp_root / "configs").mkdir()
+        (temp_root / "configs/project.example.json").write_text(
+            (ROOT / "configs/project.example.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        temp_readiness = readiness_status(temp_root, load_config(temp_root))
+        assert not temp_readiness["can_prepare_result"]
+        assert "Сначала выберите точку поля" in temp_readiness["reasons"]["prepare_result"] or not temp_readiness["can_select_field"]
+        assert "btn disabled" in page(temp_root)
     job = job_status()
     assert "steps" in job
     assert "current_step" in job

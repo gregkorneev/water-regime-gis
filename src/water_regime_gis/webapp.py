@@ -159,8 +159,9 @@ def start_panel_job(root: Path, kind: str) -> dict:
         return {"started": False, "error": "Укажите координаты выбранной точки.", "job": job_status()}
     if kind == "prepare-result":
         config = load_config(root)
-        if not selected_field_summary(root, config)["selected"]:
-            return {"started": False, "error": "Сначала выберите точку поля.", "job": job_status()}
+        readiness = readiness_status(root, config)
+        if not readiness["can_prepare_result"]:
+            return {"started": False, "error": readiness["reasons"]["prepare_result"], "job": job_status()}
     with JOB_LOCK:
         if JOB_STATE["running"]:
             return {"started": False, "error": "Задача уже выполняется.", "job": dict(JOB_STATE)}
@@ -185,6 +186,9 @@ def start_panel_job(root: Path, kind: str) -> dict:
 def start_select_field_job(root: Path, lon: str, lat: str) -> dict:
     if not lon or not lat:
         return {"started": False, "error": "Выберите точку на карте.", "job": job_status()}
+    readiness = readiness_status(root, load_config(root))
+    if not readiness["can_select_field"]:
+        return {"started": False, "error": readiness["reasons"]["select_field"], "job": job_status()}
     with JOB_LOCK:
         if JOB_STATE["running"]:
             return {"started": False, "error": "Задача уже выполняется.", "job": dict(JOB_STATE)}
@@ -317,9 +321,33 @@ def environment_status(root: Path, config: dict) -> dict:
     }
 
 
+def readiness_status(root: Path, config: dict) -> dict:
+    field = selected_field_summary(root, config)
+    environment = environment_status(root, config)
+    qgis_ready = environment["qgis"]["found"]
+    field_selected = field["selected"]
+    select_reason = "" if qgis_ready else environment["qgis"]["install_hint"]
+    if not qgis_ready:
+        prepare_reason = environment["qgis"]["install_hint"]
+    elif not field_selected:
+        prepare_reason = "Сначала выберите точку поля на карте."
+    else:
+        prepare_reason = ""
+    return {
+        "can_check_system": True,
+        "can_select_field": qgis_ready,
+        "can_prepare_result": qgis_ready and field_selected,
+        "reasons": {
+            "select_field": select_reason,
+            "prepare_result": prepare_reason,
+        },
+    }
+
+
 def page(root: Path, output: str = "") -> str:
     config = load_config(root)
     field = selected_field_summary(root, config)
+    readiness = readiness_status(root, config)
     missing = missing_required_dirs(root)
     contour = "не выбран"
     if field["selected"]:
@@ -344,10 +372,13 @@ def page(root: Path, output: str = "") -> str:
     system_html = system_panel(root, config)
     environment_html = environment_panel(root, config)
     results_html = result_panel(root, config)
+    select_disabled = "" if readiness["can_select_field"] else " disabled"
+    select_button_class = "btn" if readiness["can_select_field"] else "btn disabled"
+    select_title = readiness["reasons"]["select_field"]
     prepare_action = (
         '<a class="btn" href="/run/prepare-result" data-job="prepare-result">Подготовить результат</a>'
-        if field["selected"]
-        else '<span class="btn disabled" title="Сначала выберите точку поля">Подготовить результат</span>'
+        if readiness["can_prepare_result"]
+        else f'<span class="btn disabled" title="{html.escape(readiness["reasons"]["prepare_result"])}">Подготовить результат</span>'
     )
     return f"""<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -367,7 +398,7 @@ def page(root: Path, output: str = "") -> str:
   <form class="form" action="/run/select-field" method="get">
     <input id="lat" name="lat" placeholder="Широта" value="{html.escape(str(field['lat']))}" required>
     <input id="lon" name="lon" placeholder="Долгота" value="{html.escape(str(field['lon']))}" required>
-    <button class="btn" type="submit">Сохранить выбранное поле</button>
+    <button class="{select_button_class}" type="submit" title="{html.escape(select_title)}"{select_disabled}>Сохранить выбранное поле</button>
   </form>
 </section>
 <div class="actions">
@@ -451,6 +482,10 @@ function refreshSystemStatus() {{
 refreshSystemStatus();
 setInterval(refreshSystemStatus, 3000);
 function renderJob(payload) {{
+  if (payload && payload.error && runLog) {{
+    runLog.textContent = payload.error;
+    return;
+  }}
   const job = payload && payload.job ? payload.job : payload;
   if (!job || !runLog) return;
   if (job.output) runLog.textContent = job.output;
@@ -526,6 +561,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/environment.json":
             self.send_json(environment_status(root, load_config(root)))
+            return
+        if path == "/readiness.json":
+            self.send_json(readiness_status(root, load_config(root)))
             return
         if path == "/job/status":
             self.send_json(job_status())

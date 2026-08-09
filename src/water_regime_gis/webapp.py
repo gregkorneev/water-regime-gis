@@ -38,6 +38,8 @@ JOB_STATE = {
     "finished_at": "",
     "status": "",
     "output": "",
+    "current_step": "",
+    "steps": [],
 }
 JOB_LOCK = threading.Lock()
 DEFAULT_PORT = 8765
@@ -170,6 +172,8 @@ def start_panel_job(root: Path, kind: str) -> dict:
                 "finished_at": "",
                 "status": "RUNNING",
                 "output": f"{labels[kind]} запущена. Панель обновит лог автоматически.",
+                "current_step": "",
+                "steps": [],
             }
         )
     thread = threading.Thread(target=run_panel_job, args=(root, kind), daemon=True)
@@ -192,6 +196,8 @@ def start_select_field_job(root: Path, lon: str, lat: str) -> dict:
                 "finished_at": "",
                 "status": "RUNNING",
                 "output": "Выбор поля запущен. Панель обновит лог автоматически.",
+                "current_step": "",
+                "steps": [],
             }
         )
     thread = threading.Thread(target=run_select_field_job, args=(root, lon, lat), daemon=True)
@@ -200,28 +206,54 @@ def start_select_field_job(root: Path, lon: str, lat: str) -> dict:
 
 
 def run_panel_job(root: Path, kind: str) -> None:
-    output = run_workflow(root, create_project=kind == "prepare-result")
+    output = run_workflow(root, create_project=kind == "prepare-result", progress=record_job_step)
     failed = "FAILED" in output
     with JOB_LOCK:
         JOB_STATE["running"] = False
         JOB_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         JOB_STATE["status"] = "FAILED" if failed else "OK"
         JOB_STATE["output"] = output
+        JOB_STATE["current_step"] = ""
 
 
 def run_select_field_job(root: Path, lon: str, lat: str) -> None:
-    output = select_field(root, lon, lat)
+    output = select_field(root, lon, lat, progress=record_job_step)
     failed = "FAILED" in output
     with JOB_LOCK:
         JOB_STATE["running"] = False
         JOB_STATE["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         JOB_STATE["status"] = "FAILED" if failed else "OK"
         JOB_STATE["output"] = output
+        JOB_STATE["current_step"] = ""
 
 
 def job_status() -> dict:
     with JOB_LOCK:
-        return dict(JOB_STATE)
+        state = dict(JOB_STATE)
+        state["steps"] = [dict(step) for step in JOB_STATE["steps"]]
+        return state
+
+
+def record_job_step(label: str, status: str, message: str = "") -> None:
+    with JOB_LOCK:
+        steps = JOB_STATE.setdefault("steps", [])
+        for step in reversed(steps):
+            if step["label"] == label:
+                step.update({"status": status, "message": message})
+                break
+        else:
+            steps.append({"label": label, "status": status, "message": message})
+        JOB_STATE["current_step"] = label if status == "RUNNING" else ""
+        if JOB_STATE["running"]:
+            JOB_STATE["output"] = format_job_steps(steps)
+
+
+def format_job_steps(steps: list[dict]) -> str:
+    if not steps:
+        return "Задача запущена. Панель обновит лог автоматически."
+    return "\n\n".join(
+        f"{step['label']}: {step['status']}\n{step.get('message') or 'Выполняется.'}" for step in steps
+    )
 
 
 def qgis_python(config: dict) -> str:
@@ -598,67 +630,95 @@ class Handler(BaseHTTPRequestHandler):
         return
 
 
-def run_workflow(root: Path, create_project: bool) -> str:
+def run_workflow(root: Path, create_project: bool, progress=None) -> str:
     config = load_config(root)
     parts = []
+
+    def run_step(label: str, command: list[str]) -> tuple[int, str]:
+        if progress:
+            progress(label, "RUNNING", "Выполняется.")
+        code, raw_output = run_command(root, command)
+        message = public_output(label, raw_output, code)
+        if progress:
+            progress(label, "OK" if code == 0 else "FAILED", message)
+        parts.append(format_step(label, code, message))
+        return code, raw_output
 
     for label, command in [
         ("Проверка структуры", [sys.executable, "scripts/check_project.py"]),
         ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
     ]:
-        code, output = run_command(root, command)
-        parts.append(format_step(label, code, public_output(label, output, code)))
+        code, _ = run_step(label, command)
         if code:
             return "\n\n".join(parts)
 
     qgis = qgis_python(config)
     if not qgis:
-        parts.append("Геодвижок: FAILED\nГеодвижок не найден. Установите QGIS 3.40+ и повторите запуск.")
+        message = "Геодвижок не найден. Установите QGIS 3.40+ и повторите запуск."
+        if progress:
+            progress("Проверка геодвижка", "FAILED", message)
+        parts.append(f"Геодвижок: FAILED\n{message}")
         return "\n\n".join(parts)
 
     for label, command in [
         ("Проверка геодвижка", [qgis, config["qgis"]["script_runner"]]),
         ("Проверка кадастровых данных", [qgis, config["qgis"]["nspd_plugin_check_script"]]),
     ]:
-        code, output = run_command(root, command)
-        parts.append(format_step(label, code, public_output(label, output, code)))
+        code, _ = run_step(label, command)
         if code:
             return "\n\n".join(parts)
 
     if create_project:
         field = selected_field_summary(root, config)
         if not field["selected"]:
-            parts.append("Подготовка результата: FAILED\nСначала выберите точку поля на карте и нажмите 'Сохранить выбранное поле'.")
+            message = "Сначала выберите точку поля на карте и нажмите 'Сохранить выбранное поле'."
+            if progress:
+                progress("Подготовка результата", "FAILED", message)
+            parts.append(f"Подготовка результата: FAILED\n{message}")
             return "\n\n".join(parts)
-        code, output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
-        parts.append(format_step("Уточнение контура", code, public_output("Уточнение контура", output, code)))
+        code, _ = run_step("Уточнение контура", [qgis, config["qgis"]["resolve_boundary_script"]])
         if code:
             return "\n\n".join(parts)
-        code, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
-        parts.append(format_step("Подготовка результата", code, public_output("Подготовка результата", output, code)))
+        code, _ = run_step("Подготовка результата", [qgis, config["qgis"]["demo_project_script"]])
         if code == 0:
             write_result_report(root, config, "\n\n".join(parts))
 
     return "\n\n".join(parts)
 
 
-def select_field(root: Path, lon: str, lat: str) -> str:
+def select_field(root: Path, lon: str, lat: str, progress=None) -> str:
     config = load_config(root)
     qgis = qgis_python(config)
     if not qgis:
-        return "Выбор поля: FAILED\nГеодвижок недоступен. Установите QGIS 3.40+ и перезапустите панель."
+        message = "Геодвижок недоступен. Установите QGIS 3.40+ и перезапустите панель."
+        if progress:
+            progress("Выбор поля", "FAILED", message)
+        return f"Выбор поля: FAILED\n{message}"
     if not lon or not lat:
-        return "Выбор поля: FAILED\nВыберите точку на карте или введите широту и долготу."
+        message = "Выберите точку на карте или введите широту и долготу."
+        if progress:
+            progress("Выбор поля", "FAILED", message)
+        return f"Выбор поля: FAILED\n{message}"
 
+    if progress:
+        progress("Выбор поля", "RUNNING", "Сохраняем выбранную точку.")
     select_code, select_output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
+    select_message = public_output("Выбор поля", select_output, select_code)
+    if progress:
+        progress("Выбор поля", "OK" if select_code == 0 else "FAILED", select_message)
     if select_code:
-        return format_step("Выбор поля", select_code, public_output("Выбор поля", select_output, select_code))
+        return format_step("Выбор поля", select_code, select_message)
 
+    if progress:
+        progress("Уточнение контура", "RUNNING", "Ищем кадастровый контур по выбранной точке.")
     boundary_code, boundary_output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
+    boundary_message = public_output("Уточнение контура", boundary_output, boundary_code)
+    if progress:
+        progress("Уточнение контура", "OK" if boundary_code == 0 else "FAILED", boundary_message)
     return "\n\n".join(
         [
-            format_step("Выбор поля", 0, public_output("Выбор поля", select_output, 0)),
-            format_step("Уточнение контура", boundary_code, public_output("Уточнение контура", boundary_output, boundary_code)),
+            format_step("Выбор поля", 0, select_message),
+            format_step("Уточнение контура", boundary_code, boundary_message),
         ]
     )
 

@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
-from water_regime_gis.webapp import find_available_port, page, qgis_python, system_status
+from water_regime_gis.webapp import find_available_port, format_job_steps, job_status, page, qgis_python, system_status
 
 
 def main() -> int:
@@ -35,6 +35,10 @@ def main() -> int:
     status = system_status(ROOT, config)
     assert "steps" in status
     assert status["steps"]
+    job = job_status()
+    assert "steps" in job
+    assert "current_step" in job
+    assert "Шаг: RUNNING" in format_job_steps([{"label": "Шаг", "status": "RUNNING", "message": "Выполняется."}])
     assert isinstance(find_available_port(start=8765, attempts=2), int)
     qgis = qgis_python(config)
     if qgis:

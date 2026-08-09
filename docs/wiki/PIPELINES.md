@@ -174,6 +174,13 @@ python3 scripts/run_app.py
 - старт: `/job/start?kind=select-field&lat=...&lon=...`, `/job/start?kind=check-system` или `/job/start?kind=prepare-result`;
 - статус и лог: `/job/status`.
 
+`/job/status` возвращает:
+
+- `running`, `kind`, `status`;
+- `current_step`;
+- `steps` со статусом каждого шага (`RUNNING`, `OK`, `FAILED`);
+- человекочитаемый `output`, который панель выводит в блок `Лог`.
+
 Старые синхронные адреса `/run/select-field`, `/run/check-system` и `/run/prepare-result` оставлены как fallback без JavaScript и для прямой диагностики.
 
 `Проверить систему` запускает:

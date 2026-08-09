@@ -66,6 +66,7 @@ def selected_field_summary(root: Path, config: dict) -> dict:
             "lat": "",
             "area_ha": "",
             "analysis_crs": config["qgis"]["target_crs"],
+            "source": "",
         }
 
     feature = _first_feature(area_path)
@@ -81,6 +82,7 @@ def selected_field_summary(root: Path, config: dict) -> dict:
         "lat": lat,
         "area_ha": polygon_area_ha(coords),
         "analysis_crs": feature["properties"].get("analysis_crs", config["qgis"]["target_crs"]),
+        "source": feature["properties"].get("source", ""),
     }
 
 

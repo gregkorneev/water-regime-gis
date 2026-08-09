@@ -74,7 +74,7 @@ DEM используется для расчета:
 Текущий пользовательский результат первого этапа:
 
 - `outputs/maps/water_regime_gis_preview.png` — preview-карта выбранной области;
-- `data/aoi/selected_field_area.geojson` — GeoJSON-контур временной рабочей области;
+- `data/aoi/selected_field_area.geojson` — GeoJSON-контур выбранной области. Свойство `source` показывает источник: `nspd_getfeatureinfo` для кадастрового контура или `map_point_buffer` для временного fallback-буфера;
 - `outputs/reports/latest_result.json` — JSON-отчет для панели со статусом, параметрами поля, ссылками скачивания и кратким логом.
 
 Файлы результата являются локальными производными артефактами и не добавляются в git.

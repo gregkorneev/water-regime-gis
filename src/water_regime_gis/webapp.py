@@ -69,11 +69,14 @@ def page(root: Path, output: str = "") -> str:
     config = load_config(root)
     field = selected_field_summary(root, config)
     missing = missing_required_dirs(root)
+    contour = "не выбран"
+    if field["selected"]:
+        contour = "кадастровый контур" if field.get("source") == "nspd_getfeatureinfo" else "временная рабочая область"
     rows = {
         "Проект": config["project"]["name"],
         "Этап": config["project"]["stage"],
         "Поле": field["name"],
-        "Контур": "подготовлен" if field["selected"] else "не выбран",
+        "Контур": contour,
         "Долгота": field["lon"],
         "Широта": field["lat"],
         "Рабочая CRS": field["analysis_crs"],
@@ -204,7 +207,17 @@ class Handler(BaseHTTPRequestHandler):
             elif not lon or not lat:
                 output = "Выберите точку на карте или введите широту и долготу."
             else:
-                _, output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
+                select_code, select_output = run_command(root, [qgis, config["qgis"]["select_field_script"], "--lon", lon, "--lat", lat])
+                if select_code:
+                    output = format_step("Выбор поля", select_code, public_output("Выбор поля", select_output, select_code))
+                else:
+                    boundary_code, boundary_output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
+                    output = "\n\n".join(
+                        [
+                            format_step("Выбор поля", 0, public_output("Выбор поля", select_output, 0)),
+                            format_step("Уточнение контура", boundary_code, public_output("Уточнение контура", boundary_output, boundary_code)),
+                        ]
+                    )
         elif path == "/run/check-qgis":
             config = load_config(root)
             qgis = qgis_python(config)
@@ -348,6 +361,10 @@ def run_workflow(root: Path, create_project: bool) -> str:
         if not field["selected"]:
             parts.append("Подготовка результата: FAILED\nСначала выберите точку поля на карте и нажмите 'Сохранить выбранное поле'.")
             return "\n\n".join(parts)
+        code, output = run_command(root, [qgis, config["qgis"]["resolve_boundary_script"]])
+        parts.append(format_step("Уточнение контура", code, public_output("Уточнение контура", output, code)))
+        if code:
+            return "\n\n".join(parts)
         code, output = run_command(root, [qgis, config["qgis"]["demo_project_script"]])
         parts.append(format_step("Подготовка результата", code, public_output("Подготовка результата", output, code)))
         if code == 0:
@@ -372,6 +389,14 @@ def public_output(label: str, output: str, code: int) -> str:
         return "Геодвижок доступен."
     if label == "Проверка кадастровых данных":
         return "Кадастровые данные доступны."
+    if label == "Выбор поля":
+        return "Точка поля сохранена."
+    if label == "Уточнение контура":
+        if "Boundary source: nspd_getfeatureinfo" in output:
+            return "Кадастровый контур найден по выбранной точке."
+        if "Boundary source: map_point_buffer" in output:
+            return "Кадастровый контур пока недоступен, используется временная рабочая область вокруг точки."
+        return "Контур проверен."
     if label == "Подготовка результата":
         lines = []
         for line in output.splitlines():
@@ -440,6 +465,7 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
             "lat": field["lat"],
             "area_ha": field["area_ha"],
             "analysis_crs": field["analysis_crs"],
+            "source": field.get("source", ""),
         },
         "artifacts": {
             name: {"url": url, "exists": path.exists(), "size_bytes": path.stat().st_size if path.exists() else 0}

@@ -12,6 +12,7 @@
     "nspd_plugin_check_script": "scripts/qgis/check_nspd_plugin.py",
     "demo_project_script": "scripts/qgis/create_demo_project.py",
     "select_field_script": "scripts/qgis/select_field_point.py",
+    "resolve_boundary_script": "scripts/qgis/resolve_field_boundary.py",
     "field_buffer_meters": 500
   },
   "nspd": {
@@ -21,7 +22,8 @@
     "plugin_download_url": "https://plugins.qgis.org/plugins/rosreestr-search-qgis-plugin-master/version/2.5/download/",
     "parcels_wms_layer_id": 36048,
     "parcels_wms_name": "Земельные участки из ЕГРН",
-    "local_wms_proxy_url": "http://127.0.0.1:8765/nspd/wms"
+    "local_wms_proxy_url": "http://127.0.0.1:8765/nspd/wms",
+    "feature_info_span_meters": 500
   },
   "paths": {
     "test_aoi": "data/aoi/tula_test_field.geojson",

@@ -36,6 +36,8 @@
 
 На macOS приложение также пробует автоматически найти `/Applications/QGIS.app/Contents/MacOS/python`. Это wrapper QGIS, который настраивает `PYTHONHOME` для встроенного Python.
 
+Внутри PyQGIS-скриптов prefix должен оставаться `/Applications/QGIS.app`. Prefix `/Applications/QGIS.app/Contents/MacOS` не подходит для WMS-слоев, потому что QGIS тогда не видит WMS-провайдер.
+
 Минимальная идея запуска:
 
 ```bash

@@ -155,3 +155,15 @@
 Ограничение:
 
 - WMS-слой НСПД подходит для визуального контроля, но не заменяет векторную границу для расчетов. Следующий шаг — получить конкретный кадастровый полигон по точке или кадастровому номеру.
+
+## 2026-08-09 — PyQGIS prefix должен оставаться на корне QGIS.app
+
+Решение:
+
+- запускать PyQGIS через wrapper `/Applications/QGIS.app/Contents/MacOS/python`;
+- внутри скриптов задавать prefix `/Applications/QGIS.app`, если prefix нужно задать явно;
+- не использовать prefix `/Applications/QGIS.app/Contents/MacOS`.
+
+Причина:
+
+- при prefix `/Applications/QGIS.app/Contents/MacOS` headless QGIS не загружает WMS-провайдер, и слой НСПД становится невалидным.

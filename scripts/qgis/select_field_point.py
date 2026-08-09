@@ -22,7 +22,7 @@ def main() -> int:
     parser.add_argument("--buffer-meters", type=float)
     args = parser.parse_args()
 
-    QgsApplication.setPrefixPath("/Applications/QGIS.app/Contents/MacOS", True)
+    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     target_crs = QgsCoordinateReferenceSystem(config["qgis"]["target_crs"])
     if not target_crs.isValid():

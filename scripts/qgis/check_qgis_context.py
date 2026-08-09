@@ -13,7 +13,7 @@ except Exception as exc:
     raise SystemExit(1)
 
 if not QgsApplication.prefixPath():
-    QgsApplication.setPrefixPath("/Applications/QGIS.app/Contents/MacOS", True)
+    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
 
 print("PyQGIS: OK")
 print(f"QGIS version: {Qgis.QGIS_VERSION}")

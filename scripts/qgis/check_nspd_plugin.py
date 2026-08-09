@@ -15,7 +15,7 @@ CONFIG = ROOT / "configs/project.example.json"
 
 
 def main() -> int:
-    QgsApplication.setPrefixPath("/Applications/QGIS.app/Contents/MacOS", True)
+    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     plugin_id = config["nspd"]["plugin_id"]
     plugin_name = config["nspd"]["plugin_name"]

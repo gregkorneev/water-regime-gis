@@ -17,7 +17,13 @@
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/check_nspd_plugin.py
 ```
 
-На macOS 2026-08-09 в рабочем профиле QGIS плагин не был найден. После установки через QGIS Plugin Manager проверку нужно запустить повторно.
+На macOS 2026-08-09 плагин установлен в профиль QGIS `default`:
+
+```text
+~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins/rosreestr-search-qgis-plugin-master
+```
+
+Для headless PyQGIS важно не перетирать prefix на `/Applications/QGIS.app/Contents/MacOS`. Правильный prefix для загрузки WMS-провайдера: `/Applications/QGIS.app`.
 
 Важно: слой `Земельные участки из ЕГРН` из НСПД подключается как WMS. Он полезен для визуального контроля границ, но для расчетов нужен векторный полигон конкретного участка.
 

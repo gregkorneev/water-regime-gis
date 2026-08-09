@@ -8,7 +8,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.project import load_config
-from water_regime_gis.webapp import find_available_port, format_job_steps, job_status, page, qgis_python, system_status
+from water_regime_gis.webapp import (
+    environment_status,
+    find_available_port,
+    format_job_steps,
+    job_status,
+    page,
+    qgis_python,
+    system_status,
+)
 
 
 def main() -> int:
@@ -21,6 +29,7 @@ def main() -> int:
     assert "Подготовить результат" in html
     assert "Проверить систему" in html
     assert "Готовность системы" in html
+    assert "Среда" in html
     assert 'id="system-status"' in html
     assert 'id="run-log"' in html
     assert "/status.json" in html
@@ -35,6 +44,10 @@ def main() -> int:
     status = system_status(ROOT, config)
     assert "steps" in status
     assert status["steps"]
+    environment = environment_status(ROOT, config)
+    assert "qgis" in environment
+    assert "nspd_plugin" in environment
+    assert "artifacts" in environment
     job = job_status()
     assert "steps" in job
     assert "current_step" in job

@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import plistlib
 import socket
 import ssl
 import subprocess
@@ -271,6 +272,51 @@ def qgis_python(config: dict) -> str:
     return ""
 
 
+def qgis_app_path(qgis_python_path: str) -> Path:
+    path = Path(qgis_python_path)
+    parts = path.parts
+    if "QGIS.app" in parts:
+        return Path(*parts[: parts.index("QGIS.app") + 1])
+    return Path("/Applications/QGIS.app")
+
+
+def qgis_version(qgis_app: Path) -> str:
+    info = qgis_app / "Contents/Info.plist"
+    if not info.exists():
+        return ""
+    try:
+        data = plistlib.loads(info.read_bytes())
+    except Exception:
+        return ""
+    return str(data.get("CFBundleShortVersionString") or data.get("CFBundleVersion") or "")
+
+
+def environment_status(root: Path, config: dict) -> dict:
+    qgis = qgis_python(config)
+    qgis_app = qgis_app_path(qgis) if qgis else Path("/Applications/QGIS.app")
+    plugin = nspd_plugin_dir(config)
+    return {
+        "qgis": {
+            "found": bool(qgis),
+            "python": qgis,
+            "app": str(qgis_app) if qgis_app.exists() else "",
+            "version": qgis_version(qgis_app),
+            "install_hint": "" if qgis else "Установите QGIS в /Applications/QGIS.app и перезапустите панель.",
+        },
+        "nspd_plugin": {
+            "found": (plugin / "metadata.txt").exists(),
+            "path": str(plugin),
+            "name": config["nspd"]["plugin_name"],
+            "url": config["nspd"]["plugin_url"],
+        },
+        "artifacts": {
+            "selected_field_area": (root / config["paths"]["selected_field_area"]).exists(),
+            "preview": (root / "outputs/maps/water_regime_gis_preview.png").exists(),
+            "report": (root / config["paths"]["latest_report"]).exists(),
+        },
+    }
+
+
 def page(root: Path, output: str = "") -> str:
     config = load_config(root)
     field = selected_field_summary(root, config)
@@ -296,6 +342,7 @@ def page(root: Path, output: str = "") -> str:
     preview = root / "outputs/maps/water_regime_gis_preview.png"
     preview_html = '<img class="preview" src="/preview.png" alt="preview результата">' if preview.exists() else ""
     system_html = system_panel(root, config)
+    environment_html = environment_panel(root, config)
     results_html = result_panel(root, config)
     prepare_action = (
         '<a class="btn" href="/run/prepare-result" data-job="prepare-result">Подготовить результат</a>'
@@ -313,6 +360,7 @@ def page(root: Path, output: str = "") -> str:
   <div class="tile"><div class="label">Рабочая CRS</div><div class="value">{html.escape(field['analysis_crs'])}</div></div>
 </section>
 {system_html}
+{environment_html}
 <section class="panel">
   <h2>Выбор поля</h2>
   <div id="map" class="map"></div>
@@ -475,6 +523,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/status.json":
             self.send_json(system_status(root, load_config(root)))
+            return
+        if path == "/environment.json":
+            self.send_json(environment_status(root, load_config(root)))
             return
         if path == "/job/status":
             self.send_json(job_status())
@@ -770,6 +821,28 @@ def public_output(label: str, output: str, code: int) -> str:
                 lines.append(f"CRS результата: {line.split(':', 1)[1].strip()}.")
         return "\n".join(lines) or "Карта результата подготовлена."
     return output
+
+
+def environment_panel(root: Path, config: dict) -> str:
+    status = environment_status(root, config)
+    qgis = status["qgis"]
+    plugin = status["nspd_plugin"]
+    artifacts = status["artifacts"]
+    qgis_state = "найден" if qgis["found"] else "не найден"
+    plugin_state = "готов" if plugin["found"] else "будет установлен автоматически"
+    result_state = "готовы" if artifacts["preview"] and artifacts["report"] else "пока не подготовлены"
+    rows = {
+        "QGIS": f"{qgis_state}{' ' + qgis['version'] if qgis['version'] else ''}",
+        "Скрытый запуск": "готов к работе" if qgis["found"] else qgis["install_hint"],
+        "Кадастровый модуль": plugin_state,
+        "Результаты": result_state,
+    }
+    table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
+    return f"""
+<section class="panel">
+  <h2>Среда</h2>
+  <table>{table}</table>
+</section>"""
 
 
 def system_panel(root: Path, config: dict) -> str:

@@ -86,6 +86,25 @@ Docker-вариант проверяется командой `python3 scripts/c
 
 Панель показывает режим запуска в блоке `Среда`: `Локальный запуск`, если используется QGIS с компьютера пользователя, или `Docker-контейнер`, если приложение работает внутри контейнера. Машинно это доступно в `/environment.json` как `runtime.mode`.
 
+Сборка пользовательского Docker-first пакета:
+
+```bash
+python3 scripts/build_release_package.py
+```
+
+Скрипт создает `dist/water-regime-gis-release/`. Это переносимый пакет без необходимости запускать проект из репозитория:
+
+- `Water Regime GIS.app` — macOS launcher;
+- `Water Regime GIS.command` — запасной macOS launcher;
+- `Water Regime GIS.bat` — Windows launcher;
+- `docker-compose.yml` — запуск контейнерной панели;
+- `water-regime-gis-image.tar` — сохраненный Docker-образ с кодом проекта и QGIS runtime;
+- `data/`, `outputs/`, `configs/` — пользовательские данные, результаты и конфигурация рядом с приложением.
+
+При первом запуске launcher проверяет Docker Desktop, загружает `water-regime-gis-image.tar` как image `water-regime-gis:release`, запускает `docker compose up -d` и открывает `http://127.0.0.1:8765`. QGIS находится внутри Docker-образа и не открывается пользователем.
+
+Собранный пакет проверяется командой `python3 scripts/check_release_package.py`.
+
 Сборка локального `.app`:
 
 ```bash
@@ -178,5 +197,7 @@ QGIS-проект тоже использует локальный WMS-прок�
 Для macOS реализована локальная `.app`-оболочка через `scripts/build_macos_app.py`. Она не встраивает Python и код проекта внутрь bundle, а запускает панель из текущего репозитория. Это промежуточный шаг к полноценной дистрибуции.
 
 Для Windows добавлен простой `launch_panel.bat`, который запускает ту же локальную панель из репозитория.
+
+Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает Docker-first пакет для macOS и Windows с готовым Docker-образом приложения.
 
 Упаковка в standalone `.app` с вендорингом зависимостей и `.exe` для Windows пока не реализована.

@@ -14,8 +14,11 @@ def main() -> int:
     launcher = (ROOT / "launch_panel.bat").read_text(encoding="utf-8")
     docker_macos = (ROOT / "launch_docker.command").read_text(encoding="utf-8")
     docker_windows = (ROOT / "launch_docker.bat").read_text(encoding="utf-8")
+    release_script = (ROOT / "scripts/build_release_package.py").read_text(encoding="utf-8")
 
     assert (ROOT / "scripts/check_docker_app.py").exists()
+    assert (ROOT / "scripts/build_release_package.py").exists()
+    assert (ROOT / "scripts/check_release_package.py").exists()
     assert "qgis/qgis:3.44-noble" in dockerfile
     assert "WATER_REGIME_GIS_RUNTIME=docker" in dockerfile
     assert "WATER_REGIME_GIS_HOST=0.0.0.0" in dockerfile
@@ -32,6 +35,14 @@ def main() -> int:
     assert "open http://127.0.0.1:8765" in docker_macos
     assert "docker compose up --build -d" in docker_windows
     assert "start http://127.0.0.1:8765" in docker_windows
+    assert "water-regime-gis-release" in release_script
+    assert "Water Regime GIS.app" in release_script
+    assert "Water Regime GIS.bat" in release_script
+    assert "image: water-regime-gis:release" in release_script
+    assert "water-regime-gis-image.tar" in release_script
+    assert "docker load -i water-regime-gis-image.tar" in release_script
+    assert '"save"' in release_script
+    assert "docker compose up -d" in release_script
     print("Distribution config: OK")
     return 0
 

@@ -51,6 +51,11 @@
 - На Windows добавлен пользовательский launcher `launch_panel.bat`.
 - Добавлен Docker-запуск `docker compose up --build`; образ основан на `qgis/qgis:3.44-noble` и публикует панель на `127.0.0.1:8765`.
 - Добавлены Docker launchers `launch_docker.command` и `launch_docker.bat`, которые запускают compose в фоне и открывают панель.
+- Добавлен Docker-first release-пакет: `python3 scripts/build_release_package.py` создает `dist/water-regime-gis-release/`.
+- Release-пакет содержит `Water Regime GIS.app`, `Water Regime GIS.command`, `Water Regime GIS.bat`, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и Docker image tar `water-regime-gis-image.tar`.
+- В release-пакете QGIS и код проекта находятся внутри Docker image `water-regime-gis:release`; пользовательские данные и результаты лежат рядом с launcher-ами.
+- Release launchers загружают image из tar при первом запуске, запускают `docker compose up -d` и открывают панель.
+- Собранный release-пакет проверяется командой `python3 scripts/check_release_package.py`.
 - Добавлена проверка реального Docker-запуска `python3 scripts/check_docker_app.py`; она ждет bootstrap и проверяет QGIS 3.40+ и НСПД-плагин внутри контейнера.
 - Для Linux/Docker `qgis_runtime.py` выставляет `QT_QPA_PLATFORM=offscreen`, чтобы скрытые PyQGIS-проверки не падали на отсутствии дисплея.
 - Общий helper `src/water_regime_gis/qgis_runtime.py` ищет QGIS Python, prefix и профиль плагинов для macOS, Windows и Linux/Docker.

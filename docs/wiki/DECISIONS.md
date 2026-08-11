@@ -501,3 +501,16 @@
 Причина:
 
 - пользователь и будущая desktop-оболочка должны понимать, откуда берется QGIS: с компьютера пользователя или из контейнера. Это упрощает диагностику без открытия QGIS и без чтения терминала.
+
+## 2026-08-11 — Основная упаковка стала Docker-first release-пакетом
+
+Решение:
+
+- добавить `scripts/build_release_package.py`;
+- собирать Docker image `water-regime-gis:release` и сохранять его как `dist/water-regime-gis-release/water-regime-gis-image.tar`;
+- класть в release-папку macOS launcher `Water Regime GIS.app`, запасной `Water Regime GIS.command`, Windows launcher `Water Regime GIS.bat`, `docker-compose.yml`, `configs/`, `data/` и `outputs/`;
+- launchers загружают Docker image из tar при первом запуске, запускают `docker compose up -d` и открывают панель.
+
+Причина:
+
+- пользовательский продукт не должен требовать работы из dev-репозитория. QGIS runtime и код проекта должны находиться внутри Docker-образа, а пользовательские данные и результаты — в папках рядом с приложением.

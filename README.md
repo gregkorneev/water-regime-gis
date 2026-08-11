@@ -136,6 +136,20 @@ python3 scripts/check_docker_app.py
 
 Docker-проверка ждет автоподготовку контейнера и подтверждает, что QGIS и кадастровый модуль доступны из панели.
 
+Собрать пользовательский Docker-first пакет:
+
+```bash
+python3 scripts/build_release_package.py
+```
+
+Пакет создается в `dist/water-regime-gis-release/`. Внутри лежат `Water Regime GIS.app` для macOS, `Water Regime GIS.bat` для Windows, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и готовый Docker-образ `water-regime-gis-image.tar`. При первом запуске launcher сам загрузит образ в Docker и откроет панель.
+
+Проверить собранный пакет:
+
+```bash
+python3 scripts/check_release_package.py
+```
+
 E2E-проверка временно создает тестовые результаты и восстанавливает прежние локальные артефакты после завершения.
 
 После сборки приложение появится в `dist/Water Regime GIS.app`; его можно открыть двойным кликом. `dist/` не добавляется в git.

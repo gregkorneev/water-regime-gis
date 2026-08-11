@@ -42,6 +42,8 @@ docs/wiki/            # проектная wiki
 - `scripts/run_app.py` запускает локальное веб-приложение из рабочей копии.
 - `scripts/qgis/check_qgis_context.py` проверяет запуск PyQGIS через QGIS Python.
 - `scripts/install_nspd_plugin.py` автоматически устанавливает кадастровый QGIS-плагин НСПД в профиль пользователя.
+- `scripts/check_satellite_pipeline.py` проверяет конфигурацию спутникового STAC/индекс-пайплайна.
+- `scripts/qgis/process_satellite_indices.py` внутри QGIS Python ищет Sentinel-2 L2A сцену, обрезает каналы через GDAL и рассчитывает спектральные индексы.
 - `scripts/qgis/create_demo_project.py` скрыто создает QGIS-проект `outputs/maps/water_regime_gis.qgs` и preview для панели.
 
 ## Desktop-приложение
@@ -61,6 +63,7 @@ PostGIS планируется как будущий слой хранения �
 QGIS используется как скрытый исполняемый слой для:
 
 - запуска PyQGIS/Processing-алгоритмов;
+- запуска GDAL/OGR из QGIS runtime для Sentinel-2 COG, обрезки по AOI и расчета GeoTIFF индексов;
 - создания внутренних QGIS-проектов;
 - подготовки preview, карт и промежуточных геоданных;
 - работы с QGIS-плагинами, если их можно установить и запускать автоматически.

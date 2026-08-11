@@ -69,13 +69,33 @@
 
 Вход:
 
-- Sentinel-2 или Landsat сцены;
+- Sentinel-2 L2A через STAC Microsoft Planetary Computer;
 - выбранная кадастровая граница или временная рабочая область;
 - параметры облачности и дат.
 
 Выход:
 
 - обрезанные и приведенные к общему CRS растры.
+
+Текущая команда:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/process_satellite_indices.py
+```
+
+Текущая логика:
+
+- читает `data/aoi/selected_field_area.geojson`;
+- ищет Sentinel-2 L2A сцену в STAC `https://planetarycomputer.microsoft.com/api/stac/v1/search`;
+- период поиска по умолчанию — последние 60 дней;
+- максимальная облачность — 30%;
+- выбирает наименее облачную сцену;
+- подписывает asset URL через Planetary Computer SAS API;
+- через GDAL `/vsicurl/` из QGIS runtime обрезает каналы по выбранной области и приводит их к `EPSG:32637`;
+- сохраняет каналы в `data/interim/satellite/<scene_id>/`;
+- сохраняет metadata в `data/interim/satellite/latest_scene.json`.
+
+Для v1 расчеты выполняются внутри QGIS Python с использованием GDAL/OGR, поставляемых QGIS. Observearth зафиксирован как целевой QGIS-плагин для дальнейшей STAC/индекс-интеграции, но текущий автоматический пайплайн не зависит от его UI/API.
 
 ## 4. Расчет спектральных индексов
 
@@ -86,6 +106,24 @@
 Выход:
 
 - GeoTIFF для NDVI, NDMI, NDWI, MNDWI, SAVI, NDRE.
+
+Формулы v1:
+
+- NDVI = `(NIR - Red) / (NIR + Red)`;
+- NDMI = `(NIR - SWIR1) / (NIR + SWIR1)`;
+- NDWI = `(Green - NIR) / (Green + NIR)`;
+- MNDWI = `(Green - SWIR1) / (Green + SWIR1)`;
+- SAVI = `1.5 * (NIR - Red) / (NIR + Red + 0.5)`;
+- NDRE = `(NIR - RedEdge) / (NIR + RedEdge)`.
+
+Выходные файлы:
+
+- `outputs/rasters/ndvi.tif`;
+- `outputs/rasters/ndmi.tif`;
+- `outputs/rasters/ndwi.tif`;
+- `outputs/rasters/mndwi.tif`;
+- `outputs/rasters/savi.tif`;
+- `outputs/rasters/ndre.tif`.
 
 ## 5. DEM-анализ
 
@@ -195,6 +233,7 @@ python3 scripts/run_app.py
 При старте приложение автоматически запускает bootstrap-пайплайн:
 
 - `scripts/check_project.py`;
+- `scripts/check_satellite_pipeline.py`;
 - `scripts/install_nspd_plugin.py`;
 - `scripts/qgis/check_qgis_context.py`;
 - `scripts/qgis/check_nspd_plugin.py`.
@@ -234,6 +273,7 @@ python3 scripts/run_app.py
 `Проверить систему` запускает:
 
 - `scripts/check_project.py`;
+- `scripts/check_satellite_pipeline.py`;
 - `scripts/install_nspd_plugin.py`;
 - `scripts/qgis/check_qgis_context.py`;
 - `scripts/qgis/check_nspd_plugin.py`.
@@ -245,6 +285,8 @@ python3 scripts/run_app.py
 Перед созданием результата `Подготовить результат` повторно запускает:
 
 - `scripts/qgis/resolve_field_boundary.py`.
+- `scripts/qgis/process_satellite_indices.py`.
+- `scripts/qgis/create_demo_project.py`.
 
 Пользователь не открывает QGIS вручную: QGIS работает как скрытый PyQGIS-движок.
 
@@ -254,6 +296,7 @@ python3 scripts/run_app.py
 - preview-карту `/download/preview.png`;
 - контур выбранной области `/download/field.geojson`;
 - JSON-отчет `/download/report.json`, локально `outputs/reports/latest_result.json`.
+- рассчитанные GeoTIFF индексов через `/download/rasters/<index>.tif`.
 
 Проверка модели интерфейса без открытия окна:
 

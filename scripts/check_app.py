@@ -56,6 +56,7 @@ def main() -> int:
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
+    assert "/download/rasters/" in html or "Спутниковые индексы" in html
     if "Результаты" in html:
         assert "/download/result.zip" in html
     assert (ROOT / "launch_panel.command").exists()
@@ -64,6 +65,8 @@ def main() -> int:
     assert (ROOT / "scripts/check_panel_e2e.py").exists()
     assert (ROOT / "scripts/check_docker_app.py").exists()
     assert (ROOT / "scripts/check_distribution.py").exists()
+    assert (ROOT / "scripts/check_satellite_pipeline.py").exists()
+    assert (ROOT / "scripts/qgis/process_satellite_indices.py").exists()
     assert (ROOT / "Dockerfile").exists()
     assert (ROOT / "docker-compose.yml").exists()
     assert (ROOT / "launch_panel.bat").exists()
@@ -81,6 +84,10 @@ def main() -> int:
     assert "nspd_plugin" in environment
     assert "version" in environment["nspd_plugin"]
     assert "artifacts" in environment
+    assert "rasters" in environment["artifacts"]
+    assert config["satellite"]["provider"] == "planetary-computer-stac"
+    assert config["satellite"]["collection"] == "sentinel-2-l2a"
+    assert config["qgis"]["satellite_indices_script"] == "scripts/qgis/process_satellite_indices.py"
     readiness = readiness_status(ROOT, config)
     assert "can_select_field" in readiness
     assert "can_prepare_result" in readiness

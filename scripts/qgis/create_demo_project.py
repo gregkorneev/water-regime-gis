@@ -29,8 +29,11 @@ from qgis.core import (
     QgsNetworkAccessManager,
     QgsProject,
     QgsRasterLayer,
+    QgsColorRampShader,
     QgsReferencedRectangle,
+    QgsRasterShader,
     QgsSingleSymbolRenderer,
+    QgsSingleBandPseudoColorRenderer,
     QgsVectorLayer,
 )
 
@@ -83,19 +86,20 @@ def main() -> int:
         layer.setRenderer(QgsSingleSymbolRenderer(symbol))
         osm_layer = add_osm_layer(project)
         nspd_layer = add_nspd_parcels_layer(project, config)
+        satellite_layers = add_satellite_index_layers(project, config)
         project.addMapLayer(layer)
         project.addMapLayer(point_layer)
         set_point_style(point_layer)
         set_start_extent(project, layer)
         add_field_bookmark(project, layer)
-        order_layers(project, [point_layer, layer, nspd_layer, osm_layer])
+        order_layers(project, [point_layer, layer, *satellite_layers, nspd_layer, osm_layer])
 
         if not project.write(str(project_path)):
             print(f"Failed to write QGIS project: {project_path}")
             return 1
 
         preview_path = project_path.with_name("water_regime_gis_preview.png")
-        render_preview(project, layer, preview_path)
+        render_preview(project, layer, preview_path, preview_layer(satellite_layers, config))
 
         print("Demo QGIS project: OK")
         print(f"QGIS version: {Qgis.QGIS_VERSION}")
@@ -109,7 +113,7 @@ def main() -> int:
         app.exitQgis()
 
 
-def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path) -> None:
+def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path, raster: QgsRasterLayer | None = None) -> None:
     transform = QgsCoordinateTransform(layer.crs(), project.crs(), project)
     extent = transform.transformBoundingBox(layer.extent())
     extent.scale(1.25)
@@ -118,7 +122,7 @@ def render_preview(project: QgsProject, layer: QgsVectorLayer, output: Path) -> 
     image.fill(QColor(245, 249, 247))
 
     settings = QgsMapSettings()
-    settings.setLayers([layer])
+    settings.setLayers([layer] if raster is None else [layer, raster])
     settings.setDestinationCrs(project.crs())
     settings.setExtent(extent)
     settings.setOutputSize(image.size())
@@ -163,6 +167,47 @@ def add_nspd_parcels_layer(project: QgsProject, config: dict) -> QgsRasterLayer 
     else:
         print("NSPD parcels WMS layer was not added: QGIS marked it invalid. Install/check the Rosreestr NSPD plugin.")
         return None
+
+
+def add_satellite_index_layers(project: QgsProject, config: dict) -> list[QgsRasterLayer]:
+    rasters_dir = ROOT / config["paths"]["rasters"]
+    layers = []
+    for index in config.get("satellite", {}).get("indices", []):
+        path = rasters_dir / f"{index.lower()}.tif"
+        if not path.exists():
+            continue
+        layer = QgsRasterLayer(str(path), index, "gdal")
+        if not layer.isValid():
+            print(f"Satellite raster was not added: {path}")
+            continue
+        apply_index_style(layer)
+        project.addMapLayer(layer)
+        layers.append(layer)
+    return layers
+
+
+def apply_index_style(layer: QgsRasterLayer) -> None:
+    shader = QgsColorRampShader()
+    shader.setColorRampType(QgsColorRampShader.Interpolated)
+    shader.setColorRampItemList(
+        [
+            QgsColorRampShader.ColorRampItem(-1.0, QColor(121, 67, 33), "-1"),
+            QgsColorRampShader.ColorRampItem(0.0, QColor(245, 245, 210), "0"),
+            QgsColorRampShader.ColorRampItem(1.0, QColor(18, 110, 80), "1"),
+        ]
+    )
+    raster_shader = QgsRasterShader()
+    raster_shader.setRasterShaderFunction(shader)
+    renderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(), 1, raster_shader)
+    layer.setRenderer(renderer)
+
+
+def preview_layer(layers: list[QgsRasterLayer], config: dict) -> QgsRasterLayer | None:
+    preferred = config.get("satellite", {}).get("preview_index", "NDMI").lower()
+    for layer in layers:
+        if layer.name().lower() == preferred:
+            return layer
+    return layers[0] if layers else None
 
 
 def set_point_style(layer: QgsVectorLayer) -> None:

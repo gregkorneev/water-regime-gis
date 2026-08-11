@@ -33,6 +33,14 @@ python3 scripts/check_aoi.py --write-normalized
 
 Сырые сцены Sentinel-2 и Landsat хранятся вне git в `data/raw/` или во внешнем каталоге, описанном в конфигурации.
 
+Текущий автоматический источник v1:
+
+- `provider`: `planetary-computer-stac`;
+- `collection`: `sentinel-2-l2a`;
+- поиск по выбранной области, последним 60 дням и облачности до 30%;
+- metadata выбранной сцены: `data/interim/satellite/latest_scene.json`;
+- обрезанные каналы: `data/interim/satellite/<scene_id>/`.
+
 Ожидаемые каналы:
 
 - Sentinel-2: Blue, Green, Red, Red Edge, NIR, SWIR.
@@ -40,7 +48,7 @@ python3 scripts/check_aoi.py --write-normalized
 
 ## Спектральные индексы
 
-Планируемые индексы:
+Рассчитываемые индексы v1:
 
 - NDVI — растительность.
 - NDMI — влажность растительности.
@@ -49,7 +57,7 @@ python3 scripts/check_aoi.py --write-normalized
 - SAVI — растительность с поправкой на почву.
 - NDRE — состояние растительности по red edge, прежде всего для Sentinel-2.
 
-Формулы и используемые каналы должны фиксироваться в `PIPELINES.md` или отдельной странице wiki перед реализацией.
+Формулы и используемые каналы зафиксированы в `PIPELINES.md`.
 
 ## DEM и производные
 
@@ -76,6 +84,7 @@ DEM используется для расчета:
 - `outputs/maps/water_regime_gis_preview.png` — preview-карта выбранной области;
 - `data/aoi/selected_field_area.geojson` — GeoJSON-контур выбранной области. Свойство `source` показывает источник: `nspd_getfeatureinfo` для кадастрового контура или `map_point_buffer` для временного fallback-буфера;
 - `outputs/reports/latest_result.json` — JSON-отчет для панели со статусом, параметрами поля, ссылками скачивания и кратким логом.
+- `outputs/rasters/*.tif` — GeoTIFF спектральных индексов Sentinel-2.
 
 Файлы результата являются локальными производными артефактами и не добавляются в git.
 

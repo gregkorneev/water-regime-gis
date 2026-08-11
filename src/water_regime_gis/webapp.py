@@ -113,6 +113,7 @@ def bootstrap_system(root: Path) -> None:
 
     for label, command in [
         ("Проверка структуры", [sys.executable, "scripts/check_project.py"]),
+        ("Проверка спутникового пайплайна", [sys.executable, "scripts/check_satellite_pipeline.py"]),
         ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
     ]:
         code, output = run_command(root, command)
@@ -367,6 +368,7 @@ def environment_status(root: Path, config: dict) -> dict:
             "selected_field_area": (root / config["paths"]["selected_field_area"]).exists(),
             "preview": (root / "outputs/maps/water_regime_gis_preview.png").exists(),
             "report": (root / config["paths"]["latest_report"]).exists(),
+            "rasters": any((root / config["paths"]["rasters"]).glob("*.tif")),
         },
     }
 
@@ -554,6 +556,7 @@ function renderEnvironmentStatus(payload) {{
     ["Скрытый запуск", qgis.found ? "готов к работе" : qgis.install_hint],
     ["Кадастровый модуль", plugin.found ? `готов${{plugin.version ? " " + plugin.version : ""}}` : "будет установлен автоматически"],
     ["Результаты", artifacts.preview && artifacts.report ? "готовы" : "пока не подготовлены"],
+    ["Спутниковые индексы", artifacts.rasters ? "рассчитаны" : "пока не рассчитаны"],
   ];
   environmentTable.innerHTML = rows.map((row) => `<tr><td>${{escapeText(row[0])}}</td><td>${{escapeText(row[1])}}</td></tr>`).join("");
   if (environmentAction) {{
@@ -698,6 +701,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/download/report.json":
             self.send_download(root / load_config(root)["paths"]["latest_report"], "latest_result.json", "application/json")
             return
+        if path.startswith("/download/rasters/"):
+            name = Path(path).name
+            self.send_download(root / load_config(root)["paths"]["rasters"] / name, name, "image/tiff")
+            return
         if path == "/download/result.zip":
             self.send_result_zip(root, load_config(root))
             return
@@ -793,6 +800,7 @@ class Handler(BaseHTTPRequestHandler):
             (root / config["paths"]["selected_field_area"], "selected_field_area.geojson"),
             (root / config["paths"]["latest_report"], "latest_result.json"),
         ]
+        files.extend((path, f"rasters/{path.name}") for path in sorted((root / config["paths"]["rasters"]).glob("*.tif")))
         existing = [(path, name) for path, name in files if path.exists()]
         if not existing:
             self.send_error(404)
@@ -875,6 +883,7 @@ def run_workflow(root: Path, create_project: bool, progress=None) -> str:
 
     for label, command in [
         ("Проверка структуры", [sys.executable, "scripts/check_project.py"]),
+        ("Проверка спутникового пайплайна", [sys.executable, "scripts/check_satellite_pipeline.py"]),
         ("Подготовка кадастрового модуля", [sys.executable, "scripts/install_nspd_plugin.py"]),
     ]:
         code, _ = run_step(label, command)
@@ -906,6 +915,9 @@ def run_workflow(root: Path, create_project: bool, progress=None) -> str:
             parts.append(f"Подготовка результата: FAILED\n{message}")
             return "\n\n".join(parts)
         code, _ = run_step("Уточнение контура", [qgis, config["qgis"]["resolve_boundary_script"]])
+        if code:
+            return "\n\n".join(parts)
+        code, _ = run_step("Спутниковые данные", [qgis, config["qgis"]["satellite_indices_script"]])
         if code:
             return "\n\n".join(parts)
         code, _ = run_step("Подготовка результата", [qgis, config["qgis"]["demo_project_script"]])
@@ -965,6 +977,8 @@ def public_output(label: str, output: str, code: int) -> str:
             return "Не найдены необходимые рабочие папки проекта."
         if label == "Подготовка кадастрового модуля":
             return "Не удалось подготовить кадастровый модуль. Проверьте интернет-соединение и повторите запуск."
+        if label == "Проверка спутникового пайплайна":
+            return "Спутниковый пайплайн настроен некорректно."
         if label == "Проверка геодвижка":
             return "Геодвижок недоступен. Установите QGIS 3.40+ и перезапустите панель."
         if label == "Проверка кадастровых данных":
@@ -975,11 +989,15 @@ def public_output(label: str, output: str, code: int) -> str:
             return "Не удалось уточнить кадастровый контур. Повторите позже."
         if label == "Подготовка результата":
             return "Не удалось подготовить карту результата."
+        if label == "Спутниковые данные":
+            return "Не удалось загрузить спутниковые данные или рассчитать индексы."
         return output
     if label == "Проверка структуры":
         return "Структура проекта готова."
     if label == "Подготовка кадастрового модуля":
         return "Кадастровый модуль готов."
+    if label == "Проверка спутникового пайплайна":
+        return "Спутниковый пайплайн готов."
     if label == "Проверка геодвижка":
         return "Геодвижок доступен."
     if label == "Проверка кадастровых данных":
@@ -1000,6 +1018,15 @@ def public_output(label: str, output: str, code: int) -> str:
             elif line.startswith("Project CRS:"):
                 lines.append(f"CRS результата: {line.split(':', 1)[1].strip()}.")
         return "\n".join(lines) or "Карта результата подготовлена."
+    if label == "Спутниковые данные":
+        if "Satellite status: no_scene_found" in output:
+            return "Подходящая Sentinel-2 сцена не найдена. Карта будет подготовлена без спутниковых индексов."
+        if "Satellite status: OK" in output:
+            for line in output.splitlines():
+                if line.startswith("Indices:"):
+                    return f"Спутниковые индексы рассчитаны: {line.split(':', 1)[1].strip()}."
+            return "Спутниковые индексы рассчитаны."
+        return "Спутниковый этап завершен."
     return output
 
 
@@ -1012,12 +1039,14 @@ def environment_panel(root: Path, config: dict) -> str:
     qgis_state = "найден" if qgis["found"] else "не найден"
     plugin_state = f"готов {plugin['version']}" if plugin["found"] and plugin["version"] else "готов" if plugin["found"] else "будет установлен автоматически"
     result_state = "готовы" if artifacts["preview"] and artifacts["report"] else "пока не подготовлены"
+    rasters_state = "рассчитаны" if artifacts["rasters"] else "пока не рассчитаны"
     rows = {
         "Режим запуска": f"{runtime['label']}. {runtime['detail']}",
         "QGIS": f"{qgis_state}{' ' + qgis['version'] if qgis['version'] else ''}",
         "Скрытый запуск": "готов к работе" if qgis["found"] else qgis["install_hint"],
         "Кадастровый модуль": plugin_state,
         "Результаты": result_state,
+        "Спутниковые индексы": rasters_state,
     }
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows.items())
     action = (
@@ -1101,6 +1130,11 @@ def lightweight_status(root: Path, config: dict) -> list[dict]:
             "message": "Кадастровый модуль готов." if plugin_dir.exists() else "Будет установлен автоматически.",
         },
         {
+            "label": "Спутниковый пайплайн",
+            "status": "OK" if (root / config["qgis"]["satellite_indices_script"]).exists() else "FAILED",
+            "message": "STAC и расчет индексов готовы." if (root / config["qgis"]["satellite_indices_script"]).exists() else "Не найден скрипт спутникового пайплайна.",
+        },
+        {
             "label": "Поле",
             "status": "OK" if field["selected"] else "RUNNING",
             "message": "Поле выбрано." if field["selected"] else "Выберите точку на карте.",
@@ -1127,6 +1161,9 @@ def result_panel(root: Path, config: dict) -> str:
                 ("Время подготовки", report.get("created_at", "")),
                 ("Площадь области", f"{report.get('field', {}).get('area_ha', '')} га"),
                 ("CRS", report.get("field", {}).get("analysis_crs", "")),
+                ("Sentinel-2 сцена", report.get("satellite", {}).get("scene_id", "")),
+                ("Дата съемки", report.get("satellite", {}).get("datetime", "")),
+                ("Облачность", report.get("satellite", {}).get("cloud_cover", "")),
             ]
         )
     else:
@@ -1141,6 +1178,8 @@ def result_panel(root: Path, config: dict) -> str:
         links.append('<a class="btn secondary" href="/download/field.geojson">Скачать контур</a>')
     if report_path.exists():
         links.append('<a class="btn muted" href="/download/report.json">Скачать отчет JSON</a>')
+    for raster in sorted((root / config["paths"]["rasters"]).glob("*.tif")):
+        links.append(f'<a class="btn secondary" href="/download/rasters/{html.escape(raster.name)}">{html.escape(raster.stem.upper())}</a>')
     actions = "".join(links)
     return f"""
 <section class="panel">
@@ -1157,6 +1196,9 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
         "preview": (root / "outputs/maps/water_regime_gis_preview.png", "/download/preview.png"),
         "field_area": (root / config["paths"]["selected_field_area"], "/download/field.geojson"),
     }
+    scene = satellite_metadata(root)
+    for raster in sorted((root / config["paths"]["rasters"]).glob("*.tif")):
+        paths[f"raster_{raster.stem}"] = (raster, f"/download/rasters/{raster.name}")
     report = {
         "status": "OK",
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -1172,11 +1214,22 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
             name: {"url": url, "exists": path.exists(), "size_bytes": path.stat().st_size if path.exists() else 0}
             for name, (path, url) in paths.items()
         },
+        "satellite": scene,
         "log": log,
     }
     report_path = root / config["paths"]["latest_report"]
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def satellite_metadata(root: Path) -> dict:
+    path = root / "data/interim/satellite/latest_scene.json"
+    if not path.exists():
+        return {"satellite_status": "not_run", "indices": []}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"satellite_status": "invalid_metadata", "indices": []}
 
 
 def nspd_ca_bundle(config: dict) -> Path:

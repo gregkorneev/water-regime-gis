@@ -57,6 +57,11 @@
 - Release launchers загружают image из tar при первом запуске, запускают `docker compose up -d` и открывают панель.
 - Собранный release-пакет проверяется командой `python3 scripts/check_release_package.py`.
 - Добавлена проверка реального Docker-запуска `python3 scripts/check_docker_app.py`; она ждет bootstrap и проверяет QGIS 3.40+ и НСПД-плагин внутри контейнера.
+- Добавлен спутниковый v1-пайплайн: `scripts/qgis/process_satellite_indices.py` запускается внутри QGIS Python, ищет Sentinel-2 L2A через Microsoft Planetary Computer STAC, обрезает каналы GDAL `/vsicurl/` и считает NDVI, NDMI, NDWI, MNDWI, SAVI, NDRE.
+- Спутниковый пайплайн проверяется командой `python3 scripts/check_satellite_pipeline.py`.
+- `Подготовить результат` теперь запускает этап `Спутниковые данные` между уточнением контура и созданием QGIS-проекта.
+- Результаты спутниковых индексов сохраняются в `outputs/rasters/*.tif`, metadata сцены — в `data/interim/satellite/latest_scene.json`, а ZIP результата включает GeoTIFF.
+- Observearth зафиксирован как целевой QGIS-плагин STAC/индексов, но текущий автоматический v1 работает через QGIS Python/GDAL для headless-воспроизводимости. Isoliner оставлен для будущей интерполяции наземных точек и изолиний.
 - Для Linux/Docker `qgis_runtime.py` выставляет `QT_QPA_PLATFORM=offscreen`, чтобы скрытые PyQGIS-проверки не падали на отсутствии дисплея.
 - Общий helper `src/water_regime_gis/qgis_runtime.py` ищет QGIS Python, prefix и профиль плагинов для macOS, Windows и Linux/Docker.
 - Добавлен сборщик локальной оболочки `dist/Water Regime GIS.app`: `python3 scripts/build_macos_app.py`.

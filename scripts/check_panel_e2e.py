@@ -51,6 +51,12 @@ def main() -> int:
                         assert "water_regime_gis_preview.png" in names
                         assert "selected_field_area.geojson" in names
                         assert "latest_result.json" in names
+                        assert any(name.startswith("rasters/") and name.endswith(".tif") for name in names)
+            report = get_json(url, "/result.json")
+            assert report["satellite"]["satellite_status"] in {"OK", "no_scene_found", "no_indices"}
+            if report["satellite"]["satellite_status"] == "OK":
+                ok_indices = {item["name"] for item in report["satellite"]["indices"] if item["status"] == "OK"}
+                assert {"NDVI", "NDMI", "NDWI"}.issubset(ok_indices)
             print("panel e2e: OK")
             return 0
         finally:
@@ -69,6 +75,13 @@ def snapshot_paths(config: dict) -> list[Path]:
         ROOT / config["paths"]["latest_report"],
         ROOT / "outputs/maps/water_regime_gis_preview.png",
         ROOT / "outputs/maps/water_regime_gis.qgs",
+        ROOT / "data/interim/satellite/latest_scene.json",
+        ROOT / "outputs/rasters/ndvi.tif",
+        ROOT / "outputs/rasters/ndmi.tif",
+        ROOT / "outputs/rasters/ndwi.tif",
+        ROOT / "outputs/rasters/mndwi.tif",
+        ROOT / "outputs/rasters/savi.tif",
+        ROOT / "outputs/rasters/ndre.tif",
     ]
 
 

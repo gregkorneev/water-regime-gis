@@ -55,6 +55,10 @@ def main() -> int:
     assert 'data-job="repair-environment"' in html
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
+    assert "World_Imagery" in html
+    assert "World_Boundaries_and_Places" in html
+    assert "L.control.layers" in html
+    assert "Кадастровый слой" in html
     assert "/selected-field-area.geojson" in html
     assert "/download/rasters/" in html or "Спутниковые индексы" in html
     if "Результаты" in html:

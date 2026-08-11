@@ -471,14 +471,29 @@ const lonInput = document.getElementById("lon");
 const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
 const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
 L.control.attribution({{prefix: false}}).addTo(map);
-L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}}).addTo(map);
-L.tileLayer.wms("/nspd/wms", {{
+const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
+const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
+const hybridSatellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
+const hybridLabels = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
+const hybridLayer = L.layerGroup([hybridSatellite, hybridLabels]);
+const cadastralLayer = L.tileLayer.wms("/nspd/wms", {{
   layers: "36048",
   format: "image/png",
   transparent: true,
   version: "1.3.0",
   attribution: "НСПД"
-}}).addTo(map);
+}});
+osmLayer.addTo(map);
+cadastralLayer.addTo(map);
+L.control.layers(
+  {{"Карта": osmLayer, "Спутник": satelliteLayer, "Гибрид": hybridLayer}},
+  {{"Кадастровый слой": cadastralLayer}},
+  {{collapsed: false}}
+).addTo(map);
+map.on("baselayerchange overlayadd", () => {{
+  if (selectedLayer) selectedLayer.bringToFront();
+  if (marker) marker.setZIndexOffset(1000);
+}});
 let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
 let selectedLayer = null;
 const selectedStyle = {{color: "#f57c00", weight: 3, fillColor: "#ffd54f", fillOpacity: 0.24}};

@@ -24,6 +24,7 @@ from water_regime_gis.webapp import (
     nspd_plugin_metadata,
     system_status,
 )
+from water_regime_gis.qgis_runtime import qgis_install_hint
 
 
 def main() -> int:
@@ -96,8 +97,12 @@ def main() -> int:
         missing_environment = environment_status(temp_root, missing_qgis)
         assert not missing_environment["qgis"]["found"]
         assert missing_environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
+        assert missing_environment["qgis"]["install_hint"] == qgis_install_hint()
         assert not readiness_status(temp_root, missing_qgis)["can_select_field"]
         assert "Скачать QGIS" in page(temp_root)
+        assert "/Applications/QGIS.app" in qgis_install_hint("Darwin")
+        assert "OSGeo4W" in qgis_install_hint("Windows")
+        assert "Docker" in qgis_install_hint("Linux")
         plugin_dir = temp_root / "plugin"
         plugin_dir.mkdir()
         assert not nspd_plugin_metadata(plugin_dir)["valid"]

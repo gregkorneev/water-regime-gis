@@ -42,6 +42,15 @@ def find_qgis_python(configured: str = "") -> str:
     return ""
 
 
+def qgis_install_hint(system: str = "") -> str:
+    system = system or platform.system()
+    if system == "Darwin":
+        return "Установите QGIS в /Applications/QGIS.app и перезапустите панель."
+    if system == "Windows":
+        return "Установите QGIS или OSGeo4W и перезапустите панель."
+    return "Установите QGIS/PyQGIS или запустите Docker-вариант приложения."
+
+
 def qgis_prefix_path() -> Path:
     configured = os.environ.get("QGIS_PREFIX_PATH", "")
     if configured:

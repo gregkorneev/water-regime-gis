@@ -42,6 +42,8 @@
 
 Внутри PyQGIS-скриптов prefix задается через `qgis_runtime.py`: `/Applications/QGIS.app` на macOS, `C:\Program Files\QGIS*`/OSGeo4W на Windows или `/usr` в Linux/Docker. Prefix `/Applications/QGIS.app/Contents/MacOS` на macOS не подходит для WMS-слоев, потому что QGIS тогда не видит WMS-провайдер.
 
+Если QGIS не найден, панель показывает платформенную подсказку: macOS — установка в `/Applications/QGIS.app`, Windows — установка QGIS или OSGeo4W, Linux/Docker — установка QGIS/PyQGIS или запуск Docker-варианта.
+
 Запуск на macOS для пользователя:
 
 ```text

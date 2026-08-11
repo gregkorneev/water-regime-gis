@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 from .project import load_config, missing_required_dirs, project_root, selected_field_summary
-from .qgis_runtime import find_qgis_python, qgis_profile_plugins
+from .qgis_runtime import find_qgis_python, qgis_install_hint, qgis_profile_plugins
 
 
 WMS_CACHE_TTL_SECONDS = 300
@@ -334,7 +334,7 @@ def environment_status(root: Path, config: dict) -> dict:
             "python": qgis,
             "app": str(qgis_app) if qgis_app.exists() else "",
             "version": qgis_version(qgis_app, qgis) if qgis else "",
-            "install_hint": "" if qgis else "Установите QGIS в /Applications/QGIS.app и перезапустите панель.",
+            "install_hint": "" if qgis else qgis_install_hint(),
             "download_url": QGIS_DOWNLOAD_URL,
         },
         "nspd_plugin": {

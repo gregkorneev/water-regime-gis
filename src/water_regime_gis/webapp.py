@@ -469,7 +469,8 @@ def page(root: Path, output: str = "") -> str:
 const latInput = document.getElementById("lat");
 const lonInput = document.getElementById("lon");
 const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
-const map = L.map("map").setView(start, {13 if field['selected'] else 11});
+const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
+L.control.attribution({{prefix: false}}).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}}).addTo(map);
 L.tileLayer.wms("/nspd/wms", {{
   layers: "36048",

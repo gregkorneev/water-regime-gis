@@ -128,6 +128,12 @@ python3 scripts/check_macos_app.py
 python3 scripts/check_panel_e2e.py
 ```
 
+Проверить Docker-вариант панели:
+
+```bash
+python3 scripts/check_docker_app.py
+```
+
 E2E-проверка временно создает тестовые результаты и восстанавливает прежние локальные артефакты после завершения.
 
 После сборки приложение появится в `dist/Water Regime GIS.app`; его можно открыть двойным кликом. `dist/` не добавляется в git.

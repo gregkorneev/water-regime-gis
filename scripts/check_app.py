@@ -61,6 +61,7 @@ def main() -> int:
     assert (ROOT / "scripts/build_macos_app.py").exists()
     assert (ROOT / "scripts/check_macos_app.py").exists()
     assert (ROOT / "scripts/check_panel_e2e.py").exists()
+    assert (ROOT / "scripts/check_docker_app.py").exists()
     assert (ROOT / "scripts/check_distribution.py").exists()
     assert (ROOT / "Dockerfile").exists()
     assert (ROOT / "docker-compose.yml").exists()

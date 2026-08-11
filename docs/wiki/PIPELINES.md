@@ -155,6 +155,14 @@ python3 scripts/check_macos_app.py
 python3 scripts/check_distribution.py
 ```
 
+Проверка реального Docker-запуска панели:
+
+```bash
+python3 scripts/check_docker_app.py
+```
+
+Скрипт собирает Docker-образ, запускает контейнер на свободном локальном порту начиная с `8766`, проверяет `/environment.json` и `/readiness.json`, затем удаляет контейнер.
+
 Docker-запуск панели:
 
 ```text

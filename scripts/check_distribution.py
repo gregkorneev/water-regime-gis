@@ -15,6 +15,7 @@ def main() -> int:
     docker_macos = (ROOT / "launch_docker.command").read_text(encoding="utf-8")
     docker_windows = (ROOT / "launch_docker.bat").read_text(encoding="utf-8")
 
+    assert (ROOT / "scripts/check_docker_app.py").exists()
     assert "qgis/qgis:3.44-noble" in dockerfile
     assert "WATER_REGIME_GIS_HOST=0.0.0.0" in dockerfile
     assert 'CMD ["python3", "scripts/run_app.py"]' in dockerfile

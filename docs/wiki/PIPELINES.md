@@ -223,6 +223,7 @@ python3 scripts/run_app.py
 
 После успешной подготовки панель создает и показывает пользовательские артефакты:
 
+- единый ZIP-архив результата `/download/result.zip`;
 - preview-карту `/download/preview.png`;
 - контур выбранной области `/download/field.geojson`;
 - JSON-отчет `/download/report.json`, локально `outputs/reports/latest_result.json`.

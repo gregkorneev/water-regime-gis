@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import io
 import os
 import re
 import shutil
@@ -9,6 +10,7 @@ import subprocess
 import sys
 import time
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Optional
 from urllib.request import urlopen
@@ -39,10 +41,16 @@ def main() -> int:
             start_job(url, "/job/start?kind=repair-environment")
             start_job(url, "/job/start?kind=select-field&lon=38.1361306&lat=53.8413983")
             start_job(url, "/job/start?kind=prepare-result")
-            for path in ("/download/preview.png", "/download/field.geojson", "/download/report.json"):
+            for path in ("/download/preview.png", "/download/field.geojson", "/download/report.json", "/download/result.zip"):
                 with urlopen(url + path, timeout=20) as response:
                     assert response.status == 200
-                    assert response.read(1)
+                    body = response.read()
+                    assert body
+                    if path.endswith(".zip"):
+                        names = set(zipfile.ZipFile(io.BytesIO(body)).namelist())
+                        assert "water_regime_gis_preview.png" in names
+                        assert "selected_field_area.geojson" in names
+                        assert "latest_result.json" in names
             print("panel e2e: OK")
             return 0
         finally:

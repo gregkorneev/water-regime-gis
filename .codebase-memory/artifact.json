@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "7496d466cd59e01a8a41b853ad3e7c9fae942ff8",
-    "indexed_at": "2026-08-09T13:22:38Z",
+    "commit": "d5387fdbbdc3eaed9d35cbe25099e38a286d6c95",
+    "indexed_at": "2026-08-11T14:57:30Z",
     "project": "water-regime-gis",
-    "nodes": 202,
-    "edges": 526,
+    "nodes": 203,
+    "edges": 534,
     "original_size": 1900544,
-    "compressed_size": 62750,
+    "compressed_size": 63539,
     "compression_level": 3
 }

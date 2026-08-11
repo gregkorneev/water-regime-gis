@@ -54,6 +54,8 @@ def main() -> int:
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "/selected-field-area.geojson" in html
+    if "Результаты" in html:
+        assert "/download/result.zip" in html
     assert (ROOT / "launch_panel.command").exists()
     assert (ROOT / "scripts/build_macos_app.py").exists()
     assert (ROOT / "scripts/check_macos_app.py").exists()

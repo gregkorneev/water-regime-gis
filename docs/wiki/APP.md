@@ -90,6 +90,7 @@ python3 scripts/build_macos_app.py
 
 В нем доступны:
 
+- единый ZIP-архив результата через `/download/result.zip`;
 - скачивание preview-карты через `/download/preview.png`;
 - скачивание GeoJSON-контура выбранной области через `/download/field.geojson`;
 - скачивание JSON-отчета через `/download/report.json`.

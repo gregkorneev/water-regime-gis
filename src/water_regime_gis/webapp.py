@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import io
 import configparser
 import json
 import os
@@ -12,6 +13,7 @@ import sys
 import threading
 import time
 import webbrowser
+import zipfile
 from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -676,6 +678,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/download/report.json":
             self.send_download(root / load_config(root)["paths"]["latest_report"], "latest_result.json", "application/json")
             return
+        if path == "/download/result.zip":
+            self.send_result_zip(root, load_config(root))
+            return
         if path == "/selected-field-area.geojson":
             self.send_file(root / load_config(root)["paths"]["selected_field_area"], "application/geo+json")
             return
@@ -758,6 +763,29 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_result_zip(self, root: Path, config: dict) -> None:
+        files = [
+            (root / "outputs/maps/water_regime_gis_preview.png", "water_regime_gis_preview.png"),
+            (root / config["paths"]["selected_field_area"], "selected_field_area.geojson"),
+            (root / config["paths"]["latest_report"], "latest_result.json"),
+        ]
+        existing = [(path, name) for path, name in files if path.exists()]
+        if not existing:
+            self.send_error(404)
+            return
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            for path, name in existing:
+                archive.write(path, name)
+        body = buffer.getvalue()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip")
+        self.send_header("Content-Disposition", 'attachment; filename="water_regime_gis_result.zip"')
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -1084,6 +1112,7 @@ def result_panel(root: Path, config: dict) -> str:
 
     table = "".join(f"<tr><td>{html.escape(k)}</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows if str(v))
     links = []
+    links.append('<a class="btn" href="/download/result.zip">Скачать все ZIP</a>')
     if preview_path.exists():
         links.append('<a class="btn secondary" href="/download/preview.png">Скачать preview</a>')
     if field_path.exists():

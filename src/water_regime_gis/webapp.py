@@ -323,12 +323,30 @@ def nspd_plugin_metadata(plugin: Path, expected_name: str = "") -> dict:
     }
 
 
+def runtime_status() -> dict:
+    mode = os.environ.get("WATER_REGIME_GIS_RUNTIME", "").strip().lower()
+    if not mode:
+        mode = "docker" if Path("/.dockerenv").exists() else "local"
+    if mode == "docker":
+        return {
+            "mode": "docker",
+            "label": "Docker-контейнер",
+            "detail": "QGIS работает внутри контейнера.",
+        }
+    return {
+        "mode": "local",
+        "label": "Локальный запуск",
+        "detail": "QGIS берется с этого компьютера.",
+    }
+
+
 def environment_status(root: Path, config: dict) -> dict:
     qgis = qgis_python(config)
     qgis_app = qgis_app_path(qgis) if qgis else Path("/Applications/QGIS.app")
     plugin = nspd_plugin_dir(config)
     plugin_metadata = nspd_plugin_metadata(plugin, config["nspd"]["plugin_name"])
     return {
+        "runtime": runtime_status(),
         "qgis": {
             "found": bool(qgis),
             "python": qgis,
@@ -525,11 +543,13 @@ function refreshSystemStatus() {{
 }}
 function renderEnvironmentStatus(payload) {{
   if (!environmentTable || !payload) return;
+  const runtime = payload.runtime || {{}};
   const qgis = payload.qgis || {{}};
   const plugin = payload.nspd_plugin || {{}};
   const artifacts = payload.artifacts || {{}};
   const qgisText = `${{qgis.found ? "найден" : "не найден"}}${{qgis.version ? " " + qgis.version : ""}}`;
   const rows = [
+    ["Режим запуска", `${{runtime.label || "Локальный запуск"}}${{runtime.detail ? ". " + runtime.detail : ""}}`],
     ["QGIS", qgisText],
     ["Скрытый запуск", qgis.found ? "готов к работе" : qgis.install_hint],
     ["Кадастровый модуль", plugin.found ? `готов${{plugin.version ? " " + plugin.version : ""}}` : "будет установлен автоматически"],
@@ -985,6 +1005,7 @@ def public_output(label: str, output: str, code: int) -> str:
 
 def environment_panel(root: Path, config: dict) -> str:
     status = environment_status(root, config)
+    runtime = status["runtime"]
     qgis = status["qgis"]
     plugin = status["nspd_plugin"]
     artifacts = status["artifacts"]
@@ -992,6 +1013,7 @@ def environment_panel(root: Path, config: dict) -> str:
     plugin_state = f"готов {plugin['version']}" if plugin["found"] and plugin["version"] else "готов" if plugin["found"] else "будет установлен автоматически"
     result_state = "готовы" if artifacts["preview"] and artifacts["report"] else "пока не подготовлены"
     rows = {
+        "Режим запуска": f"{runtime['label']}. {runtime['detail']}",
         "QGIS": f"{qgis_state}{' ' + qgis['version'] if qgis['version'] else ''}",
         "Скрытый запуск": "готов к работе" if qgis["found"] else qgis["install_hint"],
         "Кадастровый модуль": plugin_state,

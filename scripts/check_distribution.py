@@ -17,9 +17,11 @@ def main() -> int:
 
     assert (ROOT / "scripts/check_docker_app.py").exists()
     assert "qgis/qgis:3.44-noble" in dockerfile
+    assert "WATER_REGIME_GIS_RUNTIME=docker" in dockerfile
     assert "WATER_REGIME_GIS_HOST=0.0.0.0" in dockerfile
     assert 'CMD ["python3", "scripts/run_app.py"]' in dockerfile
     assert "platform: linux/amd64" in compose
+    assert "WATER_REGIME_GIS_RUNTIME: docker" in compose
     assert "8765:8765" in compose
     assert "./data:/app/data" in compose
     assert "./outputs:/app/outputs" in compose

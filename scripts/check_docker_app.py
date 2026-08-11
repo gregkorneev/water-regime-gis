@@ -31,6 +31,8 @@ def main() -> int:
             "-p",
             f"{port}:8765",
             "-e",
+            "WATER_REGIME_GIS_RUNTIME=docker",
+            "-e",
             "WATER_REGIME_GIS_HOST=0.0.0.0",
             "-e",
             "WATER_REGIME_GIS_NO_BROWSER=1",
@@ -51,6 +53,7 @@ def main() -> int:
         readiness = wait_json(url, "/readiness.json")
         version = environment["qgis"]["version"]
         assert all(step["status"] == "OK" for step in status["steps"]), status
+        assert environment["runtime"]["mode"] == "docker", environment
         assert environment["qgis"]["found"], environment
         assert qgis_version_tuple(version) >= (3, 40), version
         assert environment["nspd_plugin"]["found"], environment

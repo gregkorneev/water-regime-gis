@@ -5,6 +5,7 @@ services:
     ports:
       - "8765:8765"
     environment:
+      WATER_REGIME_GIS_RUNTIME: docker
       WATER_REGIME_GIS_HOST: 0.0.0.0
       WATER_REGIME_GIS_PORT: 8765
       WATER_REGIME_GIS_NO_BROWSER: "1"

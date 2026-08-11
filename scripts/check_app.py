@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 import tempfile
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,6 +74,8 @@ def main() -> int:
     assert "steps" in status
     assert status["steps"]
     environment = environment_status(ROOT, config)
+    assert environment["runtime"]["mode"] in {"local", "docker"}
+    assert "Режим запуска" in html
     assert "qgis" in environment
     assert environment["qgis"]["download_url"] == QGIS_DOWNLOAD_URL
     assert "nspd_plugin" in environment
@@ -101,6 +104,17 @@ def main() -> int:
         assert missing_environment["qgis"]["install_hint"] == qgis_install_hint()
         assert not readiness_status(temp_root, missing_qgis)["can_select_field"]
         assert "Скачать QGIS" in page(temp_root)
+        old_runtime = os.environ.get("WATER_REGIME_GIS_RUNTIME")
+        try:
+            os.environ["WATER_REGIME_GIS_RUNTIME"] = "docker"
+            docker_environment = environment_status(temp_root, missing_qgis)
+            assert docker_environment["runtime"]["mode"] == "docker"
+            assert "Docker-контейнер" in page(temp_root)
+        finally:
+            if old_runtime is None:
+                os.environ.pop("WATER_REGIME_GIS_RUNTIME", None)
+            else:
+                os.environ["WATER_REGIME_GIS_RUNTIME"] = old_runtime
         assert "/Applications/QGIS.app" in qgis_install_hint("Darwin")
         assert "OSGeo4W" in qgis_install_hint("Windows")
         assert "Docker" in qgis_install_hint("Linux")

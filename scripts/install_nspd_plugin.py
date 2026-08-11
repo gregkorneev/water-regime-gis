@@ -7,7 +7,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from urllib.request import urlretrieve
+from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +35,7 @@ def main() -> int:
     qgis_profile_plugins().mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="water-regime-gis-nspd-") as tmp:
         archive = Path(tmp) / "nspd-plugin.zip"
-        urlretrieve(nspd["plugin_download_url"], archive)
+        download(nspd["plugin_download_url"], archive)
         with zipfile.ZipFile(archive) as file:
             file.extractall(qgis_profile_plugins())
 
@@ -47,6 +47,15 @@ def main() -> int:
     print("NSPD plugin install: OK")
     print(f"Installed: {plugin_dir}")
     return 0
+
+
+def download(url: str, target: Path) -> None:
+    request = Request(
+        url,
+        headers={"User-Agent": "water-regime-gis/0.1 (+https://github.com/gregkorneev/water-regime-gis)"},
+    )
+    with urlopen(request, timeout=60) as response:
+        target.write_bytes(response.read())
 
 
 def metadata_valid(path: Path, expected_name: str) -> bool:

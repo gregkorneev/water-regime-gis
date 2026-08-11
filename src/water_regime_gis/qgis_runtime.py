@@ -91,6 +91,8 @@ def qgis_profile_plugins() -> Path:
 def configure_qgis_environment() -> None:
     os.environ.setdefault("PROJ_DATA", str(qgis_project_data_path()))
     os.environ.setdefault("QGIS_PREFIX_PATH", str(qgis_prefix_path()))
+    if platform.system() == "Linux":
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     root = Path(__file__).resolve().parents[2]
     src = root / "src"
     if str(src) not in sys.path:

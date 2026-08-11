@@ -482,8 +482,9 @@
 - добавить `launch_panel.bat` для Windows;
 - добавить `launch_docker.command` и `launch_docker.bat` для запуска Docker-варианта двойным кликом;
 - добавить `scripts/check_distribution.py` для проверки пользовательских артефактов запуска;
-- добавить `scripts/check_docker_app.py` для проверки реального контейнерного запуска панели и QGIS 3.40+;
+- добавить `scripts/check_docker_app.py` для проверки реального контейнерного запуска панели, bootstrap, QGIS 3.40+ и НСПД-плагина;
 - вынести поиск QGIS Python, prefix и профиля плагинов в `src/water_regime_gis/qgis_runtime.py`.
+- для Linux/Docker выставлять `QT_QPA_PLATFORM=offscreen`.
 
 Причина:
 

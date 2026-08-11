@@ -46,13 +46,16 @@ def main() -> int:
     )
     try:
         url = f"http://127.0.0.1:{port}"
+        status = wait_bootstrap(url)
         environment = wait_json(url, "/environment.json")
         readiness = wait_json(url, "/readiness.json")
         version = environment["qgis"]["version"]
+        assert all(step["status"] == "OK" for step in status["steps"]), status
         assert environment["qgis"]["found"], environment
         assert qgis_version_tuple(version) >= (3, 40), version
+        assert environment["nspd_plugin"]["found"], environment
         assert readiness["can_check_system"], readiness
-        print(f"Docker app: OK ({version}, {url})")
+        print(f"Docker app: OK ({version}, NSPD {environment['nspd_plugin']['version']}, {url})")
         return 0
     finally:
         run(["docker", "rm", "-f", CONTAINER], check=False, quiet=True)
@@ -84,6 +87,16 @@ def wait_json(url: str, path: str) -> dict:
         except Exception:
             time.sleep(2)
     raise TimeoutError(f"Docker app did not answer: {url}{path}")
+
+
+def wait_bootstrap(url: str) -> dict:
+    deadline = time.time() + 180
+    while time.time() < deadline:
+        status = wait_json(url, "/status.json")
+        if not status.get("running") and status.get("steps"):
+            return status
+        time.sleep(2)
+    raise TimeoutError("Docker app bootstrap did not finish.")
 
 
 def qgis_version_tuple(version: str) -> tuple[int, int]:

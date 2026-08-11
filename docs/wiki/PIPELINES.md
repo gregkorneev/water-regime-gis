@@ -161,7 +161,7 @@ python3 scripts/check_distribution.py
 python3 scripts/check_docker_app.py
 ```
 
-Скрипт собирает Docker-образ, запускает контейнер на свободном локальном порту начиная с `8766`, проверяет `/environment.json` и `/readiness.json`, затем удаляет контейнер.
+Скрипт собирает Docker-образ, запускает контейнер на свободном локальном порту начиная с `8766`, ждет завершения `/status.json`, проверяет `/environment.json`, `/readiness.json`, QGIS 3.40+ и автоматическую установку НСПД-плагина, затем удаляет контейнер.
 
 Docker-запуск панели:
 

@@ -15,12 +15,14 @@ import time
 import webbrowser
 import zipfile
 from collections import OrderedDict
+from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 from .project import load_config, missing_required_dirs, project_root, selected_field_summary
+from .qgis_runtime import find_qgis_python, qgis_profile_plugins
 
 
 WMS_CACHE_TTL_SECONDS = 300
@@ -271,18 +273,7 @@ def format_job_steps(steps: list[dict]) -> str:
 
 
 def qgis_python(config: dict) -> str:
-    configured = config["qgis"].get("python_executable", "")
-    if configured:
-        return configured if Path(configured).exists() else ""
-    candidates = [
-        "/Applications/QGIS.app/Contents/MacOS/python",
-        "/Applications/QGIS.app/Contents/MacOS/bin/python",
-        "/Applications/QGIS.app/Contents/MacOS/python3.12",
-    ]
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return candidate
-    return ""
+    return find_qgis_python(config["qgis"].get("python_executable", ""))
 
 
 def qgis_app_path(qgis_python_path: str) -> Path:
@@ -293,15 +284,24 @@ def qgis_app_path(qgis_python_path: str) -> Path:
     return Path("/Applications/QGIS.app")
 
 
-def qgis_version(qgis_app: Path) -> str:
+@lru_cache(maxsize=8)
+def qgis_version(qgis_app: Path, qgis_python_path: str = "") -> str:
     info = qgis_app / "Contents/Info.plist"
-    if not info.exists():
+    if info.exists():
+        try:
+            data = plistlib.loads(info.read_bytes())
+        except Exception:
+            return ""
+        return str(data.get("CFBundleShortVersionString") or data.get("CFBundleVersion") or "")
+    if not qgis_python_path:
         return ""
+    code = "from qgis.core import Qgis; print(Qgis.QGIS_VERSION)"
     try:
-        data = plistlib.loads(info.read_bytes())
+        process = subprocess.run([qgis_python_path, "-c", code], text=True, capture_output=True, timeout=10)
     except Exception:
         return ""
-    return str(data.get("CFBundleShortVersionString") or data.get("CFBundleVersion") or "")
+    output = process.stdout.strip()
+    return output.splitlines()[0] if process.returncode == 0 and output else ""
 
 
 def nspd_plugin_metadata(plugin: Path, expected_name: str = "") -> dict:
@@ -333,7 +333,7 @@ def environment_status(root: Path, config: dict) -> dict:
             "found": bool(qgis),
             "python": qgis,
             "app": str(qgis_app) if qgis_app.exists() else "",
-            "version": qgis_version(qgis_app),
+            "version": qgis_version(qgis_app, qgis) if qgis else "",
             "install_hint": "" if qgis else "Установите QGIS в /Applications/QGIS.app и перезапустите панель.",
             "download_url": QGIS_DOWNLOAD_URL,
         },
@@ -1168,7 +1168,7 @@ def nspd_ca_bundle(config: dict) -> Path:
 def nspd_plugin_dir(config: dict) -> Path:
     plugin_id = config["nspd"]["plugin_id"]
     plugin_name = config["nspd"]["plugin_name"]
-    base = Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
+    base = qgis_profile_plugins()
     for name in (plugin_id, plugin_name):
         plugin = base / name
         if plugin.exists():
@@ -1201,9 +1201,12 @@ def set_wms_cache(key: str, content_type: str, body: bytes) -> None:
 def main() -> int:
     root = project_root()
     Handler.root_path = root
-    port = find_available_port()
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    url = f"http://127.0.0.1:{port}"
+    host = os.environ.get("WATER_REGIME_GIS_HOST", "127.0.0.1")
+    start_port = int(os.environ.get("WATER_REGIME_GIS_PORT", str(DEFAULT_PORT)))
+    port = find_available_port(host, start=start_port)
+    server = ThreadingHTTPServer((host, port), Handler)
+    public_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
+    url = f"http://{public_host}:{port}"
     os.environ["WATER_REGIME_GIS_APP_URL"] = url
     print(f"water-regime-gis app: {url}", flush=True)
     start_bootstrap(root)

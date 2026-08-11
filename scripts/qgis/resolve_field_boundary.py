@@ -3,21 +3,26 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
-os.environ.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefix_path
+
+configure_qgis_environment()
 
 from qgis.core import QgsApplication, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsPointXY, QgsProject
 
 
-ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/project.example.json"
 
 
 def main() -> int:
-    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
+    QgsApplication.setPrefixPath(str(qgis_prefix_path()), True)
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     point_path = ROOT / config["paths"]["selected_field_point"]
     area_path = ROOT / config["paths"]["selected_field_area"]

@@ -10,6 +10,8 @@
 
 - файл приложения: `src/water_regime_gis/webapp.py`;
 - запуск из репозитория: `python3 scripts/run_app.py`;
+- Docker-запуск: `docker compose up --build`;
+- Windows launcher: `launch_panel.bat`;
 - адрес: `http://127.0.0.1:8765`;
 - проверка HTML-интерфейса без открытия браузера: `python3 scripts/check_app.py`;
 - первый QGIS-скрипт: `scripts/qgis/check_qgis_context.py`;
@@ -34,11 +36,11 @@
 
 ## Скрытый геодвижок
 
-Приложение само запускает QGIS/PyQGIS-скрипты через путь `qgis.python_executable` из `configs/project.example.json`. Пользователь не должен открывать QGIS, устанавливать плагины вручную или пользоваться интерфейсом QGIS.
+Приложение само запускает QGIS/PyQGIS-скрипты через путь `qgis.python_executable` из `configs/project.example.json` или через автообнаружение `src/water_regime_gis/qgis_runtime.py`. Пользователь не должен открывать QGIS, устанавливать плагины вручную или пользоваться интерфейсом QGIS.
 
-На macOS приложение также пробует автоматически найти `/Applications/QGIS.app/Contents/MacOS/python`. Это wrapper QGIS, который настраивает `PYTHONHOME` для встроенного Python.
+На macOS приложение пробует найти `/Applications/QGIS.app/Contents/MacOS/python`. На Windows проверяются типовые `python-qgis.bat` в `C:\Program Files\QGIS*` и `C:\OSGeo4W`. В Docker используется официальный образ `qgis/qgis:3.44-noble`, где PyQGIS доступен через системный `python3`.
 
-Внутри PyQGIS-скриптов prefix должен оставаться `/Applications/QGIS.app`. Prefix `/Applications/QGIS.app/Contents/MacOS` не подходит для WMS-слоев, потому что QGIS тогда не видит WMS-провайдер.
+Внутри PyQGIS-скриптов prefix задается через `qgis_runtime.py`: `/Applications/QGIS.app` на macOS, `C:\Program Files\QGIS*`/OSGeo4W на Windows или `/usr` в Linux/Docker. Prefix `/Applications/QGIS.app/Contents/MacOS` на macOS не подходит для WMS-слоев, потому что QGIS тогда не видит WMS-провайдер.
 
 Запуск на macOS для пользователя:
 
@@ -51,6 +53,20 @@ launch_panel.command
 ```bash
 python3 scripts/run_app.py
 ```
+
+Запуск на Windows для пользователя:
+
+```text
+launch_panel.bat
+```
+
+Docker-запуск:
+
+```bash
+docker compose up --build
+```
+
+Docker-вариант слушает `0.0.0.0:8765` внутри контейнера и публикует панель как `http://127.0.0.1:8765`. Образ основан на `qgis/qgis:3.44-noble`; пользовательские `data/` и `outputs/` остаются на хосте через volume.
 
 Сборка локального `.app`:
 
@@ -142,5 +158,7 @@ QGIS-проект тоже использует локальный WMS-прок�
 ## Упаковка
 
 Для macOS реализована локальная `.app`-оболочка через `scripts/build_macos_app.py`. Она не встраивает Python и код проекта внутрь bundle, а запускает панель из текущего репозитория. Это промежуточный шаг к полноценной дистрибуции.
+
+Для Windows добавлен простой `launch_panel.bat`, который запускает ту же локальную панель из репозитория.
 
 Упаковка в standalone `.app` с вендорингом зависимостей и `.exe` для Windows пока не реализована.

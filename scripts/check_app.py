@@ -60,6 +60,10 @@ def main() -> int:
     assert (ROOT / "scripts/build_macos_app.py").exists()
     assert (ROOT / "scripts/check_macos_app.py").exists()
     assert (ROOT / "scripts/check_panel_e2e.py").exists()
+    assert (ROOT / "scripts/check_distribution.py").exists()
+    assert (ROOT / "Dockerfile").exists()
+    assert (ROOT / "docker-compose.yml").exists()
+    assert (ROOT / "launch_panel.bat").exists()
     config = load_config(ROOT)
     status = system_status(ROOT, config)
     assert "steps" in status

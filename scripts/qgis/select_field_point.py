@@ -4,14 +4,19 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
-os.environ.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefix_path
+
+configure_qgis_environment()
 
 from qgis.core import QgsApplication, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsPointXY, QgsProject
 
 
-ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/project.example.json"
 
 
@@ -22,7 +27,7 @@ def main() -> int:
     parser.add_argument("--buffer-meters", type=float)
     args = parser.parse_args()
 
-    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
+    QgsApplication.setPrefixPath(str(qgis_prefix_path()), True)
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     target_crs = QgsCoordinateReferenceSystem(config["qgis"]["target_crs"])
     if not target_crs.isValid():

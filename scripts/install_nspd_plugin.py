@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import configparser
 import json
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -11,6 +12,10 @@ from urllib.request import urlretrieve
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "configs/project.example.json"
+
+sys.path.insert(0, str(ROOT / "src"))
+
+from water_regime_gis.qgis_runtime import qgis_profile_plugins
 
 
 def main() -> int:
@@ -42,10 +47,6 @@ def main() -> int:
     print("NSPD plugin install: OK")
     print(f"Installed: {plugin_dir}")
     return 0
-
-
-def qgis_profile_plugins() -> Path:
-    return Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
 
 
 def metadata_valid(path: Path, expected_name: str) -> bool:

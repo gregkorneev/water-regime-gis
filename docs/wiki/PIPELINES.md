@@ -149,6 +149,18 @@ python3 scripts/build_macos_app.py
 python3 scripts/check_macos_app.py
 ```
 
+Проверка Docker/Windows-артефактов запуска:
+
+```bash
+python3 scripts/check_distribution.py
+```
+
+Docker-запуск панели:
+
+```bash
+docker compose up --build
+```
+
 Headless E2E-проверка панели:
 
 ```bash

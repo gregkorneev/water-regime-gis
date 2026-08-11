@@ -38,6 +38,7 @@ docs/wiki/            # проектная wiki
 - `src/water_regime_gis/project.py` содержит минимальные функции для поиска корня проекта, чтения JSON-конфига и проверки структуры.
 - `scripts/check_project.py` является первым исполняемым скриптом проекта.
 - `src/water_regime_gis/webapp.py` является текущей первой версией интерфейса.
+- `src/water_regime_gis/qgis_runtime.py` централизует поиск QGIS Python, prefix и профиля плагинов для macOS, Windows и Linux/Docker.
 - `scripts/run_app.py` запускает локальное веб-приложение из рабочей копии.
 - `scripts/qgis/check_qgis_context.py` проверяет запуск PyQGIS через QGIS Python.
 - `scripts/install_nspd_plugin.py` автоматически устанавливает кадастровый QGIS-плагин НСПД в профиль пользователя.
@@ -48,6 +49,8 @@ docs/wiki/            # проектная wiki
 Целевая форма продукта — приложение для Windows и macOS. Текущая первая версия использует локальный веб-интерфейс на стандартной библиотеке Python, чтобы не добавлять внешние GUI-зависимости и избежать лицензионной сложности на старте.
 
 Пробный `tkinter`-модуль `src/water_regime_gis/app.py` оставлен как черновик, но основной запуск идет через `src/water_regime_gis/webapp.py`.
+
+Для Docker-запуска добавлены `Dockerfile` и `docker-compose.yml`. Контейнерный вариант основан на официальном `qgis/qgis:3.44-noble` и публикует ту же панель на `127.0.0.1:8765`; локальные папки `data/`, `outputs/` и `configs/` подключаются как volumes.
 
 ## PostGIS
 

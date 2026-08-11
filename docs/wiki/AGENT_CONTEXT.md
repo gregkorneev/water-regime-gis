@@ -48,6 +48,9 @@
 - Проект теперь развивается как desktop-приложение для Windows и macOS.
 - Первая версия GUI: `python3 scripts/run_app.py`, локальный веб-интерфейс `http://127.0.0.1:8765` на стандартной библиотеке Python.
 - На macOS добавлен пользовательский launcher `launch_panel.command`, который можно открыть двойным кликом.
+- На Windows добавлен пользовательский launcher `launch_panel.bat`.
+- Добавлен Docker-запуск `docker compose up --build`; образ основан на `qgis/qgis:3.44-noble` и публикует панель на `127.0.0.1:8765`.
+- Общий helper `src/water_regime_gis/qgis_runtime.py` ищет QGIS Python, prefix и профиль плагинов для macOS, Windows и Linux/Docker.
 - Добавлен сборщик локальной оболочки `dist/Water Regime GIS.app`: `python3 scripts/build_macos_app.py`.
 - Добавлена проверка локальной macOS-оболочки: `python3 scripts/check_macos_app.py`.
 - Добавлена headless E2E-проверка панели: `python3 scripts/check_panel_e2e.py`.

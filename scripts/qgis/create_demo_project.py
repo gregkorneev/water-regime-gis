@@ -3,9 +3,15 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
-os.environ.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
+
+from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefix_path, qgis_profile_plugins
+
+configure_qgis_environment()
 
 from qgis.PyQt.QtCore import QSize
 from qgis.PyQt.QtGui import QColor, QImage, QPainter
@@ -29,12 +35,11 @@ from qgis.core import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "configs/project.example.json"
 
 
 def main() -> int:
-    QgsApplication.setPrefixPath("/Applications/QGIS.app", True)
+    QgsApplication.setPrefixPath(str(qgis_prefix_path()), True)
 
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     project_path = ROOT / config["qgis"]["project_file"]
@@ -239,8 +244,8 @@ def nspd_plugin_dir(config: dict) -> Path:
     plugin_id = config["nspd"]["plugin_id"]
     plugin_name = config["nspd"]["plugin_name"]
     candidates = [
-        Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins" / plugin_id,
-        Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins" / plugin_name,
+        qgis_profile_plugins() / plugin_id,
+        qgis_profile_plugins() / plugin_name,
     ]
     for candidate in candidates:
         if candidate.exists():

@@ -59,6 +59,8 @@ def main() -> int:
     assert "World_Boundaries_and_Places" in html
     assert "L.control.layers" in html
     assert "Кадастровый слой" in html
+    assert "/satellite-overlay.json" in html
+    assert "Последний Sentinel-2" in html
     assert "/selected-field-area.geojson" in html
     assert "/download/rasters/" in html or "Спутниковые индексы" in html
     if "Результаты" in html:

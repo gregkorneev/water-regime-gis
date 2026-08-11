@@ -49,6 +49,7 @@ def main() -> int:
                     if path.endswith(".zip"):
                         names = set(zipfile.ZipFile(io.BytesIO(body)).namelist())
                         assert "water_regime_gis_preview.png" in names
+                        assert "latest_sentinel_true_color.png" in names
                         assert "selected_field_area.geojson" in names
                         assert "latest_result.json" in names
                         assert any(name.startswith("rasters/") and name.endswith(".tif") for name in names)
@@ -57,6 +58,12 @@ def main() -> int:
             if report["satellite"]["satellite_status"] == "OK":
                 ok_indices = {item["name"] for item in report["satellite"]["indices"] if item["status"] == "OK"}
                 assert {"NDVI", "NDMI", "NDWI"}.issubset(ok_indices)
+                overlay = get_json(url, "/satellite-overlay.json")
+                assert overlay["status"] == "OK", overlay
+                assert overlay["bounds"]
+                with urlopen(url + "/satellite-true-color.png", timeout=20) as response:
+                    assert response.status == 200
+                    assert response.read()
             print("panel e2e: OK")
             return 0
         finally:
@@ -74,6 +81,8 @@ def snapshot_paths(config: dict) -> list[Path]:
         ROOT / config["paths"]["selected_field_area"],
         ROOT / config["paths"]["latest_report"],
         ROOT / "outputs/maps/water_regime_gis_preview.png",
+        ROOT / "outputs/maps/latest_sentinel_true_color.png",
+        ROOT / "outputs/maps/latest_sentinel_true_color.tif",
         ROOT / "outputs/maps/water_regime_gis.qgs",
         ROOT / "data/interim/satellite/latest_scene.json",
         ROOT / "outputs/rasters/ndvi.tif",

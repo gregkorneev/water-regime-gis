@@ -485,15 +485,16 @@ const cadastralLayer = L.tileLayer.wms("/nspd/wms", {{
 }});
 osmLayer.addTo(map);
 cadastralLayer.addTo(map);
-L.control.layers(
+const layerControl = L.control.layers(
   {{"Карта": osmLayer, "Спутник": satelliteLayer, "Гибрид": hybridLayer}},
   {{"Кадастровый слой": cadastralLayer}},
   {{collapsed: false}}
 ).addTo(map);
-map.on("baselayerchange overlayadd", () => {{
+function keepWorkLayersFront() {{
   if (selectedLayer) selectedLayer.bringToFront();
   if (marker) marker.setZIndexOffset(1000);
-}});
+}}
+map.on("baselayerchange overlayadd", keepWorkLayersFront);
 let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
 let selectedLayer = null;
 const selectedStyle = {{color: "#f57c00", weight: 3, fillColor: "#ffd54f", fillOpacity: 0.24}};
@@ -511,6 +512,22 @@ fetch("/selected-field-area.geojson")
       }}
     }}).addTo(map);
     selectedLayer.bringToFront();
+  }})
+  .catch(() => {{}});
+fetch("/satellite-overlay.json")
+  .then((response) => response.ok ? response.json() : null)
+  .then((payload) => {{
+    if (!payload || payload.status !== "OK") return;
+    const latestSentinel = L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
+    const latestHybrid = L.layerGroup([
+      L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}}),
+      L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}})
+    ]);
+    layerControl.addBaseLayer(latestSentinel, "Последний Sentinel-2");
+    layerControl.addBaseLayer(latestHybrid, "Последний Sentinel-2 гибрид");
+    map.removeLayer(osmLayer);
+    latestSentinel.addTo(map);
+    keepWorkLayersFront();
   }})
   .catch(() => {{}});
 map.on("click", (event) => {{
@@ -686,6 +703,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/preview.png":
             self.send_file(root / "outputs/maps/water_regime_gis_preview.png", "image/png")
             return
+        if path == "/satellite-true-color.png":
+            self.send_file(root / "outputs/maps/latest_sentinel_true_color.png", "image/png")
+            return
+        if path == "/satellite-overlay.json":
+            self.send_json(satellite_overlay(root))
+            return
         if path == "/result.json":
             self.send_file(root / load_config(root)["paths"]["latest_report"], "application/json")
             return
@@ -713,6 +736,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/download/preview.png":
             self.send_download(root / "outputs/maps/water_regime_gis_preview.png", "water_regime_gis_preview.png", "image/png")
+            return
+        if path == "/download/satellite-true-color.png":
+            self.send_download(root / "outputs/maps/latest_sentinel_true_color.png", "latest_sentinel_true_color.png", "image/png")
             return
         if path == "/download/report.json":
             self.send_download(root / load_config(root)["paths"]["latest_report"], "latest_result.json", "application/json")
@@ -813,6 +839,7 @@ class Handler(BaseHTTPRequestHandler):
     def send_result_zip(self, root: Path, config: dict) -> None:
         files = [
             (root / "outputs/maps/water_regime_gis_preview.png", "water_regime_gis_preview.png"),
+            (root / "outputs/maps/latest_sentinel_true_color.png", "latest_sentinel_true_color.png"),
             (root / config["paths"]["selected_field_area"], "selected_field_area.geojson"),
             (root / config["paths"]["latest_report"], "latest_result.json"),
         ]
@@ -1210,6 +1237,7 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
     field = selected_field_summary(root, config)
     paths = {
         "preview": (root / "outputs/maps/water_regime_gis_preview.png", "/download/preview.png"),
+        "true_color": (root / "outputs/maps/latest_sentinel_true_color.png", "/download/satellite-true-color.png"),
         "field_area": (root / config["paths"]["selected_field_area"], "/download/field.geojson"),
     }
     scene = satellite_metadata(root)
@@ -1236,6 +1264,23 @@ def write_result_report(root: Path, config: dict, log: str) -> None:
     report_path = root / config["paths"]["latest_report"]
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def satellite_overlay(root: Path) -> dict:
+    metadata = satellite_metadata(root)
+    true_color = metadata.get("true_color", {})
+    image = root / "outputs/maps/latest_sentinel_true_color.png"
+    if true_color.get("status") != "OK" or not true_color.get("bounds") or not image.exists():
+        return {"status": "not_available"}
+    return {
+        "status": "OK",
+        "url": "/satellite-true-color.png",
+        "bounds": true_color["bounds"],
+        "scene_id": metadata.get("scene_id", ""),
+        "datetime": metadata.get("datetime", ""),
+        "cloud_cover": metadata.get("cloud_cover", ""),
+        "attribution": "Sentinel-2 L2A",
+    }
 
 
 def satellite_metadata(root: Path) -> dict:

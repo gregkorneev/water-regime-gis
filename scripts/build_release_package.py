@@ -18,8 +18,20 @@ IMAGE_TAR = "water-regime-gis-image.tar"
 
 def main() -> int:
     if RELEASE.exists():
-        shutil.rmtree(RELEASE)
-    RELEASE.mkdir(parents=True)
+        for path in (
+            RELEASE / "Water Regime GIS.app",
+            RELEASE / "Water Regime GIS.command",
+            RELEASE / "Water Regime GIS.bat",
+            RELEASE / "README_RU.txt",
+            RELEASE / "docker-compose.yml",
+            RELEASE / IMAGE_TAR,
+        ):
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink(missing_ok=True)
+    else:
+        RELEASE.mkdir(parents=True)
     for name in (
         "configs",
         "data/aoi",
@@ -30,8 +42,10 @@ def main() -> int:
         "outputs/reports",
         "outputs/rasters",
     ):
-        (RELEASE / name).mkdir(parents=True)
-    shutil.copy2(ROOT / "configs/project.example.json", RELEASE / "configs/project.example.json")
+        (RELEASE / name).mkdir(parents=True, exist_ok=True)
+    release_config = RELEASE / "configs/project.example.json"
+    if not release_config.exists():
+        shutil.copy2(ROOT / "configs/project.example.json", release_config)
     write_compose()
     write_macos_launcher()
     write_windows_launcher()

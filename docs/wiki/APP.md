@@ -62,11 +62,23 @@ launch_panel.bat
 
 Docker-запуск:
 
+```text
+launch_docker.command
+```
+
+На Windows:
+
+```text
+launch_docker.bat
+```
+
+Запасной запуск Docker из терминала:
+
 ```bash
 docker compose up --build
 ```
 
-Docker-вариант слушает `0.0.0.0:8765` внутри контейнера и публикует панель как `http://127.0.0.1:8765`. Образ основан на `qgis/qgis:3.44-noble`; пользовательские `data/` и `outputs/` остаются на хосте через volume.
+Docker launchers проверяют наличие Docker, поднимают `docker compose up --build -d` и открывают `http://127.0.0.1:8765`. Docker-вариант слушает `0.0.0.0:8765` внутри контейнера и публикует панель как `http://127.0.0.1:8765`. Образ основан на `qgis/qgis:3.44-noble`; пользовательские `data/` и `outputs/` остаются на хосте через volume.
 
 Сборка локального `.app`:
 

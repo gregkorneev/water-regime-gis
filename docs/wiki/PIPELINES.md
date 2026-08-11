@@ -157,6 +157,13 @@ python3 scripts/check_distribution.py
 
 Docker-запуск панели:
 
+```text
+launch_docker.command
+launch_docker.bat
+```
+
+Запасной запуск Docker из терминала:
+
 ```bash
 docker compose up --build
 ```

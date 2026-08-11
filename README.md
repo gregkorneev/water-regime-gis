@@ -86,13 +86,25 @@ launch_panel.bat
 
 Запустить через Docker:
 
+```text
+launch_docker.command
+```
+
+На Windows:
+
+```text
+launch_docker.bat
+```
+
+Запасной запуск Docker из терминала:
+
 ```bash
 docker compose up --build
 ```
 
 После старта Docker-вариант открывается по адресу `http://127.0.0.1:8765`. Образ основан на официальном `qgis/qgis:3.44-noble`; локальные `data/`, `outputs/` и `configs/` подключаются как volumes.
 
-Файл можно открыть двойным кликом из Finder. Запасной запуск из терминала:
+Файл `launch_panel.command` можно открыть двойным кликом из Finder. Запасной запуск из терминала:
 
 ```bash
 python3 scripts/run_app.py

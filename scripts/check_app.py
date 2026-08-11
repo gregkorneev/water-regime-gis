@@ -64,6 +64,8 @@ def main() -> int:
     assert (ROOT / "Dockerfile").exists()
     assert (ROOT / "docker-compose.yml").exists()
     assert (ROOT / "launch_panel.bat").exists()
+    assert (ROOT / "launch_docker.command").exists()
+    assert (ROOT / "launch_docker.bat").exists()
     config = load_config(ROOT)
     status = system_status(ROOT, config)
     assert "steps" in status

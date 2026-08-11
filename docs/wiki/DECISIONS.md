@@ -479,6 +479,7 @@
 - использовать официальный Docker-образ `qgis/qgis:3.44-noble`, чтобы контейнерный QGIS соответствовал требованию НСПД-плагина `3.40+`;
 - публиковать контейнерную панель на `127.0.0.1:8765`;
 - добавить `launch_panel.bat` для Windows;
+- добавить `launch_docker.command` и `launch_docker.bat` для запуска Docker-варианта двойным кликом;
 - добавить `scripts/check_distribution.py` для проверки пользовательских артефактов запуска;
 - вынести поиск QGIS Python, prefix и профиля плагинов в `src/water_regime_gis/qgis_runtime.py`.
 

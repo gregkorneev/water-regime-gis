@@ -659,3 +659,22 @@
 Причина:
 
 - по выбранной точке НСПД может вернуть не сельскохозяйственное поле, а крупный кадастровый объект на сотни тысяч гектаров. Такой контур не подходит для первого сценария анализа поля и делает загрузку Sentinel неоправданно тяжелой.
+
+## 2026-08-12 — Release переводится в desktop-оболочку
+
+Решение:
+
+- оставить QGIS/backend внутри Docker-first release-пакета;
+- для macOS собирать `Water Regime GIS.app` как нативное Swift/WebKit приложение с `WKWebView`;
+- запускать Docker Desktop, `docker load` и `docker compose up -d` из самой `.app`;
+- показывать локальный интерфейс внутри окна приложения, не открывая системный браузер;
+- для Windows добавить shell-проект `windows-shell/` на WinForms + WebView2 и launcher `Water Regime GIS.bat`.
+- добавить GitHub Actions workflow для сборки Windows shell на `windows-latest` в artifact `Water Regime GIS.exe`.
+
+Причина:
+
+- пользователь хочет desktop-приложение для macOS и Windows, а не страницу в браузере. При этом существующий локальный HTTP backend остается полезным внутренним API для UI, проверок и будущих агентов.
+
+Ограничение:
+
+- macOS `.app` собрана и проверена в текущем workspace. Windows WebView2 shell добавлен в release-пакет; локально на macOS `.exe` не проверяется, поэтому сборка вынесена в GitHub Actions на Windows runner.

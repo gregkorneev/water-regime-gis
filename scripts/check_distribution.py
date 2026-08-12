@@ -15,6 +15,9 @@ def main() -> int:
     docker_macos = (ROOT / "launch_docker.command").read_text(encoding="utf-8")
     docker_windows = (ROOT / "launch_docker.bat").read_text(encoding="utf-8")
     release_script = (ROOT / "scripts/build_release_package.py").read_text(encoding="utf-8")
+    macos_shell = (ROOT / "packaging/macos/WaterRegimeGIS.swift").read_text(encoding="utf-8")
+    windows_shell = (ROOT / "packaging/windows/Program.cs").read_text(encoding="utf-8")
+    windows_workflow = (ROOT / ".github/workflows/windows-shell.yml").read_text(encoding="utf-8")
 
     assert (ROOT / "scripts/check_docker_app.py").exists()
     assert (ROOT / "scripts/build_release_package.py").exists()
@@ -38,11 +41,20 @@ def main() -> int:
     assert "water-regime-gis-release" in release_script
     assert "Water Regime GIS.app" in release_script
     assert "Water Regime GIS.bat" in release_script
+    assert "packaging/macos/WaterRegimeGIS.swift" in release_script
+    assert "packaging/windows" in release_script
     assert "image: water-regime-gis:release" in release_script
     assert "water-regime-gis-image.tar" in release_script
-    assert "docker load -i water-regime-gis-image.tar" in release_script
+    assert "open http://127.0.0.1:8765" not in release_script
+    assert "dotnet run --project windows-shell" in release_script
+    assert "WKWebView" in macos_shell
+    assert '["docker", "compose", "up", "-d"]' in macos_shell
+    assert "WebView2" in windows_shell
+    assert '"docker", "compose up -d"' in windows_shell
+    assert "windows-latest" in windows_workflow
+    assert "dotnet publish packaging/windows/WaterRegimeGIS.csproj" in windows_workflow
+    assert "Water Regime GIS.exe" in windows_workflow
     assert '"save"' in release_script
-    assert "docker compose up -d" in release_script
     print("Distribution config: OK")
     return 0
 

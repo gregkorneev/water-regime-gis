@@ -24,6 +24,7 @@ def main() -> int:
             RELEASE / "Water Regime GIS.bat",
             RELEASE / "README_RU.txt",
             RELEASE / "docker-compose.yml",
+            RELEASE / "windows-shell",
             RELEASE / IMAGE_TAR,
         ):
             if path.is_dir():
@@ -49,6 +50,7 @@ def main() -> int:
     write_compose()
     write_macos_launcher()
     write_windows_launcher()
+    copy_windows_shell()
     write_macos_app()
     write_readme()
     build_image()
@@ -85,25 +87,7 @@ def write_macos_launcher() -> None:
 set -e
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$APP_DIR"
-
-if ! command -v docker >/dev/null 2>&1; then
-  osascript -e 'display alert "Water Regime GIS" message "Docker Desktop не найден. Установите Docker Desktop и запустите приложение снова."'
-  exit 1
-fi
-
-if ! docker info >/dev/null 2>&1; then
-  open -a Docker || true
-  osascript -e 'display alert "Water Regime GIS" message "Docker Desktop запускается. Повторите запуск через минуту, когда Docker будет готов."'
-  exit 1
-fi
-
-if ! docker image inspect water-regime-gis:release >/dev/null 2>&1; then
-  docker load -i water-regime-gis-image.tar
-fi
-
-docker compose up -d
-open http://127.0.0.1:8765
+open "$APP_DIR/Water Regime GIS.app"
 """,
         encoding="utf-8",
     )
@@ -117,30 +101,27 @@ setlocal
 
 cd /d "%~dp0"
 
-where docker >nul 2>nul
+if exist "Water Regime GIS.exe" (
+  start "" "Water Regime GIS.exe"
+  exit /b 0
+)
+
+where dotnet >nul 2>nul
 if errorlevel 1 (
-  echo Docker Desktop не найден. Установите Docker Desktop и запустите файл снова.
+  echo .NET SDK не найден. Установите .NET SDK 8 или соберите Water Regime GIS.exe из windows-shell.
   pause
   exit /b 1
 )
 
-docker info >nul 2>nul
-if errorlevel 1 (
-  echo Docker Desktop не запущен. Запустите Docker Desktop и повторите запуск.
-  pause
-  exit /b 1
-)
-
-docker image inspect water-regime-gis:release >nul 2>nul
-if errorlevel 1 (
-  docker load -i water-regime-gis-image.tar
-)
-
-docker compose up -d
-start http://127.0.0.1:8765
+dotnet run --project windows-shell\\WaterRegimeGIS.csproj
 """,
         encoding="utf-8",
     )
+
+
+def copy_windows_shell() -> None:
+    target = RELEASE / "windows-shell"
+    shutil.copytree(ROOT / "packaging/windows", target)
 
 
 def write_macos_app() -> None:
@@ -162,16 +143,10 @@ def write_macos_app() -> None:
     with (contents / "Info.plist").open("wb") as file:
         plistlib.dump(plist, file)
     executable = macos / "water-regime-gis"
-    executable.write_text(
-        """#!/bin/zsh
-set -e
-
-APP_EXEC_DIR="$(cd "$(dirname "$0")" && pwd)"
-RELEASE_DIR="$(cd "$APP_EXEC_DIR/../../.." && pwd)"
-exec "$RELEASE_DIR/Water Regime GIS.command"
-""",
-        encoding="utf-8",
-    )
+    swiftc = shutil.which("swiftc")
+    if not swiftc:
+        raise RuntimeError("swiftc not found. macOS release app requires Swift toolchain.")
+    subprocess.run([swiftc, str(ROOT / "packaging/macos/WaterRegimeGIS.swift"), "-o", str(executable)], cwd=ROOT, check=True)
     executable.chmod(executable.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
@@ -182,12 +157,13 @@ def write_readme() -> None:
 Требование: установленный Docker Desktop.
 
 macOS:
-1. Откройте Water Regime GIS.app или Water Regime GIS.command.
-2. Панель откроется в браузере: http://127.0.0.1:8765
+1. Откройте Water Regime GIS.app.
+2. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
 
 Windows:
-1. Откройте Water Regime GIS.bat.
-2. Панель откроется в браузере: http://127.0.0.1:8765
+1. Если рядом есть Water Regime GIS.exe, откройте его.
+2. Если exe еще не собран, откройте Water Regime GIS.bat или windows-shell\\Build Windows App.bat.
+3. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
 
 Папки рядом с launcher-ами:
 - data: пользовательские входные геоданные;
@@ -195,6 +171,7 @@ Windows:
 - configs: конфигурация проекта.
 
 QGIS находится внутри Docker-образа и не открывается пользователем.
+Пользовательский интерфейс открывается в desktop-окне, а не в системном браузере.
 Файл water-regime-gis-image.tar содержит готовый Docker-образ приложения.
 """,
         encoding="utf-8",

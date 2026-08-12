@@ -6,9 +6,11 @@
 
 ## Текущая первая версия
 
-Текущая первая версия реализована как локальное веб-приложение на стандартной библиотеке Python:
+Текущая первая версия разделена на desktop-оболочку и локальный backend:
 
-- файл приложения: `src/water_regime_gis/webapp.py`;
+- backend: `src/water_regime_gis/webapp.py`;
+- release macOS shell: `packaging/macos/WaterRegimeGIS.swift`, нативный `WKWebView`;
+- release Windows shell: `packaging/windows/`, WinForms + WebView2;
 - запуск из репозитория: `python3 scripts/run_app.py`;
 - Docker-запуск: `docker compose up --build`;
 - Windows launcher: `launch_panel.bat`;
@@ -21,16 +23,18 @@
 
 Ранее была пробная `tkinter`-версия в `src/water_regime_gis/app.py`, но на macOS системный Tk оказался нестабильным по отображению темной темы. Основной запуск переключен на локальный веб-интерфейс.
 
-## Почему локальный веб-интерфейс
+## Почему backend остается локальным web-сервисом
 
-Локальный веб-интерфейс работает на Windows и macOS через браузер, не требует внешних GUI-зависимостей и сохраняет открытую лицензионную модель. В будущем его можно упаковать в `.app`/`.exe` с локальным сервером или заменить на нативную оболочку.
+Локальный web-backend упрощает связку UI, QGIS и Docker: один и тот же интерфейс можно открыть в нативном desktop shell, проверить через HTTP и использовать агентами. Пользовательская release-версия больше не должна открывать системный браузер: macOS показывает UI в `WKWebView`, Windows — в WebView2.
 
 ## Лицензирование
 
 Код проекта распространяется под лицензией MIT. Используемые компоненты первой версии:
 
 - Python standard library;
-- браузер пользователя.
+- macOS WebKit/WKWebView для release `.app`;
+- Microsoft WebView2 для Windows shell;
+- Docker Desktop как runtime QGIS/backend.
 
 Сведения о сторонних лицензиях фиксируются в `THIRD_PARTY_NOTICES.md`.
 
@@ -94,14 +98,15 @@ python3 scripts/build_release_package.py
 
 Скрипт создает `dist/water-regime-gis-release/`. Это переносимый пакет без необходимости запускать проект из репозитория:
 
-- `Water Regime GIS.app` — macOS launcher;
-- `Water Regime GIS.command` — запасной macOS launcher;
-- `Water Regime GIS.bat` — Windows launcher;
+- `Water Regime GIS.app` — macOS desktop-приложение с нативным `WKWebView`;
+- `Water Regime GIS.command` — запасной macOS launcher, открывающий `.app`;
+- `Water Regime GIS.bat` — Windows launcher для desktop shell;
+- `windows-shell/` — исходники Windows WebView2 shell и скрипт сборки `Water Regime GIS.exe`;
 - `docker-compose.yml` — запуск контейнерной панели;
 - `water-regime-gis-image.tar` — сохраненный Docker-образ с кодом проекта и QGIS runtime;
 - `data/`, `outputs/`, `configs/` — пользовательские данные, результаты и конфигурация рядом с приложением.
 
-При первом запуске launcher проверяет Docker Desktop, загружает `water-regime-gis-image.tar` как image `water-regime-gis:release`, запускает `docker compose up -d` и открывает `http://127.0.0.1:8765`. QGIS находится внутри Docker-образа и не открывается пользователем.
+При первом запуске desktop-приложение проверяет Docker Desktop, загружает `water-regime-gis-image.tar` как image `water-regime-gis:release`, запускает `docker compose up -d` и открывает интерфейс внутри окна приложения. QGIS находится внутри Docker-образа и не открывается пользователем.
 
 Собранный пакет проверяется командой `python3 scripts/check_release_package.py`.
 
@@ -209,10 +214,12 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 ## Упаковка
 
-Для macOS реализована локальная `.app`-оболочка через `scripts/build_macos_app.py`. Она не встраивает Python и код проекта внутрь bundle, а запускает панель из текущего репозитория. Это промежуточный шаг к полноценной дистрибуции.
+Для macOS release-пакет содержит нативную `.app`-оболочку, собранную из `packaging/macos/WaterRegimeGIS.swift`. Она запускает Docker backend и показывает интерфейс внутри собственного окна приложения.
 
-Для Windows добавлен простой `launch_panel.bat`, который запускает ту же локальную панель из репозитория.
+Для Windows release-пакет содержит `windows-shell/` с WinForms/WebView2-приложением. На macOS Windows `.exe` не собирается; его нужно собрать в Windows-среде через `windows-shell\Build Windows App.bat` или запускать `Water Regime GIS.bat`, если установлен .NET SDK.
+
+Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускается на `windows-latest`, публикует `packaging/windows/WaterRegimeGIS.csproj` как single-file `Water Regime GIS.exe` и сохраняет exe как artifact.
 
 Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает Docker-first пакет для macOS и Windows с готовым Docker-образом приложения.
 
-Упаковка в standalone `.app` с вендорингом зависимостей и `.exe` для Windows пока не реализована.
+Полностью собранный Windows `.exe` пока не проверен в Windows-среде из этого macOS workspace.

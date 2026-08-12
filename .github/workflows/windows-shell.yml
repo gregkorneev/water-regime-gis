@@ -1,0 +1,39 @@
+name: Build Windows desktop shell
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows-shell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish WebView2 desktop shell
+        shell: pwsh
+        run: >
+          dotnet publish packaging/windows/WaterRegimeGIS.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -o dist/windows-shell
+
+      - name: Check executable
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist/windows-shell/Water Regime GIS.exe")) {
+            throw "Windows desktop executable was not created."
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Water-Regime-GIS-Windows-Shell
+          path: dist/windows-shell/Water Regime GIS.exe

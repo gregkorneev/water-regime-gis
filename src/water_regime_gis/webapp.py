@@ -474,7 +474,8 @@ const lonInput = document.getElementById("lon");
 const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
 const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
 L.control.attribution({{prefix: false}}).addTo(map);
-const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
+const osmBase = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
+const osmLayer = L.layerGroup([osmBase]);
 const satelliteBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
 const satelliteLayer = L.layerGroup([satelliteBase]);
 const hybridSatellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
@@ -523,8 +524,8 @@ fetch("https://tiles.openfreemap.org/styles/liberty")
   .then((style) => {{
     if (!style) return;
     const attribution = "OpenFreeMap &copy; OpenMapTiles, OpenStreetMap";
-    const russianLabels = L.maplibreGL({{style: russianLabelStyle(style), pane: "overlayPane", attribution}});
-    hybridLayer.addLayer(russianLabels);
+    osmLayer.addLayer(L.maplibreGL({{style: russianLabelStyle(style), pane: "overlayPane", attribution}}));
+    hybridLayer.addLayer(L.maplibreGL({{style: russianLabelStyle(style), pane: "overlayPane", attribution}}));
     keepWorkLayersFront();
   }})
   .catch(() => {{}});

@@ -60,6 +60,7 @@ def main() -> int:
     assert '"name:ru"' in html
     assert "L.maplibreGL" in html
     assert 'pane: "overlayPane"' in html
+    assert "osmLayer.addLayer(L.maplibreGL" in html
     assert "L.control.layers" in html
     assert "Кадастровый слой" in html
     assert "/satellite-overlay.json" in html

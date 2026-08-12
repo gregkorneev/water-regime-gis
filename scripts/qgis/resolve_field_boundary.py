@@ -15,7 +15,8 @@ from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefi
 
 configure_qgis_environment()
 
-from qgis.core import QgsApplication, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsPointXY, QgsProject
+from qgis.core import QgsApplication, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsPointXY, QgsProject
+from water_regime_gis.project import polygon_area_ha, selected_area_crs, utm_crs_for_lon_lat
 
 
 CONFIG = ROOT / "configs/project.example.json"
@@ -39,14 +40,23 @@ def main() -> int:
         response = request_feature_info(config, lon, lat)
         feature = first_polygon_feature(response)
         if not feature:
+            write_point_buffer(area_path, lon, lat, config)
             print("Boundary source: map_point_buffer")
             print("NSPD did not return a polygon for the selected point.")
             return 0
 
         feature["geometry"] = geometry_to_wgs84(feature["geometry"])
+        area_ha = geometry_area_ha(feature["geometry"])
+        max_area_ha = float(config["nspd"].get("max_selected_parcel_area_ha", 2000))
+        if area_ha > max_area_ha:
+            write_point_buffer(area_path, lon, lat, config)
+            print("Boundary source: map_point_buffer")
+            print(f"NSPD polygon is too large for a field workflow: {area_ha:.2f} ha.")
+            return 0
+
         properties = feature.setdefault("properties", {})
         properties["name"] = properties.get("descr") or properties.get("label") or "NSPD selected parcel"
-        properties["analysis_crs"] = config["qgis"]["target_crs"]
+        properties["analysis_crs"] = selected_area_crs(ROOT, config)
         properties["source"] = "nspd_getfeatureinfo"
         properties["selected_lon"] = lon
         properties["selected_lat"] = lat
@@ -69,6 +79,46 @@ def selected_point(path: Path) -> tuple[float, float]:
     feature = data["features"][0]
     lon, lat = feature["geometry"]["coordinates"]
     return float(lon), float(lat)
+
+
+def write_point_buffer(area_path: Path, lon: float, lat: float, config: dict) -> None:
+    source_crs = QgsCoordinateReferenceSystem("EPSG:4326")
+    target_crs = QgsCoordinateReferenceSystem(utm_crs_for_lon_lat(lon, lat))
+    to_target = QgsCoordinateTransform(source_crs, target_crs, QgsProject.instance())
+    to_source = QgsCoordinateTransform(target_crs, source_crs, QgsProject.instance())
+    center = to_target.transform(QgsPointXY(lon, lat))
+    buffer_meters = float(config["qgis"].get("field_buffer_meters", 500))
+    coordinates = circle_coordinates(center.x(), center.y(), buffer_meters)
+    coordinates = [[to_source.transform(QgsPointXY(x, y)).x(), to_source.transform(QgsPointXY(x, y)).y()] for x, y in coordinates]
+    write_geojson(
+        area_path,
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Selected field working area",
+                "analysis_crs": target_crs.authid(),
+                "source": "map_point_buffer",
+                "buffer_meters": buffer_meters,
+            },
+            "geometry": {"type": "Polygon", "coordinates": [coordinates]},
+        },
+    )
+
+
+def circle_coordinates(x: float, y: float, radius: float, segments: int = 64) -> list[list[float]]:
+    import math
+
+    coordinates = [[x + math.cos(2 * math.pi * index / segments) * radius, y + math.sin(2 * math.pi * index / segments) * radius] for index in range(segments)]
+    coordinates.append(coordinates[0])
+    return coordinates
+
+
+def geometry_area_ha(geometry: dict) -> float:
+    if geometry.get("type") == "Polygon":
+        return polygon_area_ha(geometry["coordinates"][0])
+    if geometry.get("type") == "MultiPolygon":
+        return sum(polygon_area_ha(polygon[0]) for polygon in geometry.get("coordinates", []))
+    return 0.0
 
 
 def request_feature_info(config: dict, lon: float, lat: float) -> dict:
@@ -135,9 +185,16 @@ def geometry_to_wgs84(geometry: dict) -> dict:
     source_crs = QgsCoordinateReferenceSystem("EPSG:3857")
     target_crs = QgsCoordinateReferenceSystem("EPSG:4326")
     transform = QgsCoordinateTransform(source_crs, target_crs, QgsProject.instance())
-    qgis_geometry = QgsGeometry.fromJson(json.dumps(geometry))
-    qgis_geometry.transform(transform)
-    return json.loads(qgis_geometry.asJson())
+    transformed = dict(geometry)
+    transformed["coordinates"] = transform_coordinates(geometry["coordinates"], transform)
+    return transformed
+
+
+def transform_coordinates(value: list, transform: QgsCoordinateTransform) -> list:
+    if value and isinstance(value[0], (int, float)):
+        point = transform.transform(QgsPointXY(float(value[0]), float(value[1])))
+        return [point.x(), point.y(), *value[2:]]
+    return [transform_coordinates(item, transform) for item in value]
 
 
 def geometry_needs_web_mercator_transform(geometry: dict) -> bool:

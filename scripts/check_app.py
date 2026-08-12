@@ -31,7 +31,7 @@ from water_regime_gis.qgis_runtime import qgis_install_hint
 def main() -> int:
     html = page(ROOT)
     assert "water-regime-gis" in html
-    assert "EPSG:32637" in html
+    assert "Рабочая CRS" in html
     assert "NDVI" in html
     assert "Выбор поля" in html
     assert "Сохранить выбранное поле" in html

@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 from .project import load_config, missing_required_dirs, project_root, selected_field_summary
-from .qgis_runtime import find_qgis_python, qgis_install_hint, qgis_profile_plugins
+from .qgis_runtime import find_qgis_python, qgis_install_hint, qgis_profile_plugins, qgis_project_data_path
 
 
 WMS_CACHE_TTL_SECONDS = 300
@@ -74,7 +74,7 @@ table{width:100%;border-collapse:collapse}td{padding:8px 0;border-bottom:1px sol
 
 def run_command(root: Path, command: list[str]) -> tuple[int, str]:
     env = os.environ.copy()
-    env.setdefault("PROJ_DATA", "/Applications/QGIS.app/Contents/Resources/qgis/proj")
+    env["PROJ_DATA"] = str(qgis_project_data_path())
     try:
         process = subprocess.run(command, cwd=root, text=True, capture_output=True, env=env, timeout=COMMAND_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
@@ -1109,6 +1109,8 @@ def public_output(label: str, output: str, code: int) -> str:
     if label == "Уточнение контура":
         if "Boundary source: nspd_getfeatureinfo" in output:
             return "Кадастровый контур найден по выбранной точке."
+        if "NSPD polygon is too large" in output:
+            return "Кадастровый объект слишком крупный для поля, используется временная рабочая область вокруг точки."
         if "Boundary source: map_point_buffer" in output:
             return "Кадастровый контур пока недоступен, используется временная рабочая область вокруг точки."
         return "Контур проверен."

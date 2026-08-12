@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefix_path, qgis_profile_plugins
+from water_regime_gis.project import selected_area_crs
 
 configure_qgis_environment()
 
@@ -55,9 +56,10 @@ def main() -> int:
     try:
         project = QgsProject.instance()
         project.clear()
-        crs = QgsCoordinateReferenceSystem(config["qgis"]["target_crs"])
+        target_crs = selected_area_crs(ROOT, config)
+        crs = QgsCoordinateReferenceSystem(target_crs)
         if not crs.isValid():
-            print(f"CRS is not valid: {config['qgis']['target_crs']}")
+            print(f"CRS is not valid: {target_crs}")
             return 1
         project.setCrs(crs)
         project.setTitle("water-regime-gis")

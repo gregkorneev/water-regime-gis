@@ -86,6 +86,19 @@ def selected_field_summary(root: Path, config: dict) -> dict:
     }
 
 
+def utm_crs_for_lon_lat(lon: float, lat: float) -> str:
+    zone = max(1, min(60, int((lon + 180) // 6) + 1))
+    return f"EPSG:{32600 + zone if lat >= 0 else 32700 + zone}"
+
+
+def selected_area_crs(root: Path, config: dict) -> str:
+    area_path = root / config["paths"]["selected_field_area"]
+    if not area_path.exists():
+        return config["qgis"]["target_crs"]
+    feature = _first_feature(area_path)
+    return feature.get("properties", {}).get("analysis_crs") or config["qgis"]["target_crs"]
+
+
 def load_aoi_feature(root: Path, config: dict) -> dict:
     path = root / config["paths"]["test_aoi"]
     return _first_feature(path)

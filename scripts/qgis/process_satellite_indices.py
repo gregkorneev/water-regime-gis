@@ -16,6 +16,7 @@ from water_regime_gis.qgis_runtime import configure_qgis_environment
 configure_qgis_environment()
 
 from osgeo import gdal, osr
+from water_regime_gis.project import selected_area_crs
 
 
 CONFIG = ROOT / "configs/project.example.json"
@@ -68,9 +69,10 @@ def main() -> int:
     item = sorted(items, key=lambda feature: float(feature["properties"].get("eo:cloud_cover") or 1000))[0]
     scene_dir = interim / safe_name(item["id"])
     scene_dir.mkdir(parents=True, exist_ok=True)
-    band_paths = clip_bands(item, scene_dir, area_path, config["qgis"]["target_crs"])
+    target_crs = selected_area_crs(ROOT, config)
+    band_paths = clip_bands(item, scene_dir, area_path, target_crs)
     indices = calculate_indices(band_paths, rasters, config["satellite"]["indices"])
-    true_color = write_true_color(band_paths, ROOT / config["paths"]["maps"], config["qgis"]["target_crs"])
+    true_color = write_true_color(band_paths, ROOT / config["paths"]["maps"], target_crs)
     metadata = {
         "satellite_status": "OK" if indices else "no_indices",
         "provider": config["satellite"]["provider"],
@@ -79,6 +81,7 @@ def main() -> int:
         "datetime": item["properties"].get("datetime", ""),
         "cloud_cover": item["properties"].get("eo:cloud_cover", ""),
         "bands": {name: str(path.relative_to(ROOT)) for name, path in band_paths.items()},
+        "analysis_crs": target_crs,
         "indices": indices,
         "true_color": true_color,
     }
@@ -128,8 +131,9 @@ def clip_bands(item: dict, scene_dir: Path, area_path: Path, target_crs: str) ->
         if not asset:
             continue
         output = scene_dir / f"{asset_name.lower()}_{name.lower()}.tif"
+        remove_if_exists(output)
         signed = sign_href(asset["href"])
-        gdal.Warp(
+        dataset = gdal.Warp(
             str(output),
             signed,
             dstSRS=target_crs,
@@ -142,6 +146,9 @@ def clip_bands(item: dict, scene_dir: Path, area_path: Path, target_crs: str) ->
             dstNodata=0,
             multithread=True,
         )
+        if dataset is None:
+            raise RuntimeError(f"Failed to clip Sentinel-2 band: {asset_name}")
+        dataset = None
         paths[name] = output
     return paths
 
@@ -177,6 +184,7 @@ def calculate_indices(bands: dict[str, Path], rasters: Path, wanted: list[str]) 
             written.append({"name": name, "status": "missing_band", "path": ""})
             continue
         output = rasters / f"{name.lower()}.tif"
+        remove_if_exists(output)
         write_index(name, bands[left], bands[right], output, formula)
         written.append({"name": name, "status": "OK", "path": str(output.relative_to(ROOT)), "url": f"/download/rasters/{name.lower()}.tif"})
     return written
@@ -230,6 +238,8 @@ def write_true_color(bands: dict[str, Path], maps_dir: Path, target_crs: str) ->
     output = maps_dir / "latest_sentinel_true_color.png"
     bounds = wgs84_bounds(red_ds, target_crs)
     temp_tif = maps_dir / "latest_sentinel_true_color.tif"
+    remove_if_exists(output)
+    remove_if_exists(temp_tif)
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create(str(temp_tif), red_ds.RasterXSize, red_ds.RasterYSize, 3, gdal.GDT_Byte, options=["COMPRESS=DEFLATE", "TILED=YES"])
     ds.SetGeoTransform(red_ds.GetGeoTransform())
@@ -239,7 +249,10 @@ def write_true_color(bands: dict[str, Path], maps_dir: Path, target_crs: str) ->
         band.WriteArray(array)
         band.FlushCache()
     ds = None
-    gdal.Translate(str(output), str(temp_tif), format="PNG")
+    translated = gdal.Translate(str(output), str(temp_tif), format="PNG")
+    if translated is None:
+        raise RuntimeError("Failed to write Sentinel-2 true color preview.")
+    translated = None
     return {
         "status": "OK",
         "path": str(output.relative_to(ROOT)),
@@ -278,6 +291,11 @@ def safe_name(value: str) -> str:
 def write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def remove_if_exists(path: Path) -> None:
+    if path.exists():
+        path.unlink()
 
 
 if __name__ == "__main__":

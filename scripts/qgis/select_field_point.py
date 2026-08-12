@@ -15,6 +15,7 @@ from water_regime_gis.qgis_runtime import configure_qgis_environment, qgis_prefi
 configure_qgis_environment()
 
 from qgis.core import QgsApplication, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsPointXY, QgsProject
+from water_regime_gis.project import utm_crs_for_lon_lat
 
 
 CONFIG = ROOT / "configs/project.example.json"
@@ -29,7 +30,7 @@ def main() -> int:
 
     QgsApplication.setPrefixPath(str(qgis_prefix_path()), True)
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
-    target_crs = QgsCoordinateReferenceSystem(config["qgis"]["target_crs"])
+    target_crs = QgsCoordinateReferenceSystem(utm_crs_for_lon_lat(args.lon, args.lat))
     if not target_crs.isValid():
         print(f"CRS is not valid: {config['qgis']['target_crs']}")
         return 1

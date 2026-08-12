@@ -24,7 +24,8 @@
     "parcels_wms_layer_id": 36048,
     "parcels_wms_name": "Земельные участки из ЕГРН",
     "local_wms_proxy_url": "http://127.0.0.1:8765/nspd/wms",
-    "feature_info_span_meters": 500
+    "feature_info_span_meters": 500,
+    "max_selected_parcel_area_ha": 2000
   },
   "paths": {
     "test_aoi": "data/aoi/tula_test_field.geojson",

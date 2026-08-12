@@ -65,6 +65,7 @@ def main() -> int:
     assert "/satellite-overlay.json" in html
     assert 'layerControl.addBaseLayer' not in html
     assert "satelliteLayer.addLayer(latestSentinel)" in html
+    assert "hybridLayer.addTo(map)" in html
     assert "/selected-field-area.geojson" in html
     assert "/download/rasters/" in html or "Спутниковые индексы" in html
     if "Результаты" in html:

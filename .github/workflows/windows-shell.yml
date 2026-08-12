@@ -74,18 +74,18 @@ jobs:
           Copy-Item scripts/run_app.py, scripts/check_project.py, scripts/check_satellite_pipeline.py, scripts/install_nspd_plugin.py "$release/scripts/"
           Copy-Item -Recurse scripts/qgis "$release/scripts/qgis"
           Copy-Item -Recurse packaging/windows "$release/windows-shell"
-          @'
-          Water Regime GIS для Windows
-
-          Требование: установленный чистый QGIS с официального сайта или OSGeo4W.
-
-          1. Откройте Water Regime GIS.exe.
-          2. Приложение само найдет QGIS, запустит локальный backend и откроет интерфейс внутри окна приложения.
-
-          QGIS не открывается пользователем и используется как скрытый геодвижок.
-          Python, GDAL, плагины QGIS и рабочие папки готовятся автоматикой приложения.
-          Пользовательские данные хранятся в папках data, outputs и configs рядом с exe.
-'@ | Set-Content -Encoding UTF8 "$release/README_RU.txt"
+          @(
+            "Water Regime GIS для Windows",
+            "",
+            "Требование: установленный чистый QGIS с официального сайта или OSGeo4W.",
+            "",
+            "1. Откройте Water Regime GIS.exe.",
+            "2. Приложение само найдет QGIS, запустит локальный backend и откроет интерфейс внутри окна приложения.",
+            "",
+            "QGIS не открывается пользователем и используется как скрытый геодвижок.",
+            "Python, GDAL, плагины QGIS и рабочие папки готовятся автоматикой приложения.",
+            "Пользовательские данные хранятся в папках data, outputs и configs рядом с exe."
+          ) | Set-Content -Encoding UTF8 "$release/README_RU.txt"
 
       - name: Check release package
         shell: pwsh

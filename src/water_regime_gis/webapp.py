@@ -463,6 +463,67 @@ def page(root: Path, output: str = "") -> str:
   <div class="panel"><h2>Лог</h2><pre id="run-log">{escaped_output}</pre>{preview_html}</div>
 </section>
 {results_html}
+<script>
+(() => {{
+  const runLog = document.getElementById("run-log");
+  function renderJob(payload) {{
+    if (payload && payload.error && runLog) {{
+      runLog.textContent = payload.error;
+      return;
+    }}
+    const job = payload && payload.job ? payload.job : payload;
+    if (!job || !runLog) return;
+    if (job.output) runLog.textContent = job.output;
+    if (!job.running && sessionStorage.getItem("wrgJobStarted") === job.kind) {{
+      sessionStorage.removeItem("wrgJobStarted");
+      setTimeout(() => window.location.reload(), 800);
+    }}
+  }}
+  function pollJob() {{
+    fetch("/job/status")
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {{
+        renderJob(payload);
+        if (payload && payload.running) setTimeout(pollJob, 1500);
+      }})
+      .catch(() => {{}});
+  }}
+  document.addEventListener("click", (event) => {{
+    const button = event.target.closest("[data-job]");
+    if (!button) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const kind = button.getAttribute("data-job");
+    fetch(`/job/start?kind=${{encodeURIComponent(kind)}}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {{
+        if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", kind);
+        renderJob(payload);
+        pollJob();
+      }})
+      .catch(() => {{
+        window.location.href = button.getAttribute("href");
+      }});
+  }}, true);
+  document.querySelector(".form").addEventListener("submit", (event) => {{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const latInput = document.getElementById("lat");
+    const lonInput = document.getElementById("lon");
+    const params = new URLSearchParams({{kind: "select-field", lat: latInput.value, lon: lonInput.value}});
+    fetch(`/job/start?${{params.toString()}}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {{
+        if (payload && payload.started) sessionStorage.setItem("wrgJobStarted", "select-field");
+        renderJob(payload);
+        pollJob();
+      }})
+      .catch(() => {{
+        event.target.submit();
+      }});
+  }}, true);
+}})();
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

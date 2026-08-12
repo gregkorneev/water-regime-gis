@@ -143,7 +143,14 @@ Docker-проверка ждет автоподготовку контейнер
 python3 scripts/build_release_package.py
 ```
 
-Пакет создается в `dist/water-regime-gis-release/`. Внутри лежат `Water Regime GIS.app` для macOS, `Water Regime GIS.bat` и `windows-shell/` для Windows, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и готовый Docker-образ `water-regime-gis-image.tar`. При первом запуске desktop-приложение само загрузит образ в Docker, запустит backend и откроет интерфейс внутри окна приложения.
+Пакет создается в `dist/water-regime-gis-release/`, а готовый архив для GitHub Release — в `dist/water-regime-gis-release.zip`. Внутри лежат `Water Regime GIS.app` для macOS, `Water Regime GIS.bat` и `windows-shell/` для Windows, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и готовый Docker-образ `water-regime-gis-image.tar`. При первом запуске desktop-приложение само загрузит образ в Docker, запустит backend и откроет интерфейс внутри окна приложения.
+
+Для пользователя release-сценарий должен оставаться простым:
+
+1. Скачать архив из GitHub Release.
+2. Распаковать его.
+3. Открыть `Water Regime GIS.app` на macOS или `Water Regime GIS.exe` на Windows, если он приложен к Windows release.
+4. Установить Docker Desktop для Docker-first release. Чистый QGIS с официального сайта нужен как максимум для будущего локального режима без Docker и ручной проверки `.qgs`; плагины, Python-зависимости и рабочие папки готовятся автоматикой приложения.
 
 Проверить собранный пакет:
 

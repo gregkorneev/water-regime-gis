@@ -56,12 +56,14 @@
 - На Windows добавлен пользовательский launcher `launch_panel.bat`.
 - Добавлен Docker-запуск `docker compose up --build`; образ основан на `qgis/qgis:3.44-noble` и публикует панель на `127.0.0.1:8765`.
 - Добавлены Docker launchers `launch_docker.command` и `launch_docker.bat`, которые запускают compose в фоне и открывают панель.
-- Добавлен Docker-first release-пакет: `python3 scripts/build_release_package.py` создает `dist/water-regime-gis-release/`.
+- Добавлен Docker-first release-пакет: `python3 scripts/build_release_package.py` создает `dist/water-regime-gis-release/` и готовый архив `dist/water-regime-gis-release.zip` для GitHub Release.
+- Release-сборщик пересоздает папку `dist/water-regime-gis-release/` с нуля, чтобы в публикацию не попадали старые дубликаты файлов.
 - Release-пакет содержит нативную macOS оболочку `Water Regime GIS.app` на Swift/WKWebView, запасной `Water Regime GIS.command`, Windows WebView2 shell в `windows-shell/`, `Water Regime GIS.bat`, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и Docker image tar `water-regime-gis-image.tar`.
 - В release-пакете QGIS и код проекта находятся внутри Docker image `water-regime-gis:release`; пользовательские данные и результаты лежат рядом с launcher-ами.
 - Release desktop shell загружает image из tar при первом запуске, запускает `docker compose up -d` и открывает панель внутри desktop-окна, а не в системном браузере.
 - Добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`, который собирает Windows WebView2 shell как `Water Regime GIS.exe` на `windows-latest`.
-- Собранный release-пакет проверяется командой `python3 scripts/check_release_package.py`.
+- Собранный release-пакет проверяется командой `python3 scripts/check_release_package.py`; проверка подтверждает структуру пакета, zip-архив, Docker image tar и отсутствие stale-дубликатов.
+- На 2026-08-12 проверен чистый release-runtime сценарий: удалить `water-regime-gis:release`, загрузить image из `water-regime-gis-image.tar`, поднять compose из release-папки, выбрать точку `62.628719, 91.7578125`, подготовить результат и скачать `/download/result.zip`.
 - Добавлена проверка реального Docker-запуска `python3 scripts/check_docker_app.py`; она ждет bootstrap и проверяет QGIS 3.40+ и НСПД-плагин внутри контейнера.
 - Добавлен спутниковый v1-пайплайн: `scripts/qgis/process_satellite_indices.py` запускается внутри QGIS Python, ищет Sentinel-2 L2A через Microsoft Planetary Computer STAC, обрезает каналы GDAL `/vsicurl/` и считает NDVI, NDMI, NDWI, MNDWI, SAVI, NDRE.
 - Спутниковый пайплайн проверяется командой `python3 scripts/check_satellite_pipeline.py`.

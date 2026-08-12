@@ -222,4 +222,25 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает Docker-first пакет для macOS и Windows с готовым Docker-образом приложения.
 
+Сборщик release-пакета пересоздает `dist/water-regime-gis-release/` с нуля, чтобы в GitHub Release не попадали старые дубликаты файлов. После сборки дополнительно создается архив `dist/water-regime-gis-release.zip`, который можно прикреплять к GitHub Release.
+
+Проверка `python3 scripts/check_release_package.py` подтверждает:
+
+- наличие `.app`, `.command`, `.bat`, `docker-compose.yml`, `configs/`, рабочих папок и `water-regime-gis-image.tar`;
+- наличие архива `dist/water-regime-gis-release.zip`;
+- отсутствие stale-дубликатов вроде файлов с ` 2` в имени;
+- наличие ключевых файлов внутри zip-архива.
+
+Проверенный release-сценарий на 2026-08-12:
+
+- остановлен старый release-compose;
+- удален локальный Docker image `water-regime-gis:release`;
+- image заново загружен из `dist/water-regime-gis-release/water-regime-gis-image.tar`;
+- запущен `docker compose up -d` из release-папки;
+- подтверждены `runtime.mode = docker`, QGIS `3.44.13-Solothurn` и НСПД-плагин `2.5`;
+- через панель выбрана точка `62.628719, 91.7578125`;
+- подготовка результата завершилась `OK`, CRS результата `EPSG:32646`;
+- рассчитаны `NDVI`, `NDMI`, `NDWI`, `MNDWI`, `SAVI`, `NDRE`;
+- `/download/result.zip` содержит `selected_field_area.geojson`, `latest_result.json` и все шесть GeoTIFF.
+
 Полностью собранный Windows `.exe` пока не проверен в Windows-среде из этого macOS workspace.

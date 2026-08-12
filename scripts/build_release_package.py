@@ -14,25 +14,14 @@ RELEASE = DIST / "water-regime-gis-release"
 APP_NAME = "Water Regime GIS"
 IMAGE = "water-regime-gis:release"
 IMAGE_TAR = "water-regime-gis-image.tar"
+RELEASE_ARCHIVE = DIST / "water-regime-gis-release.zip"
 
 
 def main() -> int:
     if RELEASE.exists():
-        for path in (
-            RELEASE / "Water Regime GIS.app",
-            RELEASE / "Water Regime GIS.command",
-            RELEASE / "Water Regime GIS.bat",
-            RELEASE / "README_RU.txt",
-            RELEASE / "docker-compose.yml",
-            RELEASE / "windows-shell",
-            RELEASE / IMAGE_TAR,
-        ):
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink(missing_ok=True)
-    else:
-        RELEASE.mkdir(parents=True)
+        shutil.rmtree(RELEASE)
+    RELEASE_ARCHIVE.unlink(missing_ok=True)
+    RELEASE.mkdir(parents=True)
     for name in (
         "configs",
         "data/aoi",
@@ -54,7 +43,9 @@ def main() -> int:
     write_macos_app()
     write_readme()
     build_image()
+    build_archive()
     print(f"Release package: {RELEASE}")
+    print(f"Release archive: {RELEASE_ARCHIVE}")
     return 0
 
 
@@ -154,7 +145,16 @@ def write_readme() -> None:
     (RELEASE / "README_RU.txt").write_text(
         """Water Regime GIS
 
-Требование: установленный Docker Desktop.
+Release-пакет для GitHub.
+
+Что должен установить пользователь:
+- Water Regime GIS из этого архива;
+- Docker Desktop, если выбран Docker-first release;
+- чистый QGIS с официального сайта нужен для будущего локального режима без Docker и для ручной проверки QGIS-проектов.
+
+Внутри Docker-first release QGIS уже находится в образе water-regime-gis-image.tar.
+Пользователю не нужно устанавливать Python, GDAL, плагины QGIS, .NET SDK или исходный код проекта.
+Кадастровый модуль и рабочие папки готовятся автоматически при запуске.
 
 macOS:
 1. Откройте Water Regime GIS.app.
@@ -181,6 +181,11 @@ QGIS находится внутри Docker-образа и не открыва�
 def build_image() -> None:
     subprocess.run(["docker", "build", "--platform", "linux/amd64", "-t", IMAGE, "."], cwd=ROOT, check=True)
     subprocess.run(["docker", "save", "-o", str(RELEASE / IMAGE_TAR), IMAGE], cwd=ROOT, check=True)
+
+
+def build_archive() -> None:
+    archive_base = RELEASE_ARCHIVE.with_suffix("")
+    shutil.make_archive(str(archive_base), "zip", root_dir=DIST, base_dir=RELEASE.name)
 
 
 if __name__ == "__main__":

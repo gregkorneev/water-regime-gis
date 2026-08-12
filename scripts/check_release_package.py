@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import plistlib
+import zipfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DIST = ROOT / "dist"
 RELEASE = ROOT / "dist" / "water-regime-gis-release"
+RELEASE_ARCHIVE = DIST / "water-regime-gis-release.zip"
 
 
 def main() -> int:
@@ -17,8 +20,10 @@ def main() -> int:
     app = RELEASE / "Water Regime GIS.app"
     executable = app / "Contents/MacOS/water-regime-gis"
     windows_shell = RELEASE / "windows-shell"
+    stale_names = [path.name for path in RELEASE.rglob("*") if " 2" in path.name or path.name.endswith(" copy")]
     with (app / "Contents/Info.plist").open("rb") as file:
         plist = plistlib.load(file)
+    assert not stale_names, f"Stale duplicated files in release package: {stale_names}"
     assert "image: water-regime-gis:release" in compose
     assert "./data:/app/data" in compose
     assert "./outputs:/app/outputs" in compose
@@ -28,6 +33,7 @@ def main() -> int:
     assert "start http://127.0.0.1:8765" not in windows
     assert "QGIS находится внутри Docker-образа" in readme
     assert "desktop-окне, а не в системном браузере" in readme
+    assert "Пользователю не нужно устанавливать Python, GDAL, плагины QGIS, .NET SDK" in readme
     assert plist["CFBundleExecutable"] == "water-regime-gis"
     assert executable.exists()
     assert (executable.stat().st_mode & 0o111) != 0
@@ -38,6 +44,18 @@ def main() -> int:
     assert "WebView2" in (windows_shell / "Program.cs").read_text(encoding="utf-8")
     assert (RELEASE / "water-regime-gis-image.tar").stat().st_size > 0
     assert (RELEASE / "configs/project.example.json").exists()
+    assert RELEASE_ARCHIVE.stat().st_size > 0
+    with zipfile.ZipFile(RELEASE_ARCHIVE) as archive:
+        names = set(archive.namelist())
+    for name in (
+        "water-regime-gis-release/README_RU.txt",
+        "water-regime-gis-release/docker-compose.yml",
+        "water-regime-gis-release/Water Regime GIS.command",
+        "water-regime-gis-release/Water Regime GIS.bat",
+        "water-regime-gis-release/Water Regime GIS.app/Contents/Info.plist",
+        "water-regime-gis-release/water-regime-gis-image.tar",
+    ):
+        assert name in names, name
     for name in (
         "data/aoi",
         "data/raw",

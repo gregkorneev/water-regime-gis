@@ -45,8 +45,10 @@ def main() -> int:
     assert "packaging/windows" in release_script
     assert "image: water-regime-gis:release" in release_script
     assert "water-regime-gis-image.tar" in release_script
+    assert "water-regime-gis-release.zip" in release_script
     assert "open http://127.0.0.1:8765" not in release_script
     assert "dotnet run --project windows-shell" in release_script
+    assert "shutil.rmtree(RELEASE)" in release_script
     assert "WKWebView" in macos_shell
     assert '["docker", "compose", "up", "-d"]' in macos_shell
     assert "WebView2" in windows_shell

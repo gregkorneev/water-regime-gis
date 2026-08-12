@@ -471,11 +471,12 @@ def page(root: Path, output: str = "") -> str:
 <script>
 const latInput = document.getElementById("lat");
 const lonInput = document.getElementById("lon");
-const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
-const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
+const mapParams = new URLSearchParams(window.location.search);
+const start = [Number(mapParams.get("lat")) || {field['lat'] or 53.84}, Number(mapParams.get("lon")) || {field['lon'] or 38.107}];
+const startZoom = Number(mapParams.get("zoom")) || {13 if field['selected'] else 11};
+const map = L.map("map", {{attributionControl: false}}).setView(start, startZoom);
 L.control.attribution({{prefix: false}}).addTo(map);
-const osmBase = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
-const osmLayer = L.layerGroup([osmBase]);
+const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
 const satelliteBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
 const satelliteLayer = L.layerGroup([satelliteBase]);
 const hybridSatellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
@@ -494,11 +495,32 @@ const layerControl = L.control.layers(
   {{"Кадастровый слой": cadastralLayer}},
   {{collapsed: false}}
 ).addTo(map);
+let activeBaseName = "Карта";
+let labelLayer = null;
+let fullLabelStyle = null;
+let regionalLabelStyle = null;
 function keepWorkLayersFront() {{
   if (selectedLayer) selectedLayer.bringToFront();
   if (marker) marker.setZIndexOffset(1000);
 }}
-map.on("baselayerchange overlayadd", keepWorkLayersFront);
+function applyLabelMode() {{
+  if (!labelLayer) return;
+  const container = labelLayer.getContainer();
+  if (activeBaseName === "Спутник") {{
+    container.style.display = "none";
+    return;
+  }}
+  container.style.display = "block";
+  labelLayer.getMaplibreMap().setStyle(activeBaseName === "Карта" ? regionalLabelStyle : fullLabelStyle);
+  labelLayer.getMaplibreMap().resize();
+  keepWorkLayersFront();
+}}
+map.on("baselayerchange", (event) => {{
+  activeBaseName = event.name;
+  applyLabelMode();
+  keepWorkLayersFront();
+}});
+map.on("overlayadd", keepWorkLayersFront);
 let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
 let selectedLayer = null;
 const selectedStyle = {{color: "#f57c00", weight: 3, fillColor: "#ffd54f", fillOpacity: 0.24}};
@@ -508,9 +530,12 @@ function usesNameField(value) {{
   if (value[0] === "get" && typeof value[1] === "string" && value[1].startsWith("name")) return true;
   return value.some(usesNameField);
 }}
-function russianLabelStyle(style) {{
+function russianLabelStyle(style, regionalOnly = false) {{
   const result = JSON.parse(JSON.stringify(style));
-  result.layers = result.layers.filter((layer) => layer.type === "symbol");
+  const regionalLabels = new Set(["label_state", "label_country_1", "label_country_2", "label_country_3"]);
+  result.layers = result.layers.filter((layer) =>
+    layer.type === "symbol" && (!regionalOnly || regionalLabels.has(layer.id))
+  );
   result.layers.forEach((layer) => {{
     const field = layer.layout && layer.layout["text-field"];
     if (usesNameField(field)) {{
@@ -524,9 +549,14 @@ fetch("https://tiles.openfreemap.org/styles/liberty")
   .then((style) => {{
     if (!style) return;
     const attribution = "OpenFreeMap &copy; OpenMapTiles, OpenStreetMap";
-    osmLayer.addLayer(L.maplibreGL({{style: russianLabelStyle(style), pane: "overlayPane", attribution}}));
-    hybridLayer.addLayer(L.maplibreGL({{style: russianLabelStyle(style), pane: "overlayPane", attribution}}));
-    keepWorkLayersFront();
+    regionalLabelStyle = russianLabelStyle(style, true);
+    fullLabelStyle = russianLabelStyle(style);
+    labelLayer = L.maplibreGL({{
+      style: regionalLabelStyle,
+      pane: "overlayPane",
+      attribution
+    }}).addTo(map);
+    applyLabelMode();
   }})
   .catch(() => {{}});
 fetch("/selected-field-area.geojson")
@@ -554,6 +584,8 @@ fetch("/satellite-overlay.json")
     hybridLayer.addLayer(latestHybrid);
     map.removeLayer(osmLayer);
     hybridLayer.addTo(map);
+    activeBaseName = "Гибрид";
+    applyLabelMode();
     keepWorkLayersFront();
   }})
   .catch(() => {{}});

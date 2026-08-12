@@ -56,11 +56,17 @@ def main() -> int:
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "World_Imagery" in html
-    assert "tiles.openfreemap.org/styles/liberty" in html
-    assert '"name:ru"' in html
+    assert "World_Transportation" not in html
+    assert "World_Boundaries_and_Places" not in html
+    assert "OpenFreeMap" in html
     assert "L.maplibreGL" in html
-    assert 'pane: "overlayPane"' in html
-    assert "osmLayer.addLayer(L.maplibreGL" in html
+    assert '"name:ru"' in html
+    assert 'layer.type === "symbol"' in html
+    assert '"label_state"' in html
+    assert "regionalLabelStyle = russianLabelStyle(style, true)" in html
+    assert "labelLayer.getMaplibreMap().setStyle" in html
+    assert 'container.style.display = "none"' in html
+    assert 'mapParams.get("zoom")' in html
     assert "L.control.layers" in html
     assert "Кадастровый слой" in html
     assert "/satellite-overlay.json" in html

@@ -7,8 +7,8 @@
 - Python standard library — Python Software Foundation License.
 - Browser runtime — браузер пользователя.
 - Leaflet — BSD 2-Clause License, используется в локальном веб-интерфейсе для выбора точки на карте через CDN.
-- MapLibre GL JS и MapLibre GL Leaflet — BSD 3-Clause License, используются для отображения русскоязычной векторной карты.
-- OpenFreeMap / OpenMapTiles — векторная картографическая подложка без API-ключа; требуется атрибуция OpenFreeMap, OpenMapTiles и OpenStreetMap.
+- MapLibre GL JS и MapLibre GL Leaflet — BSD 3-Clause License, используются для слоя подписей гибридной карты через CDN.
+- OpenFreeMap / OpenMapTiles — используются как источник векторных подписей гибридной карты; атрибуция отображается непосредственно на карте.
 - OpenStreetMap — используется как картографическая подложка в веб-интерфейсе и QGIS-проекте; данные OSM распространяются на условиях Open Database License (ODbL).
 
 Текущая версия интерфейса не добавляет внешних Python-зависимостей.

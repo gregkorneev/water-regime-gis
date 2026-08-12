@@ -464,19 +464,22 @@ def page(root: Path, output: str = "") -> str:
 </section>
 {results_html}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
 <script>
 const latInput = document.getElementById("lat");
 const lonInput = document.getElementById("lon");
 const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
 const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
 L.control.attribution({{prefix: false}}).addTo(map);
-const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
+const osmFallback = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
+const osmLayer = L.layerGroup([osmFallback]);
 const satelliteBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
 const satelliteLayer = L.layerGroup([satelliteBase]);
 const hybridSatellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
-const hybridLabels = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
-const hybridLayer = L.layerGroup([hybridSatellite, hybridLabels]);
+const hybridLayer = L.layerGroup([hybridSatellite]);
 const cadastralLayer = L.tileLayer.wms("/nspd/wms", {{
   layers: "36048",
   format: "image/png",
@@ -500,6 +503,35 @@ let marker = {f"L.marker(start).addTo(map)" if field['selected'] else "null"};
 let selectedLayer = null;
 const selectedStyle = {{color: "#f57c00", weight: 3, fillColor: "#ffd54f", fillOpacity: 0.24}};
 const hoverStyle = {{color: "#00a6a6", weight: 5, fillColor: "#80cbc4", fillOpacity: 0.34}};
+function usesNameField(value) {{
+  if (!Array.isArray(value)) return false;
+  if (value[0] === "get" && typeof value[1] === "string" && value[1].startsWith("name")) return true;
+  return value.some(usesNameField);
+}}
+function russianStyle(style, labelsOnly = false) {{
+  const result = JSON.parse(JSON.stringify(style));
+  if (labelsOnly) result.layers = result.layers.filter((layer) => layer.type === "symbol");
+  result.layers.forEach((layer) => {{
+    const field = layer.layout && layer.layout["text-field"];
+    if (usesNameField(field)) {{
+      layer.layout["text-field"] = ["coalesce", ["get", "name:ru"], ["get", "name_ru"], ["get", "name"]];
+    }}
+  }});
+  return result;
+}}
+fetch("https://tiles.openfreemap.org/styles/liberty")
+  .then((response) => response.ok ? response.json() : null)
+  .then((style) => {{
+    if (!style) return;
+    const attribution = "OpenFreeMap &copy; OpenMapTiles, OpenStreetMap";
+    const russianMap = L.maplibreGL({{style: russianStyle(style), attribution}});
+    const russianLabels = L.maplibreGL({{style: russianStyle(style, true), pane: "overlayPane", attribution}});
+    osmLayer.removeLayer(osmFallback);
+    osmLayer.addLayer(russianMap);
+    hybridLayer.addLayer(russianLabels);
+    keepWorkLayersFront();
+  }})
+  .catch(() => {{}});
 fetch("/selected-field-area.geojson")
   .then((response) => response.ok ? response.json() : null)
   .then((geojson) => {{
@@ -519,12 +551,10 @@ fetch("/satellite-overlay.json")
   .then((response) => response.ok ? response.json() : null)
   .then((payload) => {{
     if (!payload || payload.status !== "OK") return;
-    const latestSentinel = L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
-    const latestHybrid = L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
+    const latestSentinel = L.imageOverlay(payload.url, payload.bounds, {{pane: "tilePane", opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
+    const latestHybrid = L.imageOverlay(payload.url, payload.bounds, {{pane: "tilePane", opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
     satelliteLayer.addLayer(latestSentinel);
-    hybridLayer.removeLayer(hybridLabels);
     hybridLayer.addLayer(latestHybrid);
-    hybridLayer.addLayer(hybridLabels);
     map.removeLayer(osmLayer);
     satelliteLayer.addTo(map);
     keepWorkLayersFront();

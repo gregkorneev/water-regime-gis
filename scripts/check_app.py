@@ -56,7 +56,10 @@ def main() -> int:
     assert 'kind: "select-field"' in html
     assert "/nspd/wms" in html
     assert "World_Imagery" in html
-    assert "World_Boundaries_and_Places" in html
+    assert "tiles.openfreemap.org/styles/liberty" in html
+    assert '"name:ru"' in html
+    assert "L.maplibreGL" in html
+    assert 'pane: "overlayPane"' in html
     assert "L.control.layers" in html
     assert "Кадастровый слой" in html
     assert "/satellite-overlay.json" in html

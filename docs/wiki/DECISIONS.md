@@ -669,7 +669,7 @@
 - запускать Docker Desktop, `docker load` и `docker compose up -d` из самой `.app`;
 - показывать локальный интерфейс внутри окна приложения, не открывая системный браузер;
 - для Windows добавить shell-проект `windows-shell/` на WinForms + WebView2 и launcher `Water Regime GIS.bat`.
-- добавить GitHub Actions workflow для сборки Windows shell на `windows-latest` в artifact `Water Regime GIS.exe`.
+- добавить GitHub Actions workflow для сборки Windows shell на `windows-latest` и полного Windows release artifact на `ubuntu-latest`.
 
 Причина:
 
@@ -677,4 +677,4 @@
 
 Ограничение:
 
-- macOS `.app` собрана и проверена в текущем workspace. Windows WebView2 shell добавлен в release-пакет; локально на macOS `.exe` не проверяется, поэтому сборка вынесена в GitHub Actions на Windows runner.
+- macOS `.app` собрана и проверена в текущем workspace. Windows WebView2 shell добавлен в release-пакет; локально на macOS `.exe` не проверяется, поэтому сборка и полный Windows release artifact вынесены в GitHub Actions.

@@ -52,8 +52,11 @@ def main() -> int:
     assert "WebView2" in windows_shell
     assert '"docker", "compose up -d"' in windows_shell
     assert "windows-latest" in windows_workflow
+    assert "ubuntu-latest" in windows_workflow
     assert "dotnet publish packaging/windows/WaterRegimeGIS.csproj" in windows_workflow
     assert "Water Regime GIS.exe" in windows_workflow
+    assert "water-regime-gis-windows-release" in windows_workflow
+    assert "water-regime-gis-image.tar" in windows_workflow
     assert '"save"' in release_script
     print("Distribution config: OK")
     return 0

@@ -218,7 +218,7 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 Для Windows release-пакет содержит `windows-shell/` с WinForms/WebView2-приложением. На macOS Windows `.exe` не собирается; его нужно собрать в Windows-среде через `windows-shell\Build Windows App.bat` или запускать `Water Regime GIS.bat`, если установлен .NET SDK.
 
-Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускается на `windows-latest`, публикует `packaging/windows/WaterRegimeGIS.csproj` как single-file `Water Regime GIS.exe` и сохраняет exe как artifact.
+Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускает отдельную сборку `.exe` на `windows-latest`, а также собирает полный Windows release artifact на `ubuntu-latest`: `Water Regime GIS.exe`, `water-regime-gis-image.tar`, `docker-compose.yml`, `configs/`, `data/` и `outputs/`.
 
 Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает Docker-first пакет для macOS и Windows с готовым Docker-образом приложения.
 

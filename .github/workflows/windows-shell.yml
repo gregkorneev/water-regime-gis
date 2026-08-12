@@ -37,3 +37,77 @@ jobs:
         with:
           name: Water-Regime-GIS-Windows-Shell
           path: dist/windows-shell/Water Regime GIS.exe
+
+  build-windows-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish Windows desktop shell
+        shell: bash
+        run: >
+          dotnet publish packaging/windows/WaterRegimeGIS.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -o dist/water-regime-gis-windows-release
+
+      - name: Assemble release folders
+        shell: bash
+        run: |
+          set -euo pipefail
+          release="dist/water-regime-gis-windows-release"
+          mkdir -p "$release/configs" "$release/data/aoi" "$release/data/raw" "$release/data/interim" "$release/data/processed" "$release/outputs/maps" "$release/outputs/reports" "$release/outputs/rasters"
+          cp configs/project.example.json "$release/configs/project.example.json"
+          cp -R packaging/windows "$release/windows-shell"
+          cat > "$release/docker-compose.yml" <<'YAML'
+          services:
+            water-regime-gis:
+              image: water-regime-gis:release
+              platform: linux/amd64
+              ports:
+                - "8765:8765"
+              environment:
+                WATER_REGIME_GIS_RUNTIME: docker
+                WATER_REGIME_GIS_HOST: 0.0.0.0
+                WATER_REGIME_GIS_PORT: 8765
+                WATER_REGIME_GIS_NO_BROWSER: "1"
+              volumes:
+                - ./data:/app/data
+                - ./outputs:/app/outputs
+                - ./configs:/app/configs:ro
+          YAML
+          cat > "$release/README_RU.txt" <<'TXT'
+          Water Regime GIS для Windows
+
+          Требование: установленный Docker Desktop.
+
+          1. Откройте Water Regime GIS.exe.
+          2. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
+
+          QGIS находится внутри Docker-образа и не открывается пользователем.
+          Пользовательские данные хранятся в папках data, outputs и configs рядом с exe.
+          TXT
+
+      - name: Build Docker runtime image
+        shell: bash
+        run: |
+          docker build --platform linux/amd64 -t water-regime-gis:release .
+          docker save -o dist/water-regime-gis-windows-release/water-regime-gis-image.tar water-regime-gis:release
+
+      - name: Check release package
+        shell: bash
+        run: |
+          test -f "dist/water-regime-gis-windows-release/Water Regime GIS.exe"
+          test -s "dist/water-regime-gis-windows-release/water-regime-gis-image.tar"
+          test -f "dist/water-regime-gis-windows-release/docker-compose.yml"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Water-Regime-GIS-Windows-Release
+          path: dist/water-regime-gis-windows-release

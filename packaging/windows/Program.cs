@@ -6,6 +6,7 @@ namespace WaterRegimeGis;
 internal static class Program
 {
     private static readonly Uri AppUri = new("http://127.0.0.1:8765");
+    private static Process? backendProcess;
 
     [STAThread]
     private static async Task Main()
@@ -17,7 +18,7 @@ internal static class Program
         try
         {
             var releaseDir = AppContext.BaseDirectory;
-            await Task.Run(() => EnsureDockerBackend(releaseDir));
+            await Task.Run(() => EnsureLocalBackend(releaseDir));
             form.Navigate(AppUri);
         }
         catch (Exception ex)
@@ -27,16 +28,24 @@ internal static class Program
         }
 
         Application.Run(form);
+        if (backendProcess is { HasExited: false })
+        {
+            backendProcess.Kill(entireProcessTree: true);
+        }
     }
 
-    private static void EnsureDockerBackend(string releaseDir)
+    private static void EnsureLocalBackend(string releaseDir)
     {
-        Run("docker", "info", releaseDir, "Docker Desktop не найден или не запущен. Установите/запустите Docker Desktop и откройте приложение снова.");
-        if (RunStatus("docker", "image inspect water-regime-gis:release", releaseDir) != 0)
+        if (BackendResponds()) return;
+
+        var python = QgisPython();
+        var script = Path.Combine(releaseDir, "scripts", "run_app.py");
+        if (!File.Exists(script))
         {
-            Run("docker", "load -i water-regime-gis-image.tar", releaseDir);
+            throw new InvalidOperationException("В release-пакете не найден scripts\\run_app.py. Скачайте полный архив Water Regime GIS из GitHub Release.");
         }
-        Run("docker", "compose up -d", releaseDir);
+
+        backendProcess = StartBackend(python, script, releaseDir);
         WaitForBackend();
     }
 
@@ -55,39 +64,61 @@ internal static class Program
             {
                 Thread.Sleep(1000);
             }
+            if (backendProcess is { HasExited: true })
+            {
+                throw new InvalidOperationException("Локальный сервис завершился сразу после запуска. Проверьте установку QGIS.");
+            }
         }
         throw new InvalidOperationException("Локальный сервис не ответил за 90 секунд.");
     }
 
-    private static int RunStatus(string file, string arguments, string cwd)
+    private static bool BackendResponds()
     {
         try
         {
-            using var process = StartProcess(file, arguments, cwd);
-            process.WaitForExit();
-            return process.ExitCode;
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+            using var response = client.GetAsync(AppUri).GetAwaiter().GetResult();
+            return (int)response.StatusCode is >= 200 and < 500;
         }
         catch
         {
-            return 127;
+            return false;
         }
     }
 
-    private static void Run(string file, string arguments, string cwd, string? friendlyError = null)
+    private static string QgisPython()
     {
-        using var process = StartProcess(file, arguments, cwd);
-        process.WaitForExit();
-        if (process.ExitCode == 0) return;
-
-        var output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
-        throw new InvalidOperationException(friendlyError ?? (string.IsNullOrWhiteSpace(output) ? $"{file} {arguments} failed." : output.Trim()));
+        var candidates = new List<string>();
+        var configured = Environment.GetEnvironmentVariable("WATER_REGIME_GIS_QGIS_PYTHON");
+        if (!string.IsNullOrWhiteSpace(configured)) candidates.Add(configured);
+        candidates.AddRange(FindFiles(@"C:\Program Files", "python-qgis.bat").OrderByDescending(path => path));
+        candidates.AddRange(FindFiles(@"C:\OSGeo4W", "python-qgis.bat").OrderByDescending(path => path));
+        foreach (var candidate in candidates)
+        {
+            if (File.Exists(candidate)) return candidate;
+        }
+        throw new InvalidOperationException("QGIS не найден. Установите чистый QGIS с официального сайта или OSGeo4W и откройте приложение снова.");
     }
 
-    private static Process StartProcess(string file, string arguments, string cwd)
+    private static IEnumerable<string> FindFiles(string root, string pattern)
     {
+        if (!Directory.Exists(root)) return [];
+        try
+        {
+            return Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories).ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static Process StartBackend(string python, string script, string cwd)
+    {
+        var isBatch = python.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) || python.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase);
         var process = new Process
         {
-            StartInfo = new ProcessStartInfo(file, arguments)
+            StartInfo = new ProcessStartInfo(isBatch ? "cmd.exe" : python, isBatch ? $"/c \"\"{python}\" \"{script}\"\"" : $"\"{script}\"")
             {
                 WorkingDirectory = cwd,
                 UseShellExecute = false,
@@ -96,6 +127,9 @@ internal static class Program
                 CreateNoWindow = true,
             }
         };
+        process.StartInfo.Environment["WATER_REGIME_GIS_NO_BROWSER"] = "1";
+        process.StartInfo.Environment["WATER_REGIME_GIS_PORT"] = "8765";
+        process.StartInfo.Environment["WATER_REGIME_GIS_RUNTIME"] = "local-release";
         process.Start();
         return process;
     }

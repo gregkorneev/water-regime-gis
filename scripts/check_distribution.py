@@ -43,23 +43,29 @@ def main() -> int:
     assert "Water Regime GIS.bat" in release_script
     assert "packaging/macos/WaterRegimeGIS.swift" in release_script
     assert "packaging/windows" in release_script
-    assert "image: water-regime-gis:release" in release_script
-    assert "water-regime-gis-image.tar" in release_script
+    assert "copy_runtime_sources" in release_script
+    assert "pyproject.toml" in release_script
+    assert "scripts/run_app.py" in release_script
     assert "water-regime-gis-release.zip" in release_script
     assert "open http://127.0.0.1:8765" not in release_script
     assert "dotnet run --project windows-shell" in release_script
     assert "shutil.rmtree(RELEASE)" in release_script
     assert "WKWebView" in macos_shell
-    assert '["docker", "compose", "up", "-d"]' in macos_shell
+    assert "ensureLocalBackend" in macos_shell
+    assert "/Applications/QGIS.app/Contents/MacOS/python" in macos_shell
+    assert "docker" not in macos_shell.lower()
     assert "WebView2" in windows_shell
-    assert '"docker", "compose up -d"' in windows_shell
+    assert "EnsureLocalBackend" in windows_shell
+    assert "python-qgis.bat" in windows_shell
+    assert "docker" not in windows_shell.lower()
     assert "windows-latest" in windows_workflow
-    assert "ubuntu-latest" in windows_workflow
     assert "dotnet publish packaging/windows/WaterRegimeGIS.csproj" in windows_workflow
     assert "Water Regime GIS.exe" in windows_workflow
     assert "water-regime-gis-windows-release" in windows_workflow
-    assert "water-regime-gis-image.tar" in windows_workflow
-    assert '"save"' in release_script
+    assert "src/water_regime_gis/webapp.py" in windows_workflow
+    assert "scripts/qgis/process_satellite_indices.py" in windows_workflow
+    assert "Docker image tar must not be required" in windows_workflow
+    assert '"save"' not in release_script
     print("Distribution config: OK")
     return 0
 

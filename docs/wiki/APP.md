@@ -90,27 +90,27 @@ Docker-вариант проверяется командой `python3 scripts/c
 
 Панель показывает режим запуска в блоке `Среда`: `Локальный запуск`, если используется QGIS с компьютера пользователя, или `Docker-контейнер`, если приложение работает внутри контейнера. Машинно это доступно в `/environment.json` как `runtime.mode`.
 
-Сборка пользовательского Docker-first пакета:
+Сборка пользовательского QGIS-first пакета:
 
 ```bash
 python3 scripts/build_release_package.py
 ```
 
-Скрипт создает `dist/water-regime-gis-release/`. Это переносимый пакет без необходимости запускать проект из репозитория:
+Скрипт создает `dist/water-regime-gis-release/` и архив `dist/water-regime-gis-release.zip`. Это переносимый пакет без необходимости запускать проект из репозитория:
 
 - `Water Regime GIS.app` — macOS desktop-приложение с нативным `WKWebView`;
-- `Water Regime GIS.command` — запасной macOS launcher, открывающий `.app`;
+- `Water Regime GIS.command` — запасной macOS launcher, запускающий backend через QGIS Python;
 - `Water Regime GIS.bat` — Windows launcher для desktop shell;
 - `windows-shell/` — исходники Windows WebView2 shell и скрипт сборки `Water Regime GIS.exe`;
-- `docker-compose.yml` — запуск контейнерной панели;
-- `water-regime-gis-image.tar` — сохраненный Docker-образ с кодом проекта и QGIS runtime;
-- `data/`, `outputs/`, `configs/` — пользовательские данные, результаты и конфигурация рядом с приложением.
+- `src/`, `scripts/`, `scripts/qgis/` — runtime-код и QGIS-скрипты, которые запускаются приложением;
+- `data/`, `outputs/`, `configs/` — пользовательские данные, результаты и конфигурация рядом с приложением;
+- `docs/wiki/`, `LICENSE`, `THIRD_PARTY_NOTICES.md` — проектная память и лицензии.
 
-При первом запуске desktop-приложение проверяет Docker Desktop, загружает `water-regime-gis-image.tar` как image `water-regime-gis:release`, запускает `docker compose up -d` и открывает интерфейс внутри окна приложения. QGIS находится внутри Docker-образа и не открывается пользователем.
+При первом запуске desktop-приложение находит установленный QGIS, запускает `scripts/run_app.py` через QGIS Python и открывает интерфейс внутри окна приложения. QGIS не открывается пользователем и используется как скрытый геодвижок. НСПД-плагин и рабочие папки готовятся автоматикой backend.
 
 Собранный пакет проверяется командой `python3 scripts/check_release_package.py`.
 
-Повторная сборка release-пакета обновляет launchers, compose и Docker image tar, но не удаляет пользовательские папки `data/`, `outputs/` и `configs/` внутри `dist/water-regime-gis-release/`.
+Повторная сборка release-пакета пересоздает `dist/water-regime-gis-release/` с нуля, чтобы в GitHub Release не попадали stale-файлы. Пользовательские данные установленной программы должны храниться вне сборочной папки или переноситься отдельным update-механизмом.
 
 Сборка локального `.app`:
 
@@ -214,33 +214,32 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 ## Упаковка
 
-Для macOS release-пакет содержит нативную `.app`-оболочку, собранную из `packaging/macos/WaterRegimeGIS.swift`. Она запускает Docker backend и показывает интерфейс внутри собственного окна приложения.
+Для macOS release-пакет содержит нативную `.app`-оболочку, собранную из `packaging/macos/WaterRegimeGIS.swift`. Она находит `/Applications/QGIS.app/Contents/MacOS/python`, запускает backend из release-папки и показывает интерфейс внутри собственного окна приложения.
 
 Для Windows release-пакет содержит `windows-shell/` с WinForms/WebView2-приложением. На macOS Windows `.exe` не собирается; его нужно собрать в Windows-среде через `windows-shell\Build Windows App.bat` или запускать `Water Regime GIS.bat`, если установлен .NET SDK.
 
-Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускает отдельную сборку `.exe` на `windows-latest`, а также собирает полный Windows release artifact на `ubuntu-latest`: `Water Regime GIS.exe`, `water-regime-gis-image.tar`, `docker-compose.yml`, `configs/`, `data/` и `outputs/`.
+Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускает сборку `.exe` на `windows-latest` и собирает полный Windows release artifact: `Water Regime GIS.exe`, runtime-исходники, QGIS-скрипты, `configs/`, `data/`, `outputs/`, лицензии и wiki.
 
-Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает Docker-first пакет для macOS и Windows с готовым Docker-образом приложения.
+Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает QGIS-first пакет для macOS и Windows.
 
 Сборщик release-пакета пересоздает `dist/water-regime-gis-release/` с нуля, чтобы в GitHub Release не попадали старые дубликаты файлов. После сборки дополнительно создается архив `dist/water-regime-gis-release.zip`, который можно прикреплять к GitHub Release.
 
 Проверка `python3 scripts/check_release_package.py` подтверждает:
 
-- наличие `.app`, `.command`, `.bat`, `docker-compose.yml`, `configs/`, рабочих папок и `water-regime-gis-image.tar`;
+- наличие `.app`, `.command`, `.bat`, `configs/`, рабочих папок, runtime-исходников, QGIS-скриптов, лицензий и wiki;
 - наличие архива `dist/water-regime-gis-release.zip`;
 - отсутствие stale-дубликатов вроде файлов с ` 2` в имени;
 - наличие ключевых файлов внутри zip-архива.
 
 Проверенный release-сценарий на 2026-08-12:
 
-- остановлен старый release-compose;
-- удален локальный Docker image `water-regime-gis:release`;
-- image заново загружен из `dist/water-regime-gis-release/water-regime-gis-image.tar`;
-- запущен `docker compose up -d` из release-папки;
-- подтверждены `runtime.mode = docker`, QGIS `3.44.13-Solothurn` и НСПД-плагин `2.5`;
+- backend запущен из release-папки через `/Applications/QGIS.app/Contents/MacOS/python`;
+- подтверждены `runtime.mode = local`, QGIS `3.44.12` и НСПД-плагин `2.5`;
 - через панель выбрана точка `62.628719, 91.7578125`;
 - подготовка результата завершилась `OK`, CRS результата `EPSG:32646`;
 - рассчитаны `NDVI`, `NDMI`, `NDWI`, `MNDWI`, `SAVI`, `NDRE`;
 - `/download/result.zip` содержит `selected_field_area.geojson`, `latest_result.json` и все шесть GeoTIFF.
+
+Отдельно проверена macOS `.app` из release-пакета: после штатного macOS-разрешения локальной сети приложение подняло backend через QGIS Python, `/environment.json` ответил локальным режимом, а повторный `select-field` завершился `OK`.
 
 Полностью собранный Windows `.exe` пока не проверен в Windows-среде из этого macOS workspace.

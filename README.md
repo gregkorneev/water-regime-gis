@@ -43,7 +43,7 @@ QGIS-ориентированная информационная система 
 - Windows как целевая платформа приложения.
 - QGIS, PyQGIS и Processing Toolbox.
 - Desktop-оболочка для macOS/Windows поверх локального backend.
-- Локальный backend на стандартной библиотеке Python внутри Docker-first release-пакета.
+- Локальный backend на стандартной библиотеке Python, запускаемый release-приложением через Python из установленного QGIS.
 - GDAL/OGR, Rasterio, GeoPandas, Shapely, PyProj.
 - NumPy, Pandas, PyArrow.
 - GeoTIFF для растровых результатов.
@@ -53,7 +53,7 @@ QGIS-ориентированная информационная система 
 
 ## Лицензия
 
-Код проекта распространяется под лицензией MIT. Пользовательская release-версия открывается как desktop-приложение; QGIS и backend работают скрыто внутри Docker.
+Код проекта распространяется под лицензией MIT. Пользовательская release-версия открывается как desktop-приложение; QGIS используется скрыто как локальный геодвижок.
 
 ## Первый запуск
 
@@ -137,20 +137,20 @@ python3 scripts/check_docker_app.py
 
 Docker-проверка ждет автоподготовку контейнера и подтверждает, что QGIS и кадастровый модуль доступны из панели.
 
-Собрать пользовательский Docker-first пакет:
+Собрать пользовательский пакет для GitHub Release:
 
 ```bash
 python3 scripts/build_release_package.py
 ```
 
-Пакет создается в `dist/water-regime-gis-release/`, а готовый архив для GitHub Release — в `dist/water-regime-gis-release.zip`. Внутри лежат `Water Regime GIS.app` для macOS, `Water Regime GIS.bat` и `windows-shell/` для Windows, `docker-compose.yml`, папки `data/`, `outputs/`, `configs/` и готовый Docker-образ `water-regime-gis-image.tar`. При первом запуске desktop-приложение само загрузит образ в Docker, запустит backend и откроет интерфейс внутри окна приложения.
+Пакет создается в `dist/water-regime-gis-release/`, а готовый архив для GitHub Release — в `dist/water-regime-gis-release.zip`. Внутри лежат `Water Regime GIS.app` для macOS, `Water Regime GIS.bat` и `windows-shell/` для Windows, исходники runtime, QGIS-скрипты, `configs/`, `data/`, `outputs/`, лицензии и wiki. При первом запуске desktop-приложение само найдет установленный QGIS, запустит backend через QGIS Python и откроет интерфейс внутри окна приложения.
 
 Для пользователя release-сценарий должен оставаться простым:
 
 1. Скачать архив из GitHub Release.
 2. Распаковать его.
 3. Открыть `Water Regime GIS.app` на macOS или `Water Regime GIS.exe` на Windows, если он приложен к Windows release.
-4. Установить Docker Desktop для Docker-first release. Чистый QGIS с официального сайта нужен как максимум для будущего локального режима без Docker и ручной проверки `.qgs`; плагины, Python-зависимости и рабочие папки готовятся автоматикой приложения.
+4. Установить чистый QGIS с официального сайта. Python, GDAL, QGIS-плагины, рабочие папки и обработка запускаются автоматикой приложения.
 
 Проверить собранный пакет:
 

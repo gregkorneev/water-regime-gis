@@ -12,8 +12,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 RELEASE = DIST / "water-regime-gis-release"
 APP_NAME = "Water Regime GIS"
-IMAGE = "water-regime-gis:release"
-IMAGE_TAR = "water-regime-gis-image.tar"
 RELEASE_ARCHIVE = DIST / "water-regime-gis-release.zip"
 
 
@@ -23,6 +21,10 @@ def main() -> int:
     RELEASE_ARCHIVE.unlink(missing_ok=True)
     RELEASE.mkdir(parents=True)
     for name in (
+        "notebooks",
+        "src",
+        "scripts/qgis",
+        "docs/wiki",
         "configs",
         "data/aoi",
         "data/raw",
@@ -36,13 +38,13 @@ def main() -> int:
     release_config = RELEASE / "configs/project.example.json"
     if not release_config.exists():
         shutil.copy2(ROOT / "configs/project.example.json", release_config)
+    copy_runtime_sources()
     write_compose()
     write_macos_launcher()
     write_windows_launcher()
     copy_windows_shell()
     write_macos_app()
     write_readme()
-    build_image()
     build_archive()
     print(f"Release package: {RELEASE}")
     print(f"Release archive: {RELEASE_ARCHIVE}")
@@ -78,7 +80,20 @@ def write_macos_launcher() -> None:
 set -e
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
-open "$APP_DIR/Water Regime GIS.app"
+QGIS_PYTHON="${WATER_REGIME_GIS_QGIS_PYTHON:-/Applications/QGIS.app/Contents/MacOS/python}"
+
+if [ -x "$APP_DIR/Water Regime GIS.app/Contents/MacOS/water-regime-gis" ]; then
+  open "$APP_DIR/Water Regime GIS.app"
+  exit 0
+fi
+
+if [ ! -x "$QGIS_PYTHON" ]; then
+  echo "QGIS не найден. Установите QGIS с официального сайта в /Applications/QGIS.app."
+  exit 1
+fi
+
+cd "$APP_DIR"
+WATER_REGIME_GIS_RUNTIME=local-release "$QGIS_PYTHON" scripts/run_app.py
 """,
         encoding="utf-8",
     )
@@ -123,7 +138,7 @@ def write_macos_app() -> None:
     plist = {
         "CFBundleName": APP_NAME,
         "CFBundleDisplayName": APP_NAME,
-        "CFBundleIdentifier": "local.water-regime-gis.docker",
+        "CFBundleIdentifier": "local.water-regime-gis",
         "CFBundleVersion": "0.1.0",
         "CFBundleShortVersionString": "0.1.0",
         "CFBundlePackageType": "APPL",
@@ -149,38 +164,51 @@ Release-пакет для GitHub.
 
 Что должен установить пользователь:
 - Water Regime GIS из этого архива;
-- Docker Desktop, если выбран Docker-first release;
-- чистый QGIS с официального сайта нужен для будущего локального режима без Docker и для ручной проверки QGIS-проектов.
+- чистый QGIS с официального сайта.
 
-Внутри Docker-first release QGIS уже находится в образе water-regime-gis-image.tar.
-Пользователю не нужно устанавливать Python, GDAL, плагины QGIS, .NET SDK или исходный код проекта.
+Пользователю не нужно устанавливать Python, GDAL, плагины QGIS, Docker Desktop, .NET SDK или исходный код проекта.
+Приложение запускает backend через Python, который входит в QGIS.
 Кадастровый модуль и рабочие папки готовятся автоматически при запуске.
 
 macOS:
 1. Откройте Water Regime GIS.app.
-2. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
+2. Приложение само найдет /Applications/QGIS.app, запустит локальный backend и откроет интерфейс внутри окна приложения.
 
 Windows:
 1. Если рядом есть Water Regime GIS.exe, откройте его.
 2. Если exe еще не собран, откройте Water Regime GIS.bat или windows-shell\\Build Windows App.bat.
-3. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
+3. Приложение само найдет установленный QGIS/OSGeo4W, запустит локальный backend и откроет интерфейс внутри окна приложения.
 
 Папки рядом с launcher-ами:
 - data: пользовательские входные геоданные;
 - outputs: результаты;
 - configs: конфигурация проекта.
 
-QGIS находится внутри Docker-образа и не открывается пользователем.
+QGIS не открывается пользователем: он используется как скрытый геодвижок.
 Пользовательский интерфейс открывается в desktop-окне, а не в системном браузере.
-Файл water-regime-gis-image.tar содержит готовый Docker-образ приложения.
 """,
         encoding="utf-8",
     )
 
 
-def build_image() -> None:
-    subprocess.run(["docker", "build", "--platform", "linux/amd64", "-t", IMAGE, "."], cwd=ROOT, check=True)
-    subprocess.run(["docker", "save", "-o", str(RELEASE / IMAGE_TAR), IMAGE], cwd=ROOT, check=True)
+def copy_runtime_sources() -> None:
+    shutil.copy2(ROOT / "pyproject.toml", RELEASE / "pyproject.toml")
+    shutil.copy2(ROOT / "LICENSE", RELEASE / "LICENSE")
+    shutil.copy2(ROOT / "THIRD_PARTY_NOTICES.md", RELEASE / "THIRD_PARTY_NOTICES.md")
+    shutil.copytree(ROOT / "src", RELEASE / "src", ignore=ignore_generated, dirs_exist_ok=True)
+    shutil.copytree(ROOT / "docs/wiki", RELEASE / "docs/wiki", ignore=ignore_generated, dirs_exist_ok=True)
+    for script in (
+        "run_app.py",
+        "check_project.py",
+        "check_satellite_pipeline.py",
+        "install_nspd_plugin.py",
+    ):
+        shutil.copy2(ROOT / "scripts" / script, RELEASE / "scripts" / script)
+    shutil.copytree(ROOT / "scripts/qgis", RELEASE / "scripts/qgis", ignore=ignore_generated, dirs_exist_ok=True)
+
+
+def ignore_generated(_directory: str, names: list[str]) -> set[str]:
+    return {name for name in names if name in {"__pycache__", ".DS_Store"} or name.endswith((".pyc", ".pyo"))}
 
 
 def build_archive() -> None:

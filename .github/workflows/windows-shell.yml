@@ -39,7 +39,7 @@ jobs:
           path: dist/windows-shell/Water Regime GIS.exe
 
   build-windows-release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -48,7 +48,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Publish Windows desktop shell
-        shell: bash
+        shell: pwsh
         run: >
           dotnet publish packaging/windows/WaterRegimeGIS.csproj
           -c Release
@@ -58,54 +58,42 @@ jobs:
           -o dist/water-regime-gis-windows-release
 
       - name: Assemble release folders
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          release="dist/water-regime-gis-windows-release"
-          mkdir -p "$release/configs" "$release/data/aoi" "$release/data/raw" "$release/data/interim" "$release/data/processed" "$release/outputs/maps" "$release/outputs/reports" "$release/outputs/rasters"
-          cp configs/project.example.json "$release/configs/project.example.json"
-          cp -R packaging/windows "$release/windows-shell"
-          cat > "$release/docker-compose.yml" <<'YAML'
-          services:
-            water-regime-gis:
-              image: water-regime-gis:release
-              platform: linux/amd64
-              ports:
-                - "8765:8765"
-              environment:
-                WATER_REGIME_GIS_RUNTIME: docker
-                WATER_REGIME_GIS_HOST: 0.0.0.0
-                WATER_REGIME_GIS_PORT: 8765
-                WATER_REGIME_GIS_NO_BROWSER: "1"
-              volumes:
-                - ./data:/app/data
-                - ./outputs:/app/outputs
-                - ./configs:/app/configs:ro
-          YAML
-          cat > "$release/README_RU.txt" <<'TXT'
+          $release = "dist/water-regime-gis-windows-release"
+          New-Item -ItemType Directory -Force `
+            "$release/configs", "$release/data/aoi", "$release/data/raw", "$release/data/interim", "$release/data/processed", `
+            "$release/outputs/maps", "$release/outputs/reports", "$release/outputs/rasters", "$release/scripts" | Out-Null
+          Copy-Item configs/project.example.json "$release/configs/project.example.json"
+          Copy-Item pyproject.toml "$release/pyproject.toml"
+          Copy-Item LICENSE "$release/LICENSE"
+          Copy-Item THIRD_PARTY_NOTICES.md "$release/THIRD_PARTY_NOTICES.md"
+          Copy-Item -Recurse src "$release/src"
+          New-Item -ItemType Directory -Force "$release/docs" | Out-Null
+          Copy-Item -Recurse docs/wiki "$release/docs/wiki"
+          Copy-Item scripts/run_app.py, scripts/check_project.py, scripts/check_satellite_pipeline.py, scripts/install_nspd_plugin.py "$release/scripts/"
+          Copy-Item -Recurse scripts/qgis "$release/scripts/qgis"
+          Copy-Item -Recurse packaging/windows "$release/windows-shell"
+          @'
           Water Regime GIS для Windows
 
-          Требование: установленный Docker Desktop.
+          Требование: установленный чистый QGIS с официального сайта или OSGeo4W.
 
           1. Откройте Water Regime GIS.exe.
-          2. Приложение само запустит Docker-контейнер и откроет интерфейс внутри окна приложения.
+          2. Приложение само найдет QGIS, запустит локальный backend и откроет интерфейс внутри окна приложения.
 
-          QGIS находится внутри Docker-образа и не открывается пользователем.
+          QGIS не открывается пользователем и используется как скрытый геодвижок.
+          Python, GDAL, плагины QGIS и рабочие папки готовятся автоматикой приложения.
           Пользовательские данные хранятся в папках data, outputs и configs рядом с exe.
-          TXT
-
-      - name: Build Docker runtime image
-        shell: bash
-        run: |
-          docker build --platform linux/amd64 -t water-regime-gis:release .
-          docker save -o dist/water-regime-gis-windows-release/water-regime-gis-image.tar water-regime-gis:release
+'@ | Set-Content -Encoding UTF8 "$release/README_RU.txt"
 
       - name: Check release package
-        shell: bash
+        shell: pwsh
         run: |
-          test -f "dist/water-regime-gis-windows-release/Water Regime GIS.exe"
-          test -s "dist/water-regime-gis-windows-release/water-regime-gis-image.tar"
-          test -f "dist/water-regime-gis-windows-release/docker-compose.yml"
+          if (!(Test-Path "dist/water-regime-gis-windows-release/Water Regime GIS.exe")) { throw "Missing exe." }
+          if (!(Test-Path "dist/water-regime-gis-windows-release/src/water_regime_gis/webapp.py")) { throw "Missing backend." }
+          if (!(Test-Path "dist/water-regime-gis-windows-release/scripts/qgis/process_satellite_indices.py")) { throw "Missing QGIS scripts." }
+          if (Test-Path "dist/water-regime-gis-windows-release/water-regime-gis-image.tar") { throw "Docker image tar must not be required in QGIS-first Windows release." }
 
       - uses: actions/upload-artifact@v4
         with:

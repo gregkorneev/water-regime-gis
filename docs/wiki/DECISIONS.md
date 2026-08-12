@@ -696,3 +696,29 @@
 
 - текущее решение переопределяет прежнее поведение сборщика, где `data/`, `outputs/` и `configs/` внутри `dist/water-regime-gis-release/` сохранялись между пересборками. Установленные пользовательские данные должны жить вне сборочной папки или переноситься отдельным update-механизмом, а не попадать в публикуемый GitHub artifact;
 - текущий Docker-first release требует установленный и запущенный Docker Desktop. Чистый QGIS с официального сайта остается максимальным требованием для будущего локального режима без Docker и ручной проверки `.qgs`, но в Docker-first release QGIS находится внутри image.
+
+## 2026-08-12 — GitHub Release переведен на QGIS-first runtime
+
+Решение:
+
+- основной GitHub Release больше не требует Docker Desktop и `water-regime-gis-image.tar`;
+- release-пакет содержит runtime-исходники, QGIS-скрипты, `pyproject.toml`, `configs/`, `data/`, `outputs/`, `docs/wiki/` и лицензии;
+- macOS `.app` запускает backend через `/Applications/QGIS.app/Contents/MacOS/python`;
+- Windows WebView2 shell ищет `python-qgis.bat` в `Program Files` или `OSGeo4W` и запускает `scripts/run_app.py`;
+- `scripts/check_release_package.py` проверяет QGIS-first структуру пакета и отсутствие обязательного Docker image tar.
+
+Причина:
+
+- пользовательское требование: максимум установить Water Regime GIS и чистый QGIS с официального сайта; плагины, QGIS-скрипты, рабочие папки и обработка должны запускаться автоматикой приложения.
+
+Проверка:
+
+- `dist/water-regime-gis-release.zip` собран как QGIS-first архив размером около 125 KB;
+- backend из release-папки успешно запущен через `/Applications/QGIS.app/Contents/MacOS/python`;
+- полный сценарий `select-field` + `prepare-result` на точке `62.628719, 91.7578125` завершился `OK`, рассчитаны `NDVI`, `NDMI`, `NDWI`, `MNDWI`, `SAVI`, `NDRE`, скачиваемый `/download/result.zip` содержит GeoJSON, JSON и GeoTIFF;
+- macOS `.app` из release-пакета подняла backend через локальный QGIS после штатного разрешения доступа к локальной сети, `/environment.json` показал `runtime.mode = local`, QGIS `3.44.12`, НСПД `2.5`, а повторный `select-field` завершился `OK`.
+
+Ограничение:
+
+- на macOS при первом запуске неподписанной `.app` из папки Desktop система может показать privacy-диалоги доступа к папке и локальной сети; это нужно учитывать в инструкции релиза или решать подписью/notarization;
+- Windows `.exe` собирается GitHub Actions, но фактический запуск на отдельной Windows-машине еще не проверен.

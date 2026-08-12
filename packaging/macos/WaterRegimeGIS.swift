@@ -4,6 +4,7 @@ import WebKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private var webView: WKWebView!
+    private var backendProcess: Process?
     private let appURL = URL(string: "http://127.0.0.1:8765")!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -14,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let releaseDir = try self.releaseDirectory()
-                try self.ensureDockerBackend(releaseDir: releaseDir)
+                try self.ensureLocalBackend(releaseDir: releaseDir)
                 DispatchQueue.main.async {
                     self.webView.load(URLRequest(url: self.appURL))
                     NSApp.activate(ignoringOtherApps: true)
@@ -30,6 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        backendProcess?.terminate()
     }
 
     private func buildWindow() {
@@ -81,69 +86,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return url
     }
 
-    private func ensureDockerBackend(releaseDir: URL) throws {
-        try run(["docker", "info"], cwd: releaseDir, startupHint: true)
-        if runStatus(["docker", "image", "inspect", "water-regime-gis:release"], cwd: releaseDir) != 0 {
-            try run(["docker", "load", "-i", "water-regime-gis-image.tar"], cwd: releaseDir, startupHint: false)
+    private func ensureLocalBackend(releaseDir: URL) throws {
+        if backendResponds() {
+            return
         }
-        try run(["docker", "compose", "up", "-d"], cwd: releaseDir, startupHint: false)
+        let python = try qgisPython()
+        let script = releaseDir.appendingPathComponent("scripts/run_app.py")
+        if !FileManager.default.fileExists(atPath: script.path) {
+            throw ShellError(message: "В release-пакете не найден scripts/run_app.py. Скачайте полный архив Water Regime GIS из GitHub Release.")
+        }
+        let process = Process()
+        process.executableURL = python
+        process.arguments = [script.path]
+        process.currentDirectoryURL = releaseDir
+        var environment = ProcessInfo.processInfo.environment
+        environment["WATER_REGIME_GIS_NO_BROWSER"] = "1"
+        environment["WATER_REGIME_GIS_PORT"] = "8765"
+        environment["WATER_REGIME_GIS_RUNTIME"] = "local-release"
+        process.environment = environment
+        process.standardOutput = Pipe()
+        process.standardError = Pipe()
+        try process.run()
+        backendProcess = process
         try waitForBackend()
     }
 
     private func waitForBackend() throws {
         let deadline = Date().addingTimeInterval(90)
         while Date() < deadline {
-            if let (_, response) = try? URLSession.shared.synchronousData(from: appURL),
-               let http = response as? HTTPURLResponse,
-               (200..<500).contains(http.statusCode) {
+            if backendResponds() {
                 return
+            }
+            if let process = backendProcess, !process.isRunning {
+                throw ShellError(message: "Локальный сервис завершился сразу после запуска. Проверьте установку QGIS.")
             }
             Thread.sleep(forTimeInterval: 1)
         }
         throw ShellError(message: "Локальный сервис не ответил за 90 секунд.")
     }
 
-    private func runStatus(_ args: [String], cwd: URL) -> Int32 {
-        do {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = args
-            process.currentDirectoryURL = cwd
-            process.standardOutput = Pipe()
-            process.standardError = Pipe()
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus
-        } catch {
-            return 127
+    private func backendResponds() -> Bool {
+        if let (_, response) = try? URLSession.shared.synchronousData(from: appURL),
+           let http = response as? HTTPURLResponse,
+           (200..<500).contains(http.statusCode) {
+            return true
         }
+        return false
     }
 
-    private func run(_ args: [String], cwd: URL, startupHint: Bool) throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = args
-        process.currentDirectoryURL = cwd
-        let output = Pipe()
-        process.standardOutput = output
-        process.standardError = output
-        do {
-            try process.run()
-            process.waitUntilExit()
-        } catch {
-            if startupHint {
-                throw ShellError(message: "Docker Desktop не найден или не запущен. Установите/запустите Docker Desktop и откройте приложение снова.")
+    private func qgisPython() throws -> URL {
+        let candidates = [
+            ProcessInfo.processInfo.environment["WATER_REGIME_GIS_QGIS_PYTHON"] ?? "",
+            "/Applications/QGIS.app/Contents/MacOS/python",
+            "/Applications/QGIS.app/Contents/MacOS/bin/python",
+            "/Applications/QGIS.app/Contents/MacOS/python3.12",
+        ].filter { !$0.isEmpty }
+        for path in candidates {
+            if FileManager.default.fileExists(atPath: path) {
+                return URL(fileURLWithPath: path)
             }
-            throw error
         }
-        if process.terminationStatus != 0 {
-            let data = output.fileHandleForReading.readDataToEndOfFile()
-            let text = String(data: data, encoding: .utf8) ?? ""
-            if startupHint {
-                throw ShellError(message: "Docker Desktop не готов. Запустите Docker Desktop и откройте приложение снова.")
-            }
-            throw ShellError(message: text.isEmpty ? "\(args.joined(separator: " ")) failed." : text)
-        }
+        throw ShellError(message: "QGIS не найден. Установите чистый QGIS с официального сайта в /Applications/QGIS.app и откройте приложение снова.")
     }
 
     private func showAlert(message: String) {

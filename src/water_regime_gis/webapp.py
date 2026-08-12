@@ -472,7 +472,8 @@ const start = [{field['lat'] or 53.84}, {field['lon'] or 38.107}];
 const map = L.map("map", {{attributionControl: false}}).setView(start, {13 if field['selected'] else 11});
 L.control.attribution({{prefix: false}}).addTo(map);
 const osmLayer = L.tileLayer("https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png", {{maxZoom: 19, attribution: "&copy; OpenStreetMap"}});
-const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
+const satelliteBase = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
+const satelliteLayer = L.layerGroup([satelliteBase]);
 const hybridSatellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
 const hybridLabels = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}});
 const hybridLayer = L.layerGroup([hybridSatellite, hybridLabels]);
@@ -519,14 +520,13 @@ fetch("/satellite-overlay.json")
   .then((payload) => {{
     if (!payload || payload.status !== "OK") return;
     const latestSentinel = L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
-    const latestHybrid = L.layerGroup([
-      L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}}),
-      L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{{z}}/{{y}}/{{x}}", {{maxZoom: 19, attribution: "Esri"}})
-    ]);
-    layerControl.addBaseLayer(latestSentinel, "Последний Sentinel-2");
-    layerControl.addBaseLayer(latestHybrid, "Последний Sentinel-2 гибрид");
+    const latestHybrid = L.imageOverlay(payload.url, payload.bounds, {{opacity: 1, attribution: payload.attribution || "Sentinel-2"}});
+    satelliteLayer.addLayer(latestSentinel);
+    hybridLayer.removeLayer(hybridLabels);
+    hybridLayer.addLayer(latestHybrid);
+    hybridLayer.addLayer(hybridLabels);
     map.removeLayer(osmLayer);
-    latestSentinel.addTo(map);
+    satelliteLayer.addTo(map);
     keepWorkLayersFront();
   }})
   .catch(() => {{}});

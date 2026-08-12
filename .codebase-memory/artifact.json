@@ -1,7 +1,7 @@
 {
     "schema_version": 2,
-    "commit": "f0d45e250371849f298eda53de80c476b3be7a02",
-    "indexed_at": "2026-08-11T16:30:27Z",
+    "commit": "f7f6347e85d106f00c5b784336398db41b55d8ec",
+    "indexed_at": "2026-08-12T11:26:47Z",
     "project": "water-regime-gis",
     "nodes": 240,
     "edges": 620,

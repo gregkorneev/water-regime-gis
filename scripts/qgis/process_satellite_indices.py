@@ -47,6 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--interim", type=Path)
     parser.add_argument("--rasters", type=Path)
     parser.add_argument("--metadata", type=Path)
+    parser.add_argument("--report", type=Path)
     parser.add_argument("--indices", nargs="+")
     parser.add_argument("--date-from", type=dt.date.fromisoformat)
     parser.add_argument("--date-to", type=dt.date.fromisoformat)
@@ -74,13 +75,16 @@ def main() -> int:
     interim.mkdir(parents=True, exist_ok=True)
     rasters.mkdir(parents=True, exist_ok=True)
     latest_scene_path = project_path(args.metadata) if args.metadata else interim / "latest_scene.json"
+    report_path = project_path(args.report) if args.report else ROOT / config["paths"]["metrics_report"]
 
     items = search_items(config, area_path, args.date_from, args.date_to)
     if args.scene_id:
         items = [item for item in items if item.get("id") == args.scene_id]
     if not items:
         write_json(latest_scene_path, {"satellite_status": "no_scene_found", "indices": []})
+        write_json(report_path, {"status": "no_scene_found", "generated_at": utc_now(), "indices": []})
         print("Satellite status: no_scene_found")
+        print("Metrics report:", report_path)
         return 0
 
     item = sorted(items, key=lambda feature: float(feature["properties"].get("eo:cloud_cover") or 1000))[0]
@@ -101,12 +105,24 @@ def main() -> int:
         "indices": indices,
     }
     write_json(latest_scene_path, metadata)
+    report = {
+        "status": metadata["satellite_status"],
+        "generated_at": utc_now(),
+        "area": str(area_path),
+        "analysis_crs": target_crs,
+        "scene_id": metadata["scene_id"],
+        "scene_datetime": metadata["datetime"],
+        "cloud_cover": metadata["cloud_cover"],
+        "indices": indices,
+    }
+    write_json(report_path, report)
     print("Satellite status:", metadata["satellite_status"])
     print("Scene:", item["id"])
     print("Scene datetime:", metadata["datetime"])
     print("Cloud cover:", metadata["cloud_cover"])
     print("Indices:", ", ".join(index["name"] for index in indices))
     print("Metadata:", latest_scene_path)
+    print("Metrics report:", report_path)
     return 0
 
 
@@ -211,12 +227,12 @@ def calculate_indices(bands: dict[str, Path], rasters: Path, wanted: list[str]) 
             continue
         output = rasters / f"{name.lower()}.tif"
         remove_if_exists(output)
-        write_index(name, bands[left], bands[right], output, formula)
-        written.append({"name": name, "status": "OK", "path": str(output.relative_to(ROOT))})
+        metrics = write_index(name, bands[left], bands[right], output, formula)
+        written.append({"name": name, "status": "OK", "path": str(output.relative_to(ROOT)), **metrics})
     return written
 
 
-def write_index(name: str, left: Path, right: Path, output: Path, formula) -> None:
+def write_index(name: str, left: Path, right: Path, output: Path, formula) -> dict:
     import numpy as np
 
     left_ds = gdal.Open(str(left))
@@ -228,7 +244,9 @@ def write_index(name: str, left: Path, right: Path, output: Path, formula) -> No
     b = right_raw.astype("float32") / 10000.0
     with np.errstate(divide="ignore", invalid="ignore"):
         result = formula(a, b)
-    result[mask | ~np.isfinite(result)] = -9999
+    invalid = mask | ~np.isfinite(result)
+    result[invalid] = -9999
+    valid = result[~invalid]
 
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create(str(output), left_ds.RasterXSize, left_ds.RasterYSize, 1, gdal.GDT_Float32, options=["COMPRESS=DEFLATE", "TILED=YES"])
@@ -240,6 +258,18 @@ def write_index(name: str, left: Path, right: Path, output: Path, formula) -> No
     band.SetDescription(name)
     band.FlushCache()
     ds = None
+    return {
+        "valid_pixel_count": int(valid.size),
+        "nodata_pixel_count": int(invalid.sum()),
+        "minimum": float(valid.min()) if valid.size else None,
+        "maximum": float(valid.max()) if valid.size else None,
+        "mean": float(valid.mean()) if valid.size else None,
+        "standard_deviation": float(valid.std()) if valid.size else None,
+    }
+
+
+def utc_now() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
 def safe_name(value: str) -> str:

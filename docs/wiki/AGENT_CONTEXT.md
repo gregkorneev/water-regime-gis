@@ -7,6 +7,7 @@
 - Плагин установлен симлинком через `python3 scripts/install_qgis_plugin.py`.
 - Observearth 1.0.2 и Isoliner 5.6.21 установлены в профиль QGIS.
 - Работают выбор точки, fallback AOI, попытка уточнения НСПД, Sentinel-2 и индексы NDVI/NDMI/NDWI/MNDWI/SAVI/NDRE.
+- Каждый спутниковый расчет создает `outputs/reports/latest_metrics.json` со статистикой индексных растров.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
 - Кригинг требует реальный точечный слой минимум с тремя объектами и числовым полем.
 - `Собрать проект/слои` загружает доступные AOI/растры без дублей и сохраняет текущую сессию в `outputs/maps/water_regime_gis.qgs`.

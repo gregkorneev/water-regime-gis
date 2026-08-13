@@ -48,6 +48,7 @@ python3 scripts/install_nspd_plugin.py
 - рабочая граница: `data/aoi/selected_field_area.geojson`;
 - обрезанные каналы и metadata сцены: `data/interim/satellite/`;
 - индексные GeoTIFF: `outputs/rasters/`;
+- метрики индексов: `outputs/reports/latest_metrics.json`;
 - QGIS-проект: `outputs/maps/water_regime_gis.qgs`;
 - импортированные и разделенные границы: `data/processed/field_boundaries/`.
 

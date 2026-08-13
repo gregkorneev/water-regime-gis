@@ -22,7 +22,10 @@
 - `outputs/rasters/mndwi.tif`;
 - `outputs/rasters/savi.tif`;
 - `outputs/rasters/ndre.tif`;
+- `outputs/reports/latest_metrics.json` — сцена, дата, облачность, CRS и статистика каждого индекса;
 - `outputs/maps/water_regime_gis.qgs`.
+
+Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
 
 GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные входы и результаты исключены из git, кроме `.gitkeep`.
 

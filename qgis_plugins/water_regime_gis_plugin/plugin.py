@@ -105,7 +105,7 @@ class WaterRegimeDock(QDockWidget):
             f"- Observearth: {self.plugin_status('observearth')}",
             f"- Isoliner: {self.processing_status('isoliner:raster_to_isolines')}",
         ]
-        for key in ("aoi", "interim", "processed", "maps", "rasters"):
+        for key in ("aoi", "interim", "processed", "maps", "rasters", "reports"):
             path = settings.PROJECT_ROOT / config["paths"][key]
             lines.append(f"- {key}: {'OK' if path.exists() else 'missing'} {path}")
         self.log("\n".join(lines))

@@ -28,13 +28,16 @@ def main() -> int:
         print(f"Satellite script is missing: {script}")
         return 1
     script_text = script.read_text(encoding="utf-8")
-    for option in ("--area", "--rasters", "--indices", "--date-from", "--scene-id"):
+    for option in ("--area", "--rasters", "--report", "--indices", "--date-from", "--scene-id"):
         if option not in script_text:
             print(f"Satellite script option is missing: {option}")
             return 1
     missing = sorted(REQUIRED - indices)
     if missing:
         print(f"Required indices are missing: {', '.join(missing)}")
+        return 1
+    if config.get("paths", {}).get("metrics_report") != "outputs/reports/latest_metrics.json":
+        print("Metrics report path is not configured.")
         return 1
     print("Satellite pipeline: OK")
     print(f"Provider: {satellite['provider']}")

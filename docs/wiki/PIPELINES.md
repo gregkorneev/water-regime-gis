@@ -17,9 +17,10 @@
 3. выбирает наименее облачную сцену за последние 60 дней при облачности до 30%;
 4. обрезает Blue, Green, Red, Red Edge, NIR и SWIR1 через GDAL `/vsicurl/`;
 5. рассчитывает NDVI, NDMI, NDWI, MNDWI, SAVI и NDRE;
-6. сохраняет GeoTIFF в `outputs/rasters/`.
+6. сохраняет GeoTIFF в `outputs/rasters/`;
+7. записывает статистику индексов в `outputs/reports/latest_metrics.json`.
 
-Скрипт поддерживает параметры `--area`, `--interim`, `--rasters`, `--metadata`, `--indices`, `--date-from`, `--date-to` и `--scene-id` для изолированной проверки.
+Скрипт поддерживает параметры `--area`, `--interim`, `--rasters`, `--metadata`, `--report`, `--indices`, `--date-from`, `--date-to` и `--scene-id` для изолированной проверки.
 
 ## 4. Проверка Observearth
 

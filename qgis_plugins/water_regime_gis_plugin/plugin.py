@@ -259,6 +259,7 @@ class CommandTask(QgsTask):
         env = os.environ.copy()
         env.setdefault("QGIS_PREFIX_PATH", str(settings.QGIS_PREFIX))
         env.setdefault("PROJ_DATA", str(settings.QGIS_PREFIX / "Contents/Resources/qgis/proj"))
+        env["WATER_REGIME_GIS_SKIP_NSPD_WMS"] = "1"
         src = str(settings.PROJECT_ROOT / "src")
         env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else f"{src}{os.pathsep}{env['PYTHONPATH']}"
         try:

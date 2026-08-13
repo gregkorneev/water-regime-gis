@@ -25,6 +25,7 @@ def main() -> int:
     assert "name=Water Regime GIS" in metadata
     assert "WaterRegimeGisPlugin" in plugin
     assert "QgsTask" in plugin
+    assert 'WATER_REGIME_GIS_SKIP_NSPD_WMS"] = "1"' in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")
     print(f"Installed: {'yes' if TARGET.exists() else 'no'}")

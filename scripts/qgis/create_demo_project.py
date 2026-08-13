@@ -87,7 +87,9 @@ def main() -> int:
         symbol.setColor(QColor(46, 125, 50, 70))
         layer.setRenderer(QgsSingleSymbolRenderer(symbol))
         osm_layer = add_osm_layer(project)
-        nspd_layer = add_nspd_parcels_layer(project, config)
+        nspd_layer = None
+        if os.environ.get("WATER_REGIME_GIS_SKIP_NSPD_WMS") != "1":
+            nspd_layer = add_nspd_parcels_layer(project, config)
         satellite_layers = add_satellite_index_layers(project, config)
         project.addMapLayer(layer)
         project.addMapLayer(point_layer)

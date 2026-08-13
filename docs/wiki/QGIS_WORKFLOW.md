@@ -16,7 +16,7 @@ QGIS теперь является основным интерфейсом пр�
 6. Плагин запускает `scripts/qgis/select_field_point.py` и загружает созданные GeoJSON-слои в QGIS.
 7. Кнопка `Уточнить границу` запускает `scripts/qgis/resolve_field_boundary.py`.
 8. Кнопка `Рассчитать индексы` запускает `scripts/qgis/process_satellite_indices.py` в фоне.
-9. Кнопка `Собрать проект/слои` запускает `scripts/qgis/create_demo_project.py` и открывает результат в QGIS.
+9. Кнопка `Собрать проект/слои` запускает `scripts/qgis/create_demo_project.py` без legacy WMS-прокси НСПД и открывает результат в QGIS.
 
 ## Запуск из QGIS
 
@@ -38,7 +38,7 @@ python3 scripts/check_qgis_plugin.py
 - `/Applications/QGIS.app`;
 - `~/Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins`.
 
-Для v1 НСПД WMS-proxy из webapp не переносится в плагин. Если локальный web-сервис не запущен, QGIS-проект использует прямой НСПД WMS или существующий request-hook, а возможные ограничения НСПД фиксируются в логе.
+Для v1 НСПД WMS-proxy из webapp не переносится в плагин. Проект, собранный из QGIS-плагина, не включает WMS-слой НСПД, чтобы QGIS не показывал диалог недоступного слоя при выключенной legacy web-панели. Кадастровый контур по-прежнему уточняется отдельным `GetFeatureInfo`-скриптом; визуальный WMS можно добавить через установленный НСПД-плагин QGIS.
 
 ## CRS
 

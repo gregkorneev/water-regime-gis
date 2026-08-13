@@ -46,7 +46,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--area", type=Path)
     parser.add_argument("--interim", type=Path)
     parser.add_argument("--rasters", type=Path)
-    parser.add_argument("--maps", type=Path)
     parser.add_argument("--metadata", type=Path)
     parser.add_argument("--indices", nargs="+")
     parser.add_argument("--date-from", type=dt.date.fromisoformat)
@@ -72,10 +71,8 @@ def main() -> int:
 
     interim = project_path(args.interim) if args.interim else ROOT / "data/interim/satellite"
     rasters = project_path(args.rasters) if args.rasters else ROOT / config["paths"]["rasters"]
-    maps = project_path(args.maps) if args.maps else ROOT / config["paths"]["maps"]
     interim.mkdir(parents=True, exist_ok=True)
     rasters.mkdir(parents=True, exist_ok=True)
-    maps.mkdir(parents=True, exist_ok=True)
     latest_scene_path = project_path(args.metadata) if args.metadata else interim / "latest_scene.json"
 
     items = search_items(config, area_path, args.date_from, args.date_to)
@@ -92,7 +89,6 @@ def main() -> int:
     target_crs = area_analysis_crs(area_path, config) if args.area else selected_area_crs(ROOT, config)
     band_paths = clip_bands(item, scene_dir, area_path, target_crs)
     indices = calculate_indices(band_paths, rasters, args.indices or config["satellite"]["indices"])
-    true_color = write_true_color(band_paths, maps, target_crs)
     metadata = {
         "satellite_status": "OK" if indices else "no_indices",
         "provider": config["satellite"]["provider"],
@@ -103,7 +99,6 @@ def main() -> int:
         "bands": {name: str(path.relative_to(ROOT)) for name, path in band_paths.items()},
         "analysis_crs": target_crs,
         "indices": indices,
-        "true_color": true_color,
     }
     write_json(latest_scene_path, metadata)
     print("Satellite status:", metadata["satellite_status"])
@@ -111,8 +106,6 @@ def main() -> int:
     print("Scene datetime:", metadata["datetime"])
     print("Cloud cover:", metadata["cloud_cover"])
     print("Indices:", ", ".join(index["name"] for index in indices))
-    if true_color.get("url"):
-        print("True color:", true_color["url"])
     print("Metadata:", latest_scene_path)
     return 0
 
@@ -219,7 +212,7 @@ def calculate_indices(bands: dict[str, Path], rasters: Path, wanted: list[str]) 
         output = rasters / f"{name.lower()}.tif"
         remove_if_exists(output)
         write_index(name, bands[left], bands[right], output, formula)
-        written.append({"name": name, "status": "OK", "path": str(output.relative_to(ROOT)), "url": f"/download/rasters/{name.lower()}.tif"})
+        written.append({"name": name, "status": "OK", "path": str(output.relative_to(ROOT))})
     return written
 
 
@@ -247,74 +240,6 @@ def write_index(name: str, left: Path, right: Path, output: Path, formula) -> No
     band.SetDescription(name)
     band.FlushCache()
     ds = None
-
-
-def write_true_color(bands: dict[str, Path], maps_dir: Path, target_crs: str) -> dict:
-    import numpy as np
-
-    required = ["Red", "Green", "Blue"]
-    if any(name not in bands for name in required):
-        return {"status": "missing_band"}
-    maps_dir.mkdir(parents=True, exist_ok=True)
-    red_ds = gdal.Open(str(bands["Red"]))
-    arrays = [gdal.Open(str(bands[name])).ReadAsArray().astype("float32") for name in required]
-    mask = np.zeros_like(arrays[0], dtype=bool)
-    for array in arrays:
-        mask |= array <= 0
-    scaled = []
-    for array in arrays:
-        valid = array[~mask]
-        high = float(np.percentile(valid, 98)) if valid.size else 3000.0
-        high = max(high, 1000.0)
-        scaled.append(np.clip((array / high) * 255.0, 0, 255).astype("uint8"))
-
-    output = maps_dir / "latest_sentinel_true_color.png"
-    bounds = wgs84_bounds(red_ds, target_crs)
-    temp_tif = maps_dir / "latest_sentinel_true_color.tif"
-    remove_if_exists(output)
-    remove_if_exists(temp_tif)
-    driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(temp_tif), red_ds.RasterXSize, red_ds.RasterYSize, 3, gdal.GDT_Byte, options=["COMPRESS=DEFLATE", "TILED=YES"])
-    ds.SetGeoTransform(red_ds.GetGeoTransform())
-    ds.SetProjection(red_ds.GetProjection())
-    for index, array in enumerate(scaled, start=1):
-        band = ds.GetRasterBand(index)
-        band.WriteArray(array)
-        band.FlushCache()
-    ds = None
-    translated = gdal.Translate(str(output), str(temp_tif), format="PNG")
-    if translated is None:
-        raise RuntimeError("Failed to write Sentinel-2 true color preview.")
-    translated = None
-    return {
-        "status": "OK",
-        "path": str(output.relative_to(ROOT)),
-        "url": "/satellite-true-color.png",
-        "bounds": bounds,
-    }
-
-
-def wgs84_bounds(dataset, target_crs: str) -> list[list[float]]:
-    transform = dataset.GetGeoTransform()
-    width = dataset.RasterXSize
-    height = dataset.RasterYSize
-    corners = [
-        (transform[0], transform[3]),
-        (transform[0] + width * transform[1], transform[3]),
-        (transform[0], transform[3] + height * transform[5]),
-        (transform[0] + width * transform[1], transform[3] + height * transform[5]),
-    ]
-    source = osr.SpatialReference()
-    source.SetFromUserInput(target_crs)
-    source.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    target = osr.SpatialReference()
-    target.ImportFromEPSG(4326)
-    target.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    transform_crs = osr.CoordinateTransformation(source, target)
-    points = [transform_crs.TransformPoint(x, y) for x, y in corners]
-    lons = [point[0] for point in points]
-    lats = [point[1] for point in points]
-    return [[min(lats), min(lons)], [max(lats), max(lons)]]
 
 
 def safe_name(value: str) -> str:

@@ -1,110 +1,31 @@
 # Data Model
 
-## Типы данных
+## Локальные входы
 
-## AOI
+- `data/aoi/selected_field_point.geojson` — выбранная точка, `EPSG:4326`.
+- `data/aoi/selected_field_area.geojson` — рабочая граница, `EPSG:4326`, с `analysis_crs` и `source`.
+- внешний GeoJSON границ полей — необязательный вход `split_field_boundaries.py`.
 
-Границы областей интереса хранятся в `data/aoi/`.
+`source = nspd_getfeatureinfo` означает кадастровый контур, `source = map_point_buffer` — временный буфер.
 
-Рекомендуемые форматы:
+## Промежуточные данные
 
-- GeoPackage;
-- GeoJSON для небольших служебных геометрий;
-- Shapefile только при необходимости обмена со старым ПО.
-
-Текущий тестовый AOI:
-
-- файл: `data/aoi/tula_test_field.geojson`;
-- объект: тестовое сельхозполе в Тульской области;
-- источник: OpenStreetMap через Overpass API;
-- OSM id: `way/78250539`;
-- исходная CRS GeoJSON: `EPSG:4326`;
-- рабочая CRS для расчетов: `EPSG:32637`.
-
-Проверка AOI выполняется командой:
-
-```bash
-python3 scripts/check_aoi.py --write-normalized
-```
-
-При флаге `--write-normalized` создается рабочая копия `data/interim/tula_test_field.normalized.geojson`. Папка `data/interim/` не коммитится, поэтому такие производные файлы остаются локальными.
-
-## Спутниковые данные
-
-Сырые сцены Sentinel-2 и Landsat хранятся вне git в `data/raw/` или во внешнем каталоге, описанном в конфигурации.
-
-Текущий автоматический источник v1:
-
-- `provider`: `planetary-computer-stac`;
-- `collection`: `sentinel-2-l2a`;
-- поиск по выбранной области, последним 60 дням и облачности до 30%;
-- metadata выбранной сцены: `data/interim/satellite/latest_scene.json`;
-- обрезанные каналы: `data/interim/satellite/<scene_id>/`.
-
-Ожидаемые каналы:
-
-- Sentinel-2: Blue, Green, Red, Red Edge, NIR, SWIR.
-- Landsat: Blue, Green, Red, NIR, SWIR.
-
-## Спектральные индексы
-
-Рассчитываемые индексы v1:
-
-- NDVI — растительность.
-- NDMI — влажность растительности.
-- NDWI — водные объекты или влажность, в зависимости от выбранной формулы.
-- MNDWI — водные поверхности с использованием SWIR.
-- SAVI — растительность с поправкой на почву.
-- NDRE — состояние растительности по red edge, прежде всего для Sentinel-2.
-
-Формулы и используемые каналы зафиксированы в `PIPELINES.md`.
-
-## DEM и производные
-
-DEM используется для расчета:
-
-- уклона;
-- экспозиции;
-- аккумуляции стока;
-- направлений стока;
-- водосборов;
-- возможных топографических индексов влажности.
+- `data/interim/satellite/latest_scene.json` — metadata выбранной Sentinel-2 сцены;
+- `data/interim/satellite/<scene_id>/*.tif` — обрезанные каналы;
+- `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и минимальные прямоугольники.
 
 ## Результаты
 
-Рекомендуемые форматы:
+- `outputs/rasters/ndvi.tif`;
+- `outputs/rasters/ndmi.tif`;
+- `outputs/rasters/ndwi.tif`;
+- `outputs/rasters/mndwi.tif`;
+- `outputs/rasters/savi.tif`;
+- `outputs/rasters/ndre.tif`;
+- `outputs/maps/water_regime_gis.qgs`.
 
-- GeoTIFF для растров;
-- GeoPackage для векторных слоев;
-- CSV для простых таблиц обмена;
-- Parquet для больших табличных результатов.
+GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные входы и результаты исключены из git, кроме `.gitkeep`.
 
-Текущий пользовательский результат первого этапа:
+## Будущие измерения
 
-- `outputs/maps/water_regime_gis_preview.png` — preview-карта выбранной области;
-- `data/aoi/selected_field_area.geojson` — GeoJSON-контур выбранной области. Свойство `source` показывает источник: `nspd_getfeatureinfo` для кадастрового контура или `map_point_buffer` для временного fallback-буфера;
-- `outputs/reports/latest_result.json` — JSON-отчет для панели со статусом, параметрами поля, ссылками скачивания и кратким логом.
-- `outputs/rasters/*.tif` — GeoTIFF спектральных индексов Sentinel-2.
-
-Файлы результата являются локальными производными артефактами и не добавляются в git.
-
-## Импортированные границы полей
-
-Локальный импорт `kornix_field_boundaries_import_20260530_v2.geojson` разделяется по атрибуту `dataset_code` на `SP` и `KAA`. Производные файлы хранятся в `data/processed/field_boundaries/`:
-
-- `sp_fields.geojson` и `kaa_fields.geojson` — исходные полигоны по организациям;
-- `sp_minimum_rectangles.geojson` и `kaa_minimum_rectangles.geojson` — минимальные ориентированные покрывающие прямоугольники, по одному на каждое поле.
-
-Прямоугольники сохраняют исходные атрибуты и добавляют `rectangle_area_ha`, `rectangle_angle_deg`, `rectangle_width_m`, `rectangle_height_m`, `rectangle_crs`. Геометрия результата хранится в `EPSG:4326`, а построение выполняется в локальной метрической UTM CRS каждого поля.
-
-## Будущие наземные измерения
-
-Наземные точки будут добавлены отдельным слоем данных. Минимально ожидаемые поля:
-
-- идентификатор точки;
-- координаты;
-- дата и время измерения;
-- тип измерения;
-- значение;
-- единицы измерения;
-- источник или методика.
+Для кригинга понадобится точечный слой с идентификатором, датой, координатами, числовым значением, единицами и методикой измерения.

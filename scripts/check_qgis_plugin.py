@@ -28,7 +28,7 @@ def main() -> int:
     assert 'plugins.get("observearth")' in plugin
     assert '"isoliner:raster_to_isolines"' in plugin
     assert '"isoliner:kriging2d"' in plugin
-    assert 'WATER_REGIME_GIS_SKIP_NSPD_WMS"] = "1"' in plugin
+    assert "project.write()" in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")
     print(f"Installed: {'yes' if TARGET.exists() else 'no'}")

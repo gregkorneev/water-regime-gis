@@ -105,7 +105,7 @@ class WaterRegimeDock(QDockWidget):
             f"- Observearth: {self.plugin_status('observearth')}",
             f"- Isoliner: {self.processing_status('isoliner:raster_to_isolines')}",
         ]
-        for key in ("aoi", "interim", "processed", "maps", "reports", "rasters"):
+        for key in ("aoi", "interim", "processed", "maps", "rasters"):
             path = settings.PROJECT_ROOT / config["paths"][key]
             lines.append(f"- {key}: {'OK' if path.exists() else 'missing'} {path}")
         self.log("\n".join(lines))
@@ -210,11 +210,19 @@ class WaterRegimeDock(QDockWidget):
         self.log(f"Открыт алгоритм Processing: {algorithm_id}")
 
     def build_project(self):
-        self.run_task(
-            "Build QGIS project",
-            [settings.QGIS_PYTHON, settings.CREATE_PROJECT_SCRIPT],
-            after_success=self.open_generated_project,
-        )
+        self.load_field_layers()
+        self.load_raster_layers()
+        config = self.read_config()
+        path = settings.PROJECT_ROOT / config["qgis"]["project_file"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        project = QgsProject.instance()
+        project.setFileName(str(path))
+        if project.write():
+            self.log(f"Проект сохранён: {path}")
+            self.notify("Проект и доступные слои сохранены.")
+        else:
+            self.log(f"Не удалось сохранить проект: {path}")
+            self.notify("Не удалось сохранить QGIS-проект.", Qgis.Critical)
 
     def run_task(self, label: str, command: list[Path | str], after_success=None, timeout=300):
         if self.active_task:
@@ -288,19 +296,11 @@ class WaterRegimeDock(QDockWidget):
                 self.add_raster_layer(path, index)
         self.iface.mapCanvas().refresh()
 
-    def open_generated_project(self):
-        config = self.read_config()
-        path = settings.PROJECT_ROOT / config["qgis"]["project_file"]
-        if path.exists() and QgsProject.instance().read(str(path)):
-            self.log(f"Opened project: {path}")
-        else:
-            self.log(f"Could not open generated project: {path}")
-            self.load_field_layers()
-            self.load_raster_layers()
-
     def add_vector_layer(self, path: Path, name: str):
         if not path.exists():
             self.log(f"Layer missing: {path}")
+            return
+        if self.layer_is_loaded(path):
             return
         layer = QgsVectorLayer(str(path), name, "ogr")
         if layer.isValid():
@@ -310,12 +310,18 @@ class WaterRegimeDock(QDockWidget):
             self.log(f"Invalid vector layer: {path}")
 
     def add_raster_layer(self, path: Path, name: str):
+        if self.layer_is_loaded(path):
+            return
         layer = QgsRasterLayer(str(path), name, "gdal")
         if layer.isValid():
             QgsProject.instance().addMapLayer(layer)
             self.log(f"Loaded raster: {path}")
         else:
             self.log(f"Invalid raster layer: {path}")
+
+    def layer_is_loaded(self, path: Path) -> bool:
+        target = path.resolve()
+        return any(Path(layer.source().split("|")[0]).resolve() == target for layer in QgsProject.instance().mapLayers().values())
 
 
 class CommandTask(QgsTask):
@@ -334,7 +340,6 @@ class CommandTask(QgsTask):
         env = os.environ.copy()
         env.setdefault("QGIS_PREFIX_PATH", str(settings.QGIS_PREFIX))
         env.setdefault("PROJ_DATA", str(settings.QGIS_PREFIX / "Contents/Resources/qgis/proj"))
-        env["WATER_REGIME_GIS_SKIP_NSPD_WMS"] = "1"
         src = str(settings.PROJECT_ROOT / "src")
         env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else f"{src}{os.pathsep}{env['PYTHONPATH']}"
         try:

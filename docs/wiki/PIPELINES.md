@@ -1,374 +1,41 @@
 # Pipelines
 
-## Принцип
-
-Пайплайны должны быть простыми, воспроизводимыми и пригодными для запуска на macOS. Сложная обработка добавляется только после появления тестового AOI и набора данных.
-
-## Планируемые пайплайны
-
 ## 1. Выбор поля
 
-Вход:
+Плагин передает координаты клика в `scripts/qgis/select_field_point.py`. Скрипт выбирает локальную UTM-зону, сохраняет точку и создает буфер 500 м.
 
-- точка, выбранная пользователем на карте;
-- локальная рабочая CRS UTM, автоматически выбранная по координатам точки.
+## 2. Уточнение границы
 
-Выход:
+`scripts/qgis/resolve_field_boundary.py` запрашивает НСПД через WMS `GetFeatureInfo`. Подходящий полигон заменяет буфер. При сетевой ошибке, отсутствии полигона или превышении `max_selected_parcel_area_ha` буфер остается рабочей областью.
 
-- `data/aoi/selected_field_point.geojson`;
-- `data/aoi/selected_field_area.geojson`.
+## 3. Sentinel-2 и индексы
 
-Команда:
+`scripts/qgis/process_satellite_indices.py`:
 
-```bash
-/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/select_field_point.py --lon 38.107 --lat 53.84
-```
+1. читает рабочую границу;
+2. ищет Sentinel-2 L2A через Microsoft Planetary Computer STAC;
+3. выбирает наименее облачную сцену за последние 60 дней при облачности до 30%;
+4. обрезает Blue, Green, Red, Red Edge, NIR и SWIR1 через GDAL `/vsicurl/`;
+5. рассчитывает NDVI, NDMI, NDWI, MNDWI, SAVI и NDRE;
+6. сохраняет GeoTIFF в `outputs/rasters/`.
 
-Текущая логика:
+Скрипт поддерживает параметры `--area`, `--interim`, `--rasters`, `--metadata`, `--indices`, `--date-from`, `--date-to` и `--scene-id` для изолированной проверки.
 
-- принимает координаты точки в `EPSG:4326`;
-- через PyQGIS перепроецирует точку в локальную UTM CRS;
-- строит временный буфер вокруг точки;
-- сохраняет точку и рабочую область как GeoJSON.
+## 4. Проверка Observearth
 
-После сохранения точки приложение запускает `scripts/qgis/resolve_field_boundary.py`:
+`scripts/qgis/compare_observearth_ndmi.py` рассчитывает NDMI установленным движком Observearth на тех же NIR/SWIR1 и сравнивает пиксели с проектным GeoTIFF при допуске `1e-6`.
 
-- строит WMS `GetFeatureInfo`-запрос к слою `Земельные участки из ЕГРН`;
-- использует выбранную точку как центр запроса;
-- при получении полигона заменяет `selected_field_area.geojson` на кадастровый контур с `source = nspd_getfeatureinfo`;
-- если НСПД недоступна, не возвращает полигон или возвращает объект крупнее `nspd.max_selected_parcel_area_ha`, оставляет буфер с `source = map_point_buffer`.
+## 5. Изолинии и кригинг
 
-Буфер является fallback-рабочей областью, а не научно подтвержденной границей поля.
+Плагин открывает Processing-диалоги Isoliner. Изолинии строятся по активному растру. Кригинг доступен только для реального точечного слоя минимум с тремя объектами и числовым полем.
 
-## 2. Подключение кадастровых границ НСПД
+## 6. Импорт границ
 
-Вход:
+`scripts/qgis/split_field_boundaries.py` делит внешний GeoJSON по `dataset_code = SP/KAA` и создает минимальные ориентированные прямоугольники в локальной UTM CRS каждого поля.
 
-- выбранная пользователем точка;
-- QGIS с установленным плагином `rosreestr-search-qgis-plugin`.
+## Не реализовано
 
-Проверка:
-
-```bash
-/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/check_nspd_plugin.py
-```
-
-Текущий выход:
-
-- QGIS-проект с выбранной точкой;
-- кадастровый контур, если НСПД вернул полигон, иначе временная рабочая область;
-- WMS-слой `Земельные участки из ЕГРН`, если QGIS принимает источник НСПД;
-- веб-карта с кадастровым WMS через `/nspd/wms`;
-- подсвечиваемый GeoJSON выбранной рабочей области через `/selected-field-area.geojson`.
-
-Ограничение:
-
-- WMS-слой пригоден для визуального контроля кадастровых границ, но не является векторной геометрией для расчетов или hover-подсветки всех участков. Следующий шаг — получить/выбрать конкретный кадастровый полигон по точке и сохранить его как GeoJSON/GeoPackage.
-
-## Разбиение импортированных полей SP/KAA
-
-Вход:
-
-- `/Users/korneev/Desktop/kornix_field_boundaries_import_20260530_v2.geojson`;
-- атрибут группировки `dataset_code` со значениями `SP` и `KAA`.
-
-Команда:
-
-```bash
-/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/split_field_boundaries.py
-```
-
-Выход в `data/processed/field_boundaries/`:
-
-- `sp_fields.geojson` и `kaa_fields.geojson`;
-- `sp_minimum_rectangles.geojson` и `kaa_minimum_rectangles.geojson`.
-
-Для каждого исходного поля скрипт выбирает локальную UTM CRS по центру геометрии, строит через PyQGIS минимальный ориентированный покрывающий прямоугольник и возвращает его в исходную `EPSG:4326`. Скрипт проверяет, что прямоугольник покрывает исходную геометрию и что количество результатов совпадает с количеством входных полей.
-
-## 3. Подготовка спутниковых данных
-
-Вход:
-
-- Sentinel-2 L2A через STAC Microsoft Planetary Computer;
-- выбранная кадастровая граница или временная рабочая область;
-- параметры облачности и дат.
-
-Выход:
-
-- обрезанные и приведенные к общему CRS растры.
-
-Текущая команда:
-
-```bash
-/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/process_satellite_indices.py
-```
-
-Для изолированного сравнения одного поля и одной сцены скрипт принимает `--area`, `--interim`, `--rasters`, `--maps`, `--metadata`, `--indices`, `--date-from`, `--date-to` и `--scene-id`. Без параметров сохраняется основной сценарий и прежние пути.
-
-Численная сверка NDMI с установленным движком Observearth выполняется скриптом `scripts/qgis/compare_observearth_ndmi.py`: он применяет `observearth.sentinel2.Sentinel2` к тем же каналам и проверяет пиксельное расхождение с проектным GeoTIFF.
-
-Текущая логика:
-
-- читает `data/aoi/selected_field_area.geojson`;
-- ищет Sentinel-2 L2A сцену в STAC `https://planetarycomputer.microsoft.com/api/stac/v1/search`;
-- период поиска по умолчанию — последние 60 дней;
-- максимальная облачность — 30%;
-- выбирает наименее облачную сцену;
-- подписывает asset URL через Planetary Computer SAS API;
-- через GDAL `/vsicurl/` из QGIS runtime обрезает каналы по выбранной области и приводит их к `analysis_crs` выбранного поля;
-- сохраняет каналы в `data/interim/satellite/<scene_id>/`;
-- сохраняет metadata в `data/interim/satellite/latest_scene.json`.
-
-Для v1 расчеты выполняются внутри QGIS Python с использованием GDAL/OGR, поставляемых QGIS. Observearth зафиксирован как целевой QGIS-плагин для дальнейшей STAC/индекс-интеграции, но текущий автоматический пайплайн не зависит от его UI/API.
-
-## 4. Расчет спектральных индексов
-
-Вход:
-
-- подготовленные каналы спутниковых данных.
-
-Выход:
-
-- GeoTIFF для NDVI, NDMI, NDWI, MNDWI, SAVI, NDRE.
-
-Формулы v1:
-
-- NDVI = `(NIR - Red) / (NIR + Red)`;
-- NDMI = `(NIR - SWIR1) / (NIR + SWIR1)`;
-- NDWI = `(Green - NIR) / (Green + NIR)`;
-- MNDWI = `(Green - SWIR1) / (Green + SWIR1)`;
-- SAVI = `1.5 * (NIR - Red) / (NIR + Red + 0.5)`;
-- NDRE = `(NIR - RedEdge) / (NIR + RedEdge)`.
-
-Выходные файлы:
-
-- `outputs/rasters/ndvi.tif`;
-- `outputs/rasters/ndmi.tif`;
-- `outputs/rasters/ndwi.tif`;
-- `outputs/rasters/mndwi.tif`;
-- `outputs/rasters/savi.tif`;
-- `outputs/rasters/ndre.tif`.
-
-## 5. DEM-анализ
-
-Вход:
-
-- DEM;
-- AOI.
-
-Выход:
-
-- уклон;
-- экспозиция;
-- аккумуляция стока;
-- водосборы.
-
-## 6. Сравнительный анализ
-
-Вход:
-
-- индексы;
-- DEM-производные;
-- зоны или сетка анализа.
-
-Выход:
-
-- таблицы CSV/Parquet;
-- векторные слои GeoPackage;
-- карты.
-
-## Команды запуска
-
-Установка личного QGIS-плагина:
-
-```bash
-python3 scripts/install_qgis_plugin.py
-```
-
-Проверка структуры QGIS-плагина:
-
-```bash
-python3 scripts/check_qgis_plugin.py
-```
-
-Основной пользовательский сценарий теперь запускается из QGIS через плагин `Water Regime GIS`: выбор точки на canvas, уточнение границы, расчет индексов и сборка проекта/слоев. Команды ниже остаются проверочными и legacy/fallback.
-
-Проверка структуры проекта:
-
-```bash
-python3 scripts/check_project.py
-```
-
-Команда:
-
-- запускается из корня проекта;
-- использует стандартную библиотеку Python;
-- читает `configs/project.example.json`;
-- проверяет наличие обязательных каталогов;
-- не читает и не изменяет геоданные.
-
-Legacy запуск desktop/web-приложения:
-
-```text
-launch_panel.command
-```
-
-Сборка локального macOS `.app`:
-
-```bash
-python3 scripts/build_macos_app.py
-```
-
-Проверка локального macOS `.app`:
-
-```bash
-python3 scripts/check_macos_app.py
-```
-
-Проверка Docker/Windows-артефактов запуска:
-
-```bash
-python3 scripts/check_distribution.py
-```
-
-Проверка реального Docker-запуска панели:
-
-```bash
-python3 scripts/check_docker_app.py
-```
-
-Скрипт собирает Docker-образ, запускает контейнер на свободном локальном порту начиная с `8766`, ждет завершения `/status.json`, проверяет `/environment.json`, `/readiness.json`, QGIS 3.40+ и автоматическую установку НСПД-плагина, затем удаляет контейнер.
-
-Docker-запуск панели:
-
-```text
-launch_docker.command
-launch_docker.bat
-```
-
-Запасной запуск Docker из терминала:
-
-```bash
-docker compose up --build
-```
-
-Headless E2E-проверка панели:
-
-```bash
-python3 scripts/check_panel_e2e.py
-```
-
-E2E-проверка сохраняет текущие локальные пользовательские артефакты, выполняет тестовый сценарий и восстанавливает прежнее состояние.
-
-Запасной запуск из терминала:
-
-```bash
-python3 scripts/run_app.py
-```
-
-Если порт `8765` занят, приложение автоматически выбирает следующий свободный локальный порт. Текущий URL панели передается во внутренние QGIS-скрипты через переменную окружения `WATER_REGIME_GIS_APP_URL`, чтобы локальный WMS-proxy продолжал работать.
-
-При старте приложение автоматически запускает bootstrap-пайплайн:
-
-- `scripts/check_project.py`;
-- `scripts/check_satellite_pipeline.py`;
-- `scripts/install_nspd_plugin.py`;
-- `scripts/qgis/check_qgis_context.py`;
-- `scripts/qgis/check_nspd_plugin.py`.
-
-Состояние bootstrap-пайплайна отображается в панели и отдается как JSON через `/status.json`.
-Веб-интерфейс автоматически опрашивает `/status.json`, `/environment.json` и `/readiness.json` каждые 3 секунды, поэтому пользователь видит смену статусов, среды и доступности действий без ручного обновления страницы.
-Состояние локальной среды отображается в блоке `Среда` и отдается как JSON через `/environment.json`: найденный QGIS, версия, путь скрытого QGIS Python, состояние и версия НСПД-плагина, наличие пользовательских артефактов.
-Если QGIS не найден, блок `Среда` дает пользователю ссылку на официальную страницу загрузки QGIS.
-Готовность пользовательских действий отдается через `/readiness.json`; панель заранее блокирует выбор поля без QGIS и подготовку результата без QGIS или выбранного поля.
-
-Основной пользовательский сценарий из панели:
-
-- `Сохранить выбранное поле`;
-- `Восстановить среду`;
-- `Проверить систему`;
-- `Подготовить результат`.
-
-`Подготовить результат` визуально недоступен, пока поле не выбрано.
-
-В обычном браузерном сценарии `Сохранить выбранное поле`, `Проверить систему` и `Подготовить результат` стартуют как фоновые задачи:
-
-- старт: `/job/start?kind=select-field&lat=...&lon=...`, `/job/start?kind=check-system` или `/job/start?kind=prepare-result`;
-- восстановление среды: `/job/start?kind=repair-environment`;
-- статус и лог: `/job/status`.
-
-`/job/status` возвращает:
-
-- `running`, `kind`, `status`;
-- `current_step`;
-- `steps` со статусом каждого шага (`RUNNING`, `OK`, `FAILED`);
-- человекочитаемый `output`, который панель выводит в блок `Лог`.
-
-Каждая скрытая команда запускается с таймаутом 180 секунд. Если QGIS или внешний ресурс зависает, задача завершается статусом `FAILED`, а панель показывает пользователю короткую причину остановки.
-
-Старые синхронные адреса `/run/select-field`, `/run/check-system` и `/run/prepare-result` оставлены как fallback без JavaScript и для прямой диагностики.
-
-`Проверить систему` запускает:
-
-- `scripts/check_project.py`;
-- `scripts/check_satellite_pipeline.py`;
-- `scripts/install_nspd_plugin.py`;
-- `scripts/qgis/check_qgis_context.py`;
-- `scripts/qgis/check_nspd_plugin.py`.
-
-`Подготовить результат` дополнительно запускает:
-
-- `scripts/qgis/create_demo_project.py`.
-
-Перед созданием результата `Подготовить результат` повторно запускает:
-
-- `scripts/qgis/resolve_field_boundary.py`.
-- `scripts/qgis/process_satellite_indices.py`.
-- `scripts/qgis/create_demo_project.py`.
-
-Пользователь не открывает QGIS вручную: QGIS работает как скрытый PyQGIS-движок.
-
-После успешной подготовки панель создает и показывает пользовательские артефакты:
-
-- единый ZIP-архив результата `/download/result.zip`;
-- preview-карту `/download/preview.png`;
-- контур выбранной области `/download/field.geojson`;
-- JSON-отчет `/download/report.json`, локально `outputs/reports/latest_result.json`.
-- рассчитанные GeoTIFF индексов через `/download/rasters/<index>.tif`.
-
-Проверка модели интерфейса без открытия окна:
-
-```bash
-python3 scripts/check_app.py
-```
-
-Проверка QGIS/PyQGIS-контекста через приложение или напрямую:
-
-```bash
-<qgis-python> scripts/qgis/check_qgis_context.py
-```
-
-`<qgis-python>` должен быть указан в `configs/project.example.json` как `qgis.python_executable`.
-
-Создание демонстрационного QGIS-проекта:
-
-```bash
-/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/create_demo_project.py
-```
-
-Выход:
-
-- `outputs/maps/water_regime_gis.qgs`;
-- `outputs/maps/water_regime_gis_preview.png`;
-- слой `Selected field point`;
-- слой `Selected field working area`;
-- WMS-слой НСПД `Земельные участки из ЕГРН`, если доступен;
-- CRS проекта `EPSG:32637`;
-- простой зеленый стиль рабочей области.
-
-Новые команды должны фиксировать:
-
-- рабочую директорию;
-- Python-окружение;
-- входные параметры;
-- выходные файлы.
+- DEM и гидрологические производные;
+- временные ряды;
+- импорт наземных измерений;
+- автоматическая классификация зон и итоговый отчет.

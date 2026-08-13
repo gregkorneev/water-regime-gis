@@ -26,9 +26,6 @@ dist/
 .coverage
 htmlcov/
 
-# Jupyter
-.ipynb_checkpoints/
-
 # QGIS
 *.qgz~
 *.qgs~
@@ -53,19 +50,15 @@ configs/local.*
 configs/*.local.*
 
 # Geo data: keep directories, avoid committing heavy data by default
-data/raw/**
 data/interim/**
 data/processed/**
 outputs/rasters/**
 outputs/maps/**
-outputs/reports/**
 
-!data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
 !outputs/rasters/.gitkeep
 !outputs/maps/.gitkeep
-!outputs/reports/.gitkeep
 
 # Common heavy raster / remote-sensing formats
 *.tif

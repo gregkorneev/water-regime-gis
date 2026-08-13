@@ -18,7 +18,7 @@ def main() -> int:
     print(f"Project: {config['project']['name']}")
     print(f"Stage: {config['project']['stage']}")
     print(f"Root: {root}")
-    print(f"Satellite sources: {', '.join(config['satellite']['sources'])}")
+    print(f"Satellite source: {config['satellite']['collection']}")
     print(f"Indices: {', '.join(config['satellite']['indices'])}")
 
     if missing:

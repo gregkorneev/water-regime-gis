@@ -2,11 +2,41 @@
 
 ## Назначение
 
-Проект развивается как desktop-приложение для Windows и macOS. Пользователь работает только с панелью приложения; QGIS используется как скрытый геодвижок и не является пользовательским интерфейсом.
+Проект переключен на личный QGIS-first сценарий. Основной интерфейс — QGIS-плагин `Water Regime GIS`, который работает внутри установленного QGIS на компьютере пользователя. Прежняя desktop/web-панель остается legacy/fallback до отдельного удаления.
 
-## Текущая первая версия
+## Текущий основной интерфейс
 
-Текущая первая версия разделена на desktop-оболочку и локальный backend:
+Плагин расположен в `qgis_plugins/water_regime_gis_plugin/` и устанавливается в профиль QGIS `default` симлинком:
+
+```bash
+python3 scripts/install_qgis_plugin.py
+```
+
+Проверка структуры плагина:
+
+```bash
+python3 scripts/check_qgis_plugin.py
+```
+
+После перезапуска QGIS плагин добавляет меню и toolbar action `Water Regime GIS`. Кнопка открывает dock-панель с действиями:
+
+- `Проверить среду`;
+- `Взять точку с карты`;
+- `Уточнить границу`;
+- `Рассчитать индексы`;
+- `Собрать проект/слои`.
+
+Жестко выбранная личная среда:
+
+- QGIS: `/Applications/QGIS.app`;
+- проект: `/Users/korneev/Desktop/water-regime-gis`;
+- профиль: `~/Library/Application Support/QGIS/QGIS3/profiles/default`.
+
+Плагин не добавляет отдельный HTTP API. Долгие операции запускаются через `QgsTask`, а внутри вызывают существующие QGIS Python-скрипты.
+
+## Legacy desktop/web версия
+
+Legacy-версия разделена на desktop-оболочку и локальный backend:
 
 - backend: `src/water_regime_gis/webapp.py`;
 - release macOS shell: `packaging/macos/WaterRegimeGIS.swift`, нативный `WKWebView`;
@@ -220,6 +250,8 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 Для проверки Windows desktop shell добавлен GitHub Actions workflow `.github/workflows/windows-shell.yml`. Он запускает сборку `.exe` на `windows-latest` и собирает полный Windows release artifact: `Water Regime GIS.exe`, runtime-исходники, QGIS-скрипты, `configs/`, `data/`, `outputs/`, лицензии и wiki.
 
+Windows shell ищет QGIS в таком порядке: переменная `WATER_REGIME_GIS_QGIS_PYTHON`, типовые папки официального QGIS `C:\Program Files\QGIS*\bin\python-qgis.bat`, затем `C:\OSGeo4W`.
+
 Основной продуктовый путь упаковки — `scripts/build_release_package.py`: он создает QGIS-first пакет для macOS и Windows.
 
 Сборщик release-пакета пересоздает `dist/water-regime-gis-release/` с нуля, чтобы в GitHub Release не попадали старые дубликаты файлов. После сборки дополнительно создается архив `dist/water-regime-gis-release.zip`, который можно прикреплять к GitHub Release.
@@ -242,4 +274,4 @@ QGIS-проект тоже использует локальный WMS-прок�
 
 Отдельно проверена macOS `.app` из release-пакета: после штатного macOS-разрешения локальной сети приложение подняло backend через QGIS Python, `/environment.json` ответил локальным режимом, а повторный `select-field` завершился `OK`.
 
-Полностью собранный Windows `.exe` пока не проверен в Windows-среде из этого macOS workspace.
+GitHub Actions run `31630729725` для коммита `3d25404` успешно собрал `Water-Regime-GIS-Windows-Release` и проверил наличие `.exe`, backend runtime и QGIS-скриптов. Полный runtime-test Windows `.exe` на отдельной Windows-машине с установленным QGIS пока не проведен.

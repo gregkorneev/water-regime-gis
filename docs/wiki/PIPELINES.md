@@ -155,6 +155,20 @@
 
 ## Команды запуска
 
+Установка личного QGIS-плагина:
+
+```bash
+python3 scripts/install_qgis_plugin.py
+```
+
+Проверка структуры QGIS-плагина:
+
+```bash
+python3 scripts/check_qgis_plugin.py
+```
+
+Основной пользовательский сценарий теперь запускается из QGIS через плагин `Water Regime GIS`: выбор точки на canvas, уточнение границы, расчет индексов и сборка проекта/слоев. Команды ниже остаются проверочными и legacy/fallback.
+
 Проверка структуры проекта:
 
 ```bash
@@ -169,7 +183,7 @@ python3 scripts/check_project.py
 - проверяет наличие обязательных каталогов;
 - не читает и не изменяет геоданные.
 
-Запуск desktop-приложения:
+Legacy запуск desktop/web-приложения:
 
 ```text
 launch_panel.command

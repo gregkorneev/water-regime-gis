@@ -1,0 +1,10 @@
+[general]
+name=Water Regime GIS
+description=Personal QGIS interface for water regime field workflows.
+about=Runs the local water-regime-gis scripts from inside QGIS and loads the resulting field, satellite and map layers.
+version=0.1.0
+qgisMinimumVersion=3.40
+author=water-regime-gis
+email=
+category=Raster
+experimental=True

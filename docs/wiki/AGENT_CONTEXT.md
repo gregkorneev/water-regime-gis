@@ -15,6 +15,11 @@
 - Документация ведется на русском языке.
 - Имена файлов и папок — на английском.
 - Основной стек: macOS, QGIS, PyQGIS, QGIS Processing, GDAL/OGR, Python.
+- Основной пользовательский сценарий переключен на личный QGIS-плагин `Water Regime GIS`; QGIS больше не считается скрытым только движком.
+- Плагин расположен в `qgis_plugins/water_regime_gis_plugin/` и устанавливается командой `python3 scripts/install_qgis_plugin.py`.
+- Плагин жестко использует `/Users/korneev/Desktop/water-regime-gis`, `/Applications/QGIS.app` и профиль QGIS `default`.
+- Проверка структуры плагина: `python3 scripts/check_qgis_plugin.py`.
+- Прежняя web/desktop-панель остается legacy/fallback до отдельного удаления после стабилизации QGIS-плагина.
 - PostGIS планируется, но не требуется на первом этапе.
 - Большие геоданные не добавляются в git без явного разрешения.
 - `docs/wiki/DECISIONS.md` является журналом решений.
@@ -22,12 +27,12 @@
 - Первый исполняемый скрипт: `python3 scripts/check_project.py`.
 - Базовый конфиг: `configs/project.example.json`.
 - Тестовый AOI `data/aoi/tula_test_field.geojson` остается примером данных, но основной пользовательский сценарий больше не привязан к нему.
-- Пользователь выбирает поле точкой на карте в локальном веб-интерфейсе.
+- В новом основном сценарии пользователь выбирает поле кликом по canvas QGIS через плагин; legacy web-панель тоже умеет выбирать точку на карте.
 - Выбор точки обрабатывается QGIS-скриптом `scripts/qgis/select_field_point.py`.
-- Пользовательский сценарий не должен открывать QGIS. QGIS работает как скрытый headless-движок, управляемый из панели.
-- Основные кнопки панели: `Сохранить выбранное поле`, `Восстановить среду`, `Проверить систему`, `Подготовить результат`.
-- Кнопка `Подготовить результат` запускает проверку структуры, автоустановку НСПД-плагина, проверку PyQGIS/НСПД и создание результата/preview.
-- После подготовки результата панель показывает блок `Результаты` со скачиванием единого ZIP-архива, preview, GeoJSON-контура и JSON-отчета `outputs/reports/latest_result.json`.
+- Новый пользовательский сценарий выполняется в QGIS: плагин открывает dock-панель, берет точку кликом по canvas, запускает существующие QGIS-скрипты в фоне и загружает результаты в QGIS.
+- Основные кнопки QGIS-плагина: `Проверить среду`, `Взять точку с карты`, `Уточнить границу`, `Рассчитать индексы`, `Собрать проект/слои`.
+- Legacy web-панель сохраняет прежние кнопки `Сохранить выбранное поле`, `Восстановить среду`, `Проверить систему`, `Подготовить результат` до отдельного удаления.
+- QGIS-плагин загружает результаты в текущую сессию QGIS; legacy web-панель после подготовки результата показывает блок `Результаты` со скачиванием единого ZIP-архива, preview, GeoJSON-контура и JSON-отчета `outputs/reports/latest_result.json`.
 - НСПД-плагин автоматически устанавливается скриптом `scripts/install_nspd_plugin.py`.
 - Скрипт создает локальные некоммитимые слои `data/aoi/selected_field_point.geojson` и `data/aoi/selected_field_area.geojson`.
 - Скрипт `scripts/qgis/resolve_field_boundary.py` автоматически пытается уточнить реальный кадастровый контур через WMS `GetFeatureInfo` НСПД по выбранной точке.
@@ -65,6 +70,8 @@
 - Собранный release-пакет проверяется командой `python3 scripts/check_release_package.py`; проверка подтверждает структуру пакета, zip-архив, runtime-исходники, QGIS-скрипты и отсутствие stale-дубликатов.
 - На 2026-08-12 проверен QGIS-first release-runtime сценарий: запустить backend из release-папки через `/Applications/QGIS.app/Contents/MacOS/python`, выбрать точку `62.628719, 91.7578125`, подготовить результат и скачать `/download/result.zip`.
 - На 2026-08-12 проверена macOS `.app` из release-пакета: приложение само подняло backend через локальный QGIS, после штатного macOS-разрешения локальной сети `/environment.json` показал `runtime.mode = local`, QGIS `3.44.12`, НСПД `2.5`, а повторный `select-field` завершился `OK`.
+- GitHub Actions run `31630729725` для коммита `3d25404` успешно собрал Windows shell и полный Windows QGIS-first release artifact; workflow проверил наличие `.exe`, backend runtime и QGIS-скриптов, а artifact опубликован как `Water-Regime-GIS-Windows-Release`.
+- Windows shell ищет QGIS по `WATER_REGIME_GIS_QGIS_PYTHON`, затем в типовых папках официального QGIS `C:\Program Files\QGIS*\bin\python-qgis.bat`, затем в `C:\OSGeo4W`.
 - Добавлена проверка реального Docker-запуска `python3 scripts/check_docker_app.py`; она ждет bootstrap и проверяет QGIS 3.40+ и НСПД-плагин внутри контейнера.
 - Добавлен спутниковый v1-пайплайн: `scripts/qgis/process_satellite_indices.py` запускается внутри QGIS Python, ищет Sentinel-2 L2A через Microsoft Planetary Computer STAC, обрезает каналы GDAL `/vsicurl/` и считает NDVI, NDMI, NDWI, MNDWI, SAVI, NDRE.
 - Спутниковый пайплайн проверяется командой `python3 scripts/check_satellite_pipeline.py`.

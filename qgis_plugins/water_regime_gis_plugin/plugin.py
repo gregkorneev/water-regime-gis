@@ -10,6 +10,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QAction,
     QDockWidget,
+    QGridLayout,
     QLabel,
     QPushButton,
     QPlainTextEdit,
@@ -62,22 +63,27 @@ class WaterRegimeDock(QDockWidget):
         layout = QVBoxLayout(panel)
         layout.addWidget(QLabel("Личный QGIS-сценарий анализа поля"))
 
-        self.check_button = self.add_button(layout, "Проверить среду", self.check_environment)
-        self.pick_button = self.add_button(layout, "Взять точку с карты", self.enable_point_capture)
-        self.boundary_button = self.add_button(layout, "Уточнить границу", self.resolve_boundary)
-        self.indices_button = self.add_button(layout, "Рассчитать индексы", self.process_indices)
-        self.project_button = self.add_button(layout, "Собрать проект/слои", self.build_project)
+        actions = QGridLayout()
+        layout.addLayout(actions)
+        self.check_button = self.add_button(actions, 0, 0, "Проверить среду", self.check_environment)
+        self.pick_button = self.add_button(actions, 0, 1, "Взять точку с карты", self.enable_point_capture)
+        self.boundary_button = self.add_button(actions, 1, 0, "Уточнить границу", self.resolve_boundary)
+        self.indices_button = self.add_button(actions, 1, 1, "Рассчитать индексы", self.process_indices)
+        self.observearth_button = self.add_button(actions, 2, 0, "Открыть Observearth", self.open_observearth)
+        self.isolines_button = self.add_button(actions, 2, 1, "Построить изолинии", self.open_isolines)
+        self.kriging_button = self.add_button(actions, 3, 0, "Кригинг измерений", self.open_kriging)
+        self.project_button = self.add_button(actions, 3, 1, "Собрать проект/слои", self.build_project)
 
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
-        self.output.setMinimumHeight(260)
+        self.output.setMinimumHeight(180)
         layout.addWidget(self.output)
         self.setWidget(panel)
 
-    def add_button(self, layout, text, callback):
+    def add_button(self, layout, row, column, text, callback):
         button = QPushButton(text)
         button.clicked.connect(callback)
-        layout.addWidget(button)
+        layout.addWidget(button, row, column)
         return button
 
     def log(self, message: str):
@@ -96,6 +102,8 @@ class WaterRegimeDock(QDockWidget):
             f"- QGIS python: {settings.QGIS_PYTHON}",
             f"- Plugin profile: {settings.QGIS_PROFILE_PLUGINS}",
             f"- NSPD plugin: {self.nspd_status(config)}",
+            f"- Observearth: {self.plugin_status('observearth')}",
+            f"- Isoliner: {self.processing_status('isoliner:raster_to_isolines')}",
         ]
         for key in ("aoi", "interim", "processed", "maps", "reports", "rasters"):
             path = settings.PROJECT_ROOT / config["paths"][key]
@@ -151,6 +159,56 @@ class WaterRegimeDock(QDockWidget):
             timeout=1800,
         )
 
+    def open_observearth(self):
+        from qgis.utils import plugins
+
+        plugin = plugins.get("observearth")
+        if plugin is None:
+            self.notify("Observearth не включён в менеджере модулей.", Qgis.Warning)
+            return
+        plugin.run()
+        self.log("Observearth открыт. Выберите слой поля; выделенные объекты имеют приоритет.")
+
+    def open_isolines(self):
+        layer = self.iface.activeLayer()
+        if not isinstance(layer, QgsRasterLayer):
+            layer = next(
+                (candidate for candidate in QgsProject.instance().mapLayers().values()
+                 if isinstance(candidate, QgsRasterLayer) and candidate.name().lower() == "ndmi"),
+                None,
+            )
+        self.open_processing_dialog(
+            "isoliner:raster_to_isolines",
+            {"INPUT": layer, "LEVELS": "-0.2 0 0.1 0.2 0.3"} if layer else {},
+            "Выберите растр индекса перед построением изолиний.",
+        )
+
+    def open_kriging(self):
+        layer = self.iface.activeLayer()
+        numeric_fields = []
+        if isinstance(layer, QgsVectorLayer) and layer.geometryType() == Qgis.GeometryType.Point:
+            numeric_fields = [field.name() for field in layer.fields() if field.isNumeric()]
+        if not numeric_fields or layer.featureCount() < 3:
+            self.notify(
+                "Выберите точечный слой минимум с 3 объектами и числовым полем измерения.",
+                Qgis.Warning,
+            )
+            return
+        self.open_processing_dialog(
+            "isoliner:kriging2d",
+            {"INPUT": layer, "ZFIELD": numeric_fields[0]},
+            "Isoliner не включён в менеджере модулей.",
+        )
+
+    def open_processing_dialog(self, algorithm_id: str, parameters: dict, missing_message: str):
+        if QgsApplication.processingRegistry().algorithmById(algorithm_id) is None:
+            self.notify(missing_message, Qgis.Warning)
+            return
+        import processing
+
+        processing.execAlgorithmDialog(algorithm_id, parameters)
+        self.log(f"Открыт алгоритм Processing: {algorithm_id}")
+
     def build_project(self):
         self.run_task(
             "Build QGIS project",
@@ -182,6 +240,9 @@ class WaterRegimeDock(QDockWidget):
             self.pick_button,
             self.boundary_button,
             self.indices_button,
+            self.observearth_button,
+            self.isolines_button,
+            self.kriging_button,
             self.project_button,
         ):
             button.setEnabled(enabled)
@@ -198,6 +259,20 @@ class WaterRegimeDock(QDockWidget):
         ]
         existing = [path for path in candidates if path.exists()]
         return str(existing[0]) if existing else "missing"
+
+    def plugin_status(self, plugin_id: str) -> str:
+        from qgis.utils import plugins
+
+        path = settings.QGIS_PROFILE_PLUGINS / plugin_id
+        if plugin_id in plugins:
+            return f"enabled ({path})"
+        return f"installed ({path})" if path.exists() else "missing"
+
+    def processing_status(self, algorithm_id: str) -> str:
+        if QgsApplication.processingRegistry().algorithmById(algorithm_id):
+            return "enabled"
+        path = settings.QGIS_PROFILE_PLUGINS / "grid_isolines"
+        return f"installed ({path})" if path.exists() else "missing"
 
     def load_field_layers(self):
         config = self.read_config()

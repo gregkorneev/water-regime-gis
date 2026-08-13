@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import json
 import sys
@@ -16,7 +17,7 @@ from water_regime_gis.qgis_runtime import configure_qgis_environment
 configure_qgis_environment()
 
 from osgeo import gdal, osr
-from water_regime_gis.project import selected_area_crs
+from water_regime_gis.project import selected_area_crs, utm_crs_for_lon_lat
 
 
 CONFIG = ROOT / "configs/project.example.json"
@@ -40,6 +41,20 @@ FORMULAS = {
 }
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Calculate Sentinel-2 indices for a GeoJSON area.")
+    parser.add_argument("--area", type=Path)
+    parser.add_argument("--interim", type=Path)
+    parser.add_argument("--rasters", type=Path)
+    parser.add_argument("--maps", type=Path)
+    parser.add_argument("--metadata", type=Path)
+    parser.add_argument("--indices", nargs="+")
+    parser.add_argument("--date-from", type=dt.date.fromisoformat)
+    parser.add_argument("--date-to", type=dt.date.fromisoformat)
+    parser.add_argument("--scene-id")
+    return parser.parse_args()
+
+
 def main() -> int:
     gdal.UseExceptions()
     for key, value in {
@@ -48,19 +63,24 @@ def main() -> int:
         "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif,.TIF",
     }.items():
         gdal.SetConfigOption(key, value)
+    args = parse_args()
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
-    area_path = ROOT / config["paths"]["selected_field_area"]
+    area_path = project_path(args.area) if args.area else ROOT / config["paths"]["selected_field_area"]
     if not area_path.exists():
         print("Selected field area does not exist.")
         return 1
 
-    interim = ROOT / "data/interim/satellite"
-    rasters = ROOT / config["paths"]["rasters"]
+    interim = project_path(args.interim) if args.interim else ROOT / "data/interim/satellite"
+    rasters = project_path(args.rasters) if args.rasters else ROOT / config["paths"]["rasters"]
+    maps = project_path(args.maps) if args.maps else ROOT / config["paths"]["maps"]
     interim.mkdir(parents=True, exist_ok=True)
     rasters.mkdir(parents=True, exist_ok=True)
-    latest_scene_path = interim / "latest_scene.json"
+    maps.mkdir(parents=True, exist_ok=True)
+    latest_scene_path = project_path(args.metadata) if args.metadata else interim / "latest_scene.json"
 
-    items = search_items(config, area_path)
+    items = search_items(config, area_path, args.date_from, args.date_to)
+    if args.scene_id:
+        items = [item for item in items if item.get("id") == args.scene_id]
     if not items:
         write_json(latest_scene_path, {"satellite_status": "no_scene_found", "indices": []})
         print("Satellite status: no_scene_found")
@@ -69,10 +89,10 @@ def main() -> int:
     item = sorted(items, key=lambda feature: float(feature["properties"].get("eo:cloud_cover") or 1000))[0]
     scene_dir = interim / safe_name(item["id"])
     scene_dir.mkdir(parents=True, exist_ok=True)
-    target_crs = selected_area_crs(ROOT, config)
+    target_crs = area_analysis_crs(area_path, config) if args.area else selected_area_crs(ROOT, config)
     band_paths = clip_bands(item, scene_dir, area_path, target_crs)
-    indices = calculate_indices(band_paths, rasters, config["satellite"]["indices"])
-    true_color = write_true_color(band_paths, ROOT / config["paths"]["maps"], target_crs)
+    indices = calculate_indices(band_paths, rasters, args.indices or config["satellite"]["indices"])
+    true_color = write_true_color(band_paths, maps, target_crs)
     metadata = {
         "satellite_status": "OK" if indices else "no_indices",
         "provider": config["satellite"]["provider"],
@@ -97,9 +117,9 @@ def main() -> int:
     return 0
 
 
-def search_items(config: dict, area_path: Path) -> list[dict]:
-    end = dt.datetime.now(dt.timezone.utc).date()
-    start = end - dt.timedelta(days=int(config["satellite"]["date_range_days"]))
+def search_items(config: dict, area_path: Path, date_from=None, date_to=None) -> list[dict]:
+    end = date_to or dt.datetime.now(dt.timezone.utc).date()
+    start = date_from or end - dt.timedelta(days=int(config["satellite"]["date_range_days"]))
     payload = {
         "collections": [config["satellite"]["collection"]],
         "bbox": bbox(area_path),
@@ -121,6 +141,19 @@ def bbox(area_path: Path) -> list[float]:
     data = json.loads(area_path.read_text(encoding="utf-8"))
     coords = data["features"][0]["geometry"]["coordinates"][0]
     return [min(p[0] for p in coords), min(p[1] for p in coords), max(p[0] for p in coords), max(p[1] for p in coords)]
+
+
+def project_path(path: Path) -> Path:
+    return path if path.is_absolute() else ROOT / path
+
+
+def area_analysis_crs(area_path: Path, config: dict) -> str:
+    data = json.loads(area_path.read_text(encoding="utf-8"))
+    properties = data["features"][0].get("properties", {})
+    if properties.get("analysis_crs"):
+        return properties["analysis_crs"]
+    minx, miny, maxx, maxy = bbox(area_path)
+    return utm_crs_for_lon_lat((minx + maxx) / 2, (miny + maxy) / 2)
 
 
 def clip_bands(item: dict, scene_dir: Path, area_path: Path, target_crs: str) -> dict[str, Path]:

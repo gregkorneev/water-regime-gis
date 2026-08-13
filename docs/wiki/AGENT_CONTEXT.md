@@ -80,6 +80,7 @@
 - Результаты спутниковых индексов сохраняются в `outputs/rasters/*.tif`, metadata сцены — в `data/interim/satellite/latest_scene.json`, а ZIP результата включает GeoTIFF.
 - Спутниковый пайплайн берет рабочую CRS из `analysis_crs` выбранного GeoJSON, а не из глобального тестового `qgis.target_crs`.
 - Observearth зафиксирован как целевой QGIS-плагин STAC/индексов, но текущий автоматический v1 работает через QGIS Python/GDAL для headless-воспроизводимости. Isoliner оставлен для будущей интерполяции наземных точек и изолиний.
+- В профиль QGIS `default` установлены Observearth 1.0.2 и Isoliner 5.6.21; dock-панель открывает Observearth, `isoliner:raster_to_isolines` и `isoliner:kriging2d`. Кригинг блокируется без реального точечного слоя с числовым полем.
 - Для Linux/Docker `qgis_runtime.py` выставляет `QT_QPA_PLATFORM=offscreen`, чтобы скрытые PyQGIS-проверки не падали на отсутствии дисплея.
 - Общий helper `src/water_regime_gis/qgis_runtime.py` ищет QGIS Python, prefix и профиль плагинов для macOS, Windows и Linux/Docker.
 - Добавлен сборщик локальной оболочки `dist/Water Regime GIS.app`: `python3 scripts/build_macos_app.py`.

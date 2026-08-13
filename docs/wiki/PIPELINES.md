@@ -103,6 +103,10 @@
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/process_satellite_indices.py
 ```
 
+Для изолированного сравнения одного поля и одной сцены скрипт принимает `--area`, `--interim`, `--rasters`, `--maps`, `--metadata`, `--indices`, `--date-from`, `--date-to` и `--scene-id`. Без параметров сохраняется основной сценарий и прежние пути.
+
+Численная сверка NDMI с установленным движком Observearth выполняется скриптом `scripts/qgis/compare_observearth_ndmi.py`: он применяет `observearth.sentinel2.Sentinel2` к тем же каналам и проверяет пиксельное расхождение с проектным GeoTIFF.
+
 Текущая логика:
 
 - читает `data/aoi/selected_field_area.geojson`;

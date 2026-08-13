@@ -27,6 +27,11 @@ def main() -> int:
     if not script.exists():
         print(f"Satellite script is missing: {script}")
         return 1
+    script_text = script.read_text(encoding="utf-8")
+    for option in ("--area", "--rasters", "--indices", "--date-from", "--scene-id"):
+        if option not in script_text:
+            print(f"Satellite script option is missing: {option}")
+            return 1
     missing = sorted(REQUIRED - indices)
     if missing:
         print(f"Required indices are missing: {', '.join(missing)}")

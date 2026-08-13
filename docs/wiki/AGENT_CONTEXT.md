@@ -19,6 +19,7 @@
 - Плагин расположен в `qgis_plugins/water_regime_gis_plugin/` и устанавливается командой `python3 scripts/install_qgis_plugin.py`.
 - Плагин жестко использует `/Users/korneev/Desktop/water-regime-gis`, `/Applications/QGIS.app` и профиль QGIS `default`.
 - Проверка структуры плагина: `python3 scripts/check_qgis_plugin.py`.
+- Скрипт `scripts/qgis/split_field_boundaries.py` делит импортированные границы по `dataset_code` на SP/KAA и строит по одному минимальному ориентированному прямоугольнику на поле; локальные результаты находятся в `data/processed/field_boundaries/`.
 - Прежняя web/desktop-панель остается legacy/fallback до отдельного удаления после стабилизации QGIS-плагина.
 - PostGIS планируется, но не требуется на первом этапе.
 - Большие геоданные не добавляются в git без явного разрешения.

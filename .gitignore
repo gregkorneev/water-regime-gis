@@ -55,12 +55,14 @@ data/processed/**
 outputs/rasters/**
 outputs/maps/**
 outputs/reports/**
+outputs/imagery/**
 
 !data/interim/.gitkeep
 !data/processed/.gitkeep
 !outputs/rasters/.gitkeep
 !outputs/maps/.gitkeep
 !outputs/reports/.gitkeep
+!outputs/imagery/.gitkeep
 
 # Common heavy raster / remote-sensing formats
 *.tif

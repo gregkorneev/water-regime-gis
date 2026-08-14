@@ -27,6 +27,7 @@
     "processed": "data/processed",
     "maps": "outputs/maps",
     "rasters": "outputs/rasters",
+    "imagery": "outputs/imagery",
     "reports": "outputs/reports",
     "metrics_report": "outputs/reports/latest_metrics.json"
   },

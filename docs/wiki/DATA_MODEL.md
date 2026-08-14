@@ -23,6 +23,8 @@
 - `outputs/rasters/savi.tif`;
 - `outputs/rasters/ndre.tif`;
 - `outputs/reports/latest_metrics.json` — сцена, дата, облачность, CRS и статистика каждого индекса;
+- `outputs/imagery/<dataset>/<field_id>/sentinel_true_color.tif` — RGB Sentinel-2, обрезанный по отдельному полю;
+- `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
 - `outputs/maps/water_regime_gis.qgs`.
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.

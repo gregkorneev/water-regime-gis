@@ -15,6 +15,7 @@ REQUIRED_DIRS = (
     "data/processed",
     "outputs/maps",
     "outputs/rasters",
+    "outputs/imagery",
     "outputs/reports",
     "docs/wiki",
 )

@@ -23,6 +23,8 @@ from osgeo import gdal, ogr, osr
 CONFIG = ROOT / "configs/project.example.json"
 DEFAULT_INPUTS = (Path("/Users/korneev/Desktop/KAA.gpkg"), Path("/Users/korneev/Desktop/SP.gpkg"))
 DEFAULT_OUTPUT = ROOT / "outputs/imagery"
+DEFAULT_DATE_FROM = dt.date(2026, 4, 1)
+DEFAULT_DATE_TO = dt.date(2026, 8, 10)
 STAC_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 SIGN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href="
 RGB_ASSETS = ("B04", "B03", "B02")
@@ -32,8 +34,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Download Sentinel-2 true-color imagery for GPKG fields.")
     parser.add_argument("--input", nargs="+", type=Path, default=list(DEFAULT_INPUTS))
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--date-from", type=dt.date.fromisoformat)
-    parser.add_argument("--date-to", type=dt.date.fromisoformat)
+    parser.add_argument("--date-from", type=dt.date.fromisoformat, default=DEFAULT_DATE_FROM)
+    parser.add_argument("--date-to", type=dt.date.fromisoformat, default=DEFAULT_DATE_TO)
     parser.add_argument("--max-cloud", type=float)
     parser.add_argument("--where", help="OGR attribute filter, for example: calculation_ready = 1")
     parser.add_argument("--limit", type=int, help="Process at most N fields across all inputs.")
@@ -46,8 +48,10 @@ def main() -> int:
     gdal.UseExceptions()
     args = parse_args()
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
-    end = args.date_to or dt.datetime.now(dt.timezone.utc).date()
-    start = args.date_from or end - dt.timedelta(days=int(config["satellite"]["date_range_days"]))
+    start = args.date_from
+    end = args.date_to
+    if end < start:
+        raise ValueError("--date-to must not be earlier than --date-from")
     max_cloud = args.max_cloud if args.max_cloud is not None else float(config["satellite"]["max_cloud_cover"])
     output_root = args.output.expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=True)
@@ -78,52 +82,75 @@ def main() -> int:
             processed += 1
             field_id = field_identifier(feature)
             field_dir = output_root / dataset_name / field_id
-            output_path = field_dir / "sentinel_true_color.tif"
-            metadata_path = field_dir / "metadata.json"
-            if output_path.exists() and metadata_path.exists() and not args.overwrite:
-                record = json.loads(metadata_path.read_text(encoding="utf-8"))
-                record["status"] = "skipped_existing"
-                records.append(record)
-                write_manifest(manifest_path, records, start, end, max_cloud)
-                print(f"SKIP {dataset_name}/{field_id}: {output_path}")
-                continue
-
             try:
                 geometry = feature.GetGeometryRef()
                 if geometry is None or geometry.IsEmpty():
                     raise ValueError("Field geometry is empty")
                 bbox, center = geometry_bbox_wgs84(geometry, source_crs)
-                item = find_scene(bbox, start, end, max_cloud, config["satellite"]["collection"])
-                field_dir.mkdir(parents=True, exist_ok=True)
+                items = find_scenes(bbox, center, start, end, max_cloud, config["satellite"]["collection"])
                 target_crs = utm_crs_for_lon_lat(*center)
                 cutline_where = f'"{fid_column}" = {feature.GetFID()}'
-                band_paths = download_rgb_bands(
-                    item,
-                    source_path,
-                    layer.GetName(),
-                    cutline_where,
-                    target_crs,
-                    field_dir,
-                )
-                write_true_color(band_paths, output_path)
-                for path in band_paths:
-                    path.unlink(missing_ok=True)
-                record = {
-                    "status": "OK",
-                    "dataset": dataset_name,
-                    "field_id": field_id,
-                    "source": str(source_path),
-                    "source_layer": layer.GetName(),
-                    "source_fid": feature.GetFID(),
-                    "scene_id": item["id"],
-                    "scene_datetime": item["properties"].get("datetime", ""),
-                    "cloud_cover": item["properties"].get("eo:cloud_cover"),
-                    "analysis_crs": target_crs,
-                    "output": str(output_path),
-                }
-                metadata_path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-                records.append(record)
-                print(f"OK {dataset_name}/{field_id}: {output_path}")
+                for item in items:
+                    scene_datetime = item["properties"].get("datetime", "")
+                    scene_date = scene_datetime[:10]
+                    scene_dir = field_dir / scene_date
+                    output_path = scene_dir / "sentinel_true_color.tif"
+                    metadata_path = scene_dir / "metadata.json"
+                    if output_path.exists() and metadata_path.exists() and not args.overwrite:
+                        record = json.loads(metadata_path.read_text(encoding="utf-8"))
+                        record["status"] = "skipped_existing"
+                        records.append(record)
+                        print(f"SKIP {dataset_name}/{field_id}/{scene_date}: {output_path}")
+                        continue
+                    try:
+                        scene_dir.mkdir(parents=True, exist_ok=True)
+                        band_paths = download_rgb_bands(
+                            item,
+                            source_path,
+                            layer.GetName(),
+                            cutline_where,
+                            target_crs,
+                            scene_dir,
+                        )
+                        write_true_color(band_paths, output_path)
+                        for path in band_paths:
+                            path.unlink(missing_ok=True)
+                        record = {
+                            "status": "OK",
+                            "dataset": dataset_name,
+                            "field_id": field_id,
+                            "source": str(source_path),
+                            "source_layer": layer.GetName(),
+                            "source_fid": feature.GetFID(),
+                            "scene_id": item["id"],
+                            "scene_date": scene_date,
+                            "scene_datetime": scene_datetime,
+                            "cloud_cover": item["properties"].get("eo:cloud_cover"),
+                            "analysis_crs": target_crs,
+                            "output": str(output_path),
+                        }
+                        metadata_path.write_text(
+                            json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+                        )
+                        records.append(record)
+                        print(f"OK {dataset_name}/{field_id}/{scene_date}: {output_path}")
+                    except Exception as exc:
+                        record = {
+                            "status": "error",
+                            "dataset": dataset_name,
+                            "field_id": field_id,
+                            "source": str(source_path),
+                            "source_fid": feature.GetFID(),
+                            "scene_id": item["id"],
+                            "scene_date": scene_date,
+                            "error": str(exc),
+                        }
+                        records.append(record)
+                        print(f"ERROR {dataset_name}/{field_id}/{scene_date}: {exc}")
+                        if args.fail_fast:
+                            write_manifest(manifest_path, records, start, end, max_cloud)
+                            raise
+                    write_manifest(manifest_path, records, start, end, max_cloud)
             except Exception as exc:
                 record = {
                     "status": "error",
@@ -173,14 +200,20 @@ def geometry_bbox_wgs84(geometry, source_crs) -> tuple[list[float], tuple[float,
     return [minx, miny, maxx, maxy], (centroid.GetX(), centroid.GetY())
 
 
-def find_scene(bbox: list[float], start: dt.date, end: dt.date, max_cloud: float, collection: str) -> dict:
+def find_scenes(
+    bbox: list[float],
+    center: tuple[float, float],
+    start: dt.date,
+    end: dt.date,
+    max_cloud: float,
+    collection: str,
+) -> list[dict]:
     payload = {
         "collections": [collection],
         "bbox": bbox,
-        "datetime": f"{start.isoformat()}/{end.isoformat()}",
+        "datetime": f"{start.isoformat()}T00:00:00Z/{end.isoformat()}T23:59:59Z",
         "query": {"eo:cloud_cover": {"lt": max_cloud}},
-        "limit": 10,
-        "sortby": [{"field": "properties.eo:cloud_cover", "direction": "asc"}],
+        "limit": 100,
     }
     request = Request(
         STAC_URL,
@@ -190,8 +223,26 @@ def find_scene(bbox: list[float], start: dt.date, end: dt.date, max_cloud: float
     with urlopen(request, timeout=40) as response:
         items = json.loads(response.read().decode("utf-8")).get("features", [])
     if not items:
-        raise RuntimeError("No Sentinel-2 scene found for the field")
-    return min(items, key=lambda item: float(item["properties"].get("eo:cloud_cover") or 1000))
+        raise RuntimeError("No Sentinel-2 scenes found for the field and date range")
+    covering = [item for item in items if bbox_contains(item.get("bbox", []), center)]
+    candidates = covering or items
+    by_date = {}
+    for item in sorted(candidates, key=cloud_cover):
+        scene_date = item["properties"].get("datetime", "")[:10]
+        if scene_date and all(asset in item.get("assets", {}) for asset in RGB_ASSETS):
+            by_date.setdefault(scene_date, item)
+    if not by_date:
+        raise RuntimeError("Sentinel-2 scenes have no RGB assets")
+    return [by_date[scene_date] for scene_date in sorted(by_date)]
+
+
+def bbox_contains(item_bbox: list[float], point: tuple[float, float]) -> bool:
+    return len(item_bbox) >= 4 and item_bbox[0] <= point[0] <= item_bbox[2] and item_bbox[1] <= point[1] <= item_bbox[3]
+
+
+def cloud_cover(item: dict) -> float:
+    value = item.get("properties", {}).get("eo:cloud_cover")
+    return float(value) if value is not None else 1000.0
 
 
 def download_rgb_bands(

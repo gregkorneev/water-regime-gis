@@ -67,13 +67,13 @@ python3 scripts/install_nspd_plugin.py
 
 ## Снимки Sentinel-2 для KAA и SP
 
-Загрузить RGB-снимок отдельно для каждого из 156 полей:
+Загрузить временной ряд RGB-снимков для каждого из 156 полей с 1 апреля по 10 августа 2026 года:
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/download_field_imagery.py
 ```
 
-По умолчанию используются `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. Результаты сохраняются в `outputs/imagery/kaa/<field_id>/` и `outputs/imagery/sp/<field_id>/`. Общий журнал находится в `outputs/imagery/download_manifest.json`.
+По умолчанию используются `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. Для каждого календарного дня выбирается одна наименее облачная сцена. Результаты сохраняются в `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/` и `outputs/imagery/sp/<field_id>/<YYYY-MM-DD>/`. Общий журнал находится в `outputs/imagery/download_manifest.json`.
 
 Повторный запуск пропускает готовые поля. Полезные параметры:
 
@@ -84,7 +84,7 @@ python3 scripts/install_nspd_plugin.py
 # Только поля, готовые к расчету
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/download_field_imagery.py --where "calculation_ready = 1"
 
-# Пересчитать существующие снимки за заданный период
+# Пересчитать существующие снимки за другим периодом
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/download_field_imagery.py \
   --date-from 2026-06-01 --date-to 2026-08-14 --overwrite
 ```

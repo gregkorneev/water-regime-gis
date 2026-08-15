@@ -24,7 +24,10 @@
 - `outputs/rasters/ndre.tif`;
 - `outputs/reports/latest_metrics.json` — сцена, дата, облачность, CRS и статистика каждого индекса;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_true_color.tif` — RGB Sentinel-2, обрезанный по отдельному полю и дате;
+- `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif` — B02/B03/B04/B05/B08/B11/B12 и SCL на общей сетке 10 м;
+- `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/cloud_mask.tif` — бинарная маска невалидных пикселей по SCL;
 - `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
+- `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/maps/water_regime_gis.qgs`.
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.

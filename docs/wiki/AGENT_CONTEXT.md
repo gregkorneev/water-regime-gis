@@ -9,6 +9,7 @@
 - Работают выбор точки, fallback AOI, попытка уточнения НСПД, Sentinel-2 и индексы NDVI/NDMI/NDWI/MNDWI/SAVI/NDRE.
 - Каждый спутниковый расчет создает `outputs/reports/latest_metrics.json` со статистикой индексных растров.
 - `scripts/qgis/download_field_imagery.py` загружает временной ряд RGB Sentinel-2 для каждого поля из `KAA.gpkg` и `SP.gpkg` за 2026-04-01–2026-08-10, с manifest и возобновлением по датам.
+- `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
 - Кригинг требует реальный точечный слой минимум с тремя объектами и числовым полем.
 - `Собрать проект/слои` загружает доступные AOI/растры без дублей и сохраняет текущую сессию в `outputs/maps/water_regime_gis.qgs`.

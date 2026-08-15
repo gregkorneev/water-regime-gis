@@ -18,6 +18,7 @@ def main() -> int:
     satellite = config.get("satellite", {})
     script = ROOT / config["qgis"]["satellite_indices_script"]
     imagery_script = ROOT / "scripts/qgis/download_field_imagery.py"
+    analysis_script = ROOT / "scripts/qgis/download_field_analysis.py"
     indices = set(satellite.get("indices", []))
     if satellite.get("provider") != "planetary-computer-stac":
         print("Unexpected satellite provider.")
@@ -31,10 +32,18 @@ def main() -> int:
     if not imagery_script.exists():
         print(f"Field imagery script is missing: {imagery_script}")
         return 1
+    if not analysis_script.exists():
+        print(f"Field analysis script is missing: {analysis_script}")
+        return 1
     imagery_text = imagery_script.read_text(encoding="utf-8")
     for marker in ("KAA.gpkg", "SP.gpkg", "sentinel_true_color.tif", "download_manifest.json"):
         if marker not in imagery_text:
             print(f"Field imagery marker is missing: {marker}")
+            return 1
+    analysis_text = analysis_script.read_text(encoding="utf-8")
+    for marker in ("sentinel_analysis.tif", "cloud_mask.tif", "analysis_manifest.json", '"SCL"'):
+        if marker not in analysis_text:
+            print(f"Field analysis marker is missing: {marker}")
             return 1
     script_text = script.read_text(encoding="utf-8")
     for option in ("--area", "--rasters", "--report", "--indices", "--date-from", "--scene-id"):

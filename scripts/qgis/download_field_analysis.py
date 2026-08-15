@@ -7,6 +7,7 @@ import json
 import sys
 from functools import lru_cache
 from pathlib import Path
+from time import time
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -23,6 +24,7 @@ from osgeo import gdal, ogr
 DEFAULT_OUTPUT = ROOT / "outputs/imagery"
 ITEM_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-2-l2a/items/"
 SIGN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href="
+SIGNED_HREF_TTL_SECONDS = 30 * 60
 ANALYSIS_ASSETS = ("B02", "B03", "B04", "B05", "B08", "B11", "B12", "SCL")
 CLOUD_SCL_CLASSES = (3, 8, 9, 10, 11)
 INVALID_SCL_CLASSES = (0, 1, *CLOUD_SCL_CLASSES)
@@ -149,10 +151,14 @@ def fetch_item(scene_id: str) -> dict:
 
 
 @lru_cache(maxsize=None)
-def sign_href(href: str) -> str:
+def _sign_href(href: str, time_bucket: int) -> str:
     request = Request(SIGN_URL + quote(href, safe=""), headers={"User-Agent": "water-regime-gis"})
     with urlopen(request, timeout=30) as response:
         return "/vsicurl/" + json.loads(response.read().decode("utf-8"))["href"]
+
+
+def sign_href(href: str) -> str:
+    return _sign_href(href, int(time() // SIGNED_HREF_TTL_SECONDS))
 
 
 def download_bands(

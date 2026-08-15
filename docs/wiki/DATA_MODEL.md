@@ -30,6 +30,10 @@
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
+- `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI/NDWI/MNDWI`;
+- `results/data/model_dataset.csv` — объединение спутниковых и наземных измерений после появления `data/ground_measurements.csv`;
+- `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;
+- `results/reports/satellite_quality_report.md` — отчет о дублях, пропусках, датах и диапазонах индексов;
 - `outputs/maps/water_regime_gis.qgs`.
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
@@ -39,3 +43,5 @@ GeoJSON используется для небольших геометрий, G
 ## Будущие измерения
 
 Для кригинга понадобится точечный слой с идентификатором, датой, координатами, числовым значением, единицами и методикой измерения.
+
+Для табличного анализа используется `data/ground_measurements.csv` со столбцами из `data/ground_measurements.example.csv`: `field_id`, `date`, `soil_moisture`, `LAI`, `FCOVER`, дополнительные глубины влажности, полив и осадки.

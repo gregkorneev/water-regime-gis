@@ -9,9 +9,11 @@
 1. `qgis_plugins/water_regime_gis_plugin/` — меню, toolbar action и dock-панель QGIS.
 2. `scripts/qgis/` — PyQGIS/GDAL-операции выбора поля, НСПД, Sentinel-2 и импорта границ.
 3. `src/water_regime_gis/` — только общие функции конфигурации, CRS и QGIS runtime.
-4. `configs/project.example.json` — единственная конфигурация путей и спутникового поиска.
-5. `data/` — локальные AOI, промежуточные и обработанные данные вне git.
-6. `outputs/` — локальные растры и QGIS-проект вне git.
+4. `scripts/analysis/` — воспроизводимые табличные расчеты по спутниковым индексам и будущим наземным измерениям.
+5. `configs/project.example.json` — конфигурация QGIS/Sentinel-пайплайна.
+6. `configs/analysis.example.json` — конфигурация табличного анализа.
+7. `data/` — локальные AOI, промежуточные и обработанные данные вне git.
+8. `outputs/` и `results/` — локальные растры, QGIS-проект и табличные результаты вне git.
 
 ## Выполнение
 

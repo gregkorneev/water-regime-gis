@@ -105,6 +105,24 @@ python3 scripts/install_nspd_plugin.py
 
 Скрипт читает `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, исключает nodata и облачные пиксели по `cloud_mask.tif`, затем сохраняет таблицу `outputs/reports/kaa_zonal_means.csv` и манифест `outputs/reports/kaa_zonal_means.json`.
 
+## Анализ спутниковых индексов и наземных измерений
+
+Подготовить wide-таблицу спутниковых индексов, QA-отчет, сезонную сводку и заготовки для объединения с наземными измерениями:
+
+```bash
+python3 scripts/analysis/run_satellite_ground_pipeline.py
+```
+
+По умолчанию входом служит `outputs/reports/kaa_zonal_means.csv`. Результаты пишутся в `results/`:
+
+- `results/data/prepared_satellite_data.csv` — `field_id × scene_date × NDMI/NDRE/SAVI/NDVI/NDWI/MNDWI`;
+- `results/tables/seasonal_summary.csv` — среднее, медиана, p25 и p75 по датам;
+- `results/reports/satellite_quality_report.md` — проверка дублей, пропусков и диапазонов;
+- `results/data/model_dataset.csv` — таблица для моделей после добавления ground-данных;
+- `results/tables/model_comparison.csv` — M1–M4, сейчас помечены как skipped без наземных измерений.
+
+Шаблон наземной таблицы: `data/ground_measurements.example.csv`. Рабочий файл должен называться `data/ground_measurements.csv`. Конфигурация путей и параметров находится в `configs/analysis.example.json`.
+
 ## Проверка проекта
 
 ```bash

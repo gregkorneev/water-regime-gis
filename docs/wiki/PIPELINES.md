@@ -38,6 +38,12 @@
 
 `scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Результат сохраняется в `outputs/reports/kaa_zonal_means.csv`, параметры запуска — в `outputs/reports/kaa_zonal_means.json`.
 
+## 4.4. Табличный анализ индексов и ground-данных
+
+`scripts/analysis/run_satellite_ground_pipeline.py` читает long-таблицу `outputs/reports/kaa_zonal_means.csv`, проверяет дубли `field_id + scene_date + index`, преобразует ее в wide-формат и пишет `results/data/prepared_satellite_data.csv`. Скрипт также формирует QA-отчет, сезонную сводку по датам, шаблон `ground_measurements`, nearest-date merge с сохранением `days_difference` и отчет M1–M4. Пока `data/ground_measurements.csv` отсутствует, модели честно помечаются как `skipped`.
+
+OPTRAM не вычисляется из готовых индексов. Скрипт проверяет наличие `sentinel_analysis.tif` с B04/B08/B12 и пишет `results/reports/optram_availability.json`; для реального OPTRAM еще нужны параметры/методика wet/dry edge.
+
 ## 5. Изолинии и кригинг
 
 Плагин открывает Processing-диалоги Isoliner. Изолинии строятся по активному растру. Кригинг доступен только для реального точечного слоя минимум с тремя объектами и числовым полем.
@@ -49,6 +55,5 @@
 ## Не реализовано
 
 - DEM и гидрологические производные;
-- временные ряды;
 - импорт наземных измерений;
 - автоматическая классификация зон и итоговый отчет.

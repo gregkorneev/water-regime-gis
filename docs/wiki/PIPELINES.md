@@ -34,6 +34,10 @@
 
 `scripts/qgis/download_field_analysis.py` читает `scene_id` из готовых `metadata.json` и докачивает B02/B03/B04/B05/B08/B11/B12/SCL без повторного выбора сцен. Каналы приводятся к общей сетке 10 м в CRS поля; SCL ресемплируется ближайшим соседом. Результат сохраняется как восьмиканальный `sentinel_analysis.tif`, а классы SCL 0/1/3/8/9/10/11 формируют `cloud_mask.tif`. В metadata дополнительно записывается облачность внутри поля.
 
+## 4.3. Зональные средние KAA
+
+`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Результат сохраняется в `outputs/reports/kaa_zonal_means.csv`, параметры запуска — в `outputs/reports/kaa_zonal_means.json`.
+
 ## 5. Изолинии и кригинг
 
 Плагин открывает Processing-диалоги Isoliner. Изолинии строятся по активному растру. Кригинг доступен только для реального точечного слоя минимум с тремя объектами и числовым полем.

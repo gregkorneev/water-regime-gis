@@ -28,6 +28,8 @@
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/cloud_mask.tif` — бинарная маска невалидных пикселей по SCL;
 - `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
+- `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
+- `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
 - `outputs/maps/water_regime_gis.qgs`.
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.

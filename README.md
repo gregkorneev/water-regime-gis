@@ -97,6 +97,14 @@ python3 scripts/install_nspd_plugin.py
 
 Скрипт использует `scene_id` из существующих `metadata.json`, поэтому повторно не ищет и не меняет сцены. Для каждой даты создаются `sentinel_analysis.tif` с каналами B02/B03/B04/B05/B08/B11/B12/SCL и `cloud_mask.tif`. Выполнение возобновляемое; журнал сохраняется в `outputs/imagery/analysis_manifest.json`.
 
+Посчитать зональное среднее индексов по каждому растровому пятну KAA:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py
+```
+
+Скрипт читает `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, исключает nodata и облачные пиксели по `cloud_mask.tif`, затем сохраняет таблицу `outputs/reports/kaa_zonal_means.csv` и манифест `outputs/reports/kaa_zonal_means.json`.
+
 ## Проверка проекта
 
 ```bash

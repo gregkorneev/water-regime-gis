@@ -491,7 +491,7 @@ class FieldIndexChartDialog(QDialog):
         fitted = self.double_logistic_line(index_name, values)
         if not fitted:
             fitted = self.spline_line(values)
-        if index_name in settings.DOUBLE_LOGISTIC_CHART_FIT["indices"] and settings.DOUBLE_LOGISTIC_CHART_FIT["enforce_unimodal"]:
+        if settings.DOUBLE_LOGISTIC_CHART_FIT["enforce_unimodal"]:
             dates, fitted_values = fitted
             return dates, self.unimodal_curve(fitted_values)
         return fitted
@@ -503,13 +503,17 @@ class FieldIndexChartDialog(QDialog):
         from scipy.optimize import least_squares
 
         config = settings.DOUBLE_LOGISTIC_CHART_FIT
-        if index_name not in config["indices"] or len(values) < config["min_observations"]:
+        if len(values) < config["min_observations"]:
             return None
 
         dates = [date for date, _ in values]
-        y = np.array([value for _, value in values], dtype=float)
-        if np.nanpercentile(y, 90) - np.nanpercentile(y, 10) < 0.05:
+        original_y = np.array([value for _, value in values], dtype=float)
+        y_min = float(np.nanpercentile(original_y, 5))
+        y_max = float(np.nanpercentile(original_y, 95))
+        amplitude = y_max - y_min
+        if amplitude < config["amplitude_min"]:
             return None
+        y = (original_y - y_min) / amplitude
 
         t = np.array([(date - dates[0]).days for date in dates], dtype=float)
         span = max(float(t[-1] - t[0]), 1.0)
@@ -579,7 +583,7 @@ class FieldIndexChartDialog(QDialog):
             return None
         if config["enforce_unimodal"]:
             fitted = self.unimodal_curve(fitted)
-        return dense_dates, fitted
+        return dense_dates, fitted * amplitude + y_min
 
     def unimodal_curve(self, values):
         import numpy as np

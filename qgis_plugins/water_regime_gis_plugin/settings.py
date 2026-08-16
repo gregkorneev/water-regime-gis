@@ -14,11 +14,11 @@ SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indice
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
 DOUBLE_LOGISTIC_CHART_FIT = {
-    "indices": {"NDVI", "NDRE", "SAVI"},
     "min_observations": 6,
     "loss": "soft_l1",
-    "baseline_bounds": (-0.1, 0.5),
-    "upper_bounds": (0.3, 1.0),
+    "amplitude_min": 0.03,
+    "baseline_bounds": (-0.2, 0.6),
+    "upper_bounds": (0.4, 1.2),
     "rate_bounds": (0.01, 0.35),
     "max_nfev": 800,
     "enforce_unimodal": True,

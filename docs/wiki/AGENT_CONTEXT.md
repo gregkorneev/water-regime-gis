@@ -11,7 +11,7 @@
 - `scripts/qgis/download_field_imagery.py` загружает временной ряд RGB Sentinel-2 для каждого поля из `KAA.gpkg` и `SP.gpkg` за 2026-04-01–2026-08-10, с manifest и возобновлением по датам.
 - `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
 - `scripts/qgis/calculate_kaa_zonal_means.py` считает зональное среднее NDVI/NDMI/NDRE/SAVI по каждому готовому растровому пятну KAA, исключая nodata и облака, и пишет `outputs/reports/kaa_zonal_means.csv`.
-- QGIS-плагин имеет инструмент `График по полю`: при наведении на KAA/SP-полигон показывает `field_id`, а двойной щелчок открывает временной график NDVI/NDMI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`; каждый `field_id + index` fit-ится отдельно, предпочтительно одной seasonal double-logistic формой, без искусственного дорисовывания полки.
+- QGIS-плагин имеет инструмент `График по полю`: при наведении на KAA/SP-полигон показывает `field_id`, а двойной щелчок открывает временной график NDVI/NDMI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`; все ряды fit-ятся одной восьмипараметрической unimodal double-logistic формулой с необязательной начальной полкой, без fallback на сплайн, и получают устойчивую метрику `Qrob`.
 - `scripts/analysis/run_satellite_ground_pipeline.py` преобразует long CSV KAA в wide, пишет QA, сезонные сводки, шаблон ground-данных, model dataset и skipped-отчет M1–M4 до появления `data/ground_measurements.csv`.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
 - Кригинг требует реальный точечный слой минимум с тремя объектами и числовым полем.

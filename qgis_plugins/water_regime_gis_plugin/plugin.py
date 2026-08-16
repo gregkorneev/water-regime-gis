@@ -24,6 +24,7 @@ from qgis.core import Qgis, QgsApplication, QgsProject, QgsRasterLayer, QgsTask,
 from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
+from .seasonal_curve import fit_seasonal_curve
 
 
 class WaterRegimeGisPlugin:
@@ -461,13 +462,13 @@ class FieldIndexChartDialog(QDialog):
             means = [value for _, value in values]
             color = axis._get_lines.get_next_color()
             axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
-            smooth_dates, smooth_values = self.smooth_line(index_name, values)
+            fit = fit_seasonal_curve(values, settings.SEASONAL_CHART_FIT)
             axis.plot(
-                smooth_dates,
-                smooth_values,
+                fit.dates,
+                fit.values,
                 color=color,
                 linewidth=1.8,
-                label=index_name,
+                label=f"{index_name} (Qrob={fit.quality:.2f})",
             )
 
         if not by_index:
@@ -488,138 +489,6 @@ class FieldIndexChartDialog(QDialog):
         for date, value in values:
             by_date[date].append(value)
         return [(date, statistics.median(by_date[date])) for date in sorted(by_date)]
-
-    def smooth_line(self, index_name: str, values):
-        fitted = self.double_logistic_line(index_name, values)
-        if not fitted:
-            return self.spline_line(values)
-        return fitted
-        return fitted
-
-    def double_logistic_line(self, index_name: str, values):
-        import datetime as dt
-
-        import numpy as np
-        from scipy.optimize import least_squares
-
-        config = settings.DOUBLE_LOGISTIC_CHART_FIT
-        if len(values) < config["min_observations"]:
-            return None
-
-        dates = [date for date, _ in values]
-        original_y = np.array([value for _, value in values], dtype=float)
-        y_min = float(np.nanpercentile(original_y, 5))
-        y_max = float(np.nanpercentile(original_y, 95))
-        amplitude = y_max - y_min
-        if amplitude < config["amplitude_min"]:
-            return None
-        y = (original_y - y_min) / amplitude
-
-        t = np.array([(date - dates[0]).days for date in dates], dtype=float)
-        span = max(float(t[-1] - t[0]), 1.0)
-        dense_t = np.linspace(float(t[0]), float(t[-1]), max(120, len(values) * 16))
-        start_datetime = dt.datetime.combine(dates[0], dt.time())
-        dense_dates = [start_datetime + dt.timedelta(days=float(day)) for day in dense_t]
-
-        def model(params, x):
-            b, upper, t_g, width, k_g, k_s = params
-            t_s = t_g + width
-            growth = 1.0 / (1.0 + np.exp(-k_g * (x - t_g)))
-            senescence = 1.0 / (1.0 + np.exp(-k_s * (x - t_s)))
-            return b + (upper - b) * (growth - senescence)
-
-        b0 = float(np.nanpercentile(y, 10))
-        upper0 = float(np.nanpercentile(y, 90))
-        midpoint = b0 + 0.5 * (upper0 - b0)
-        peak_pos = int(np.nanargmax(y))
-        growth_candidates = t[: peak_pos + 1][y[: peak_pos + 1] >= midpoint]
-        senescence_candidates = t[peak_pos:][y[peak_pos:] <= midpoint]
-        t_g0 = float(growth_candidates[0]) if len(growth_candidates) else span * 0.35
-        t_s0 = float(t[peak_pos] + span * 0.7) if not len(senescence_candidates) else float(senescence_candidates[0])
-        width0 = max(10.0, t_s0 - t_g0)
-
-        b_bounds = config["baseline_bounds"]
-        upper_bounds = config["upper_bounds"]
-        rate_bounds = config["rate_bounds"]
-        min_width = max(10.0, span * 0.45)
-        lower = [b_bounds[0], upper_bounds[0], 0.0, min_width, rate_bounds[0], rate_bounds[0]]
-        upper = [b_bounds[1], upper_bounds[1], span + 30.0, span + 140.0, rate_bounds[1], rate_bounds[1]]
-        base = [
-            min(max(b0, lower[0]), upper[0]),
-            min(max(upper0, lower[1]), upper[1]),
-            min(max(t_g0, lower[2]), upper[2]),
-            min(max(width0, lower[3]), upper[3]),
-            0.08,
-            0.08,
-        ]
-
-        starts = []
-        for t_g_factor, width_factor in ((0.3, 0.8), (0.35, 1.0), (0.45, 1.2)):
-            guess = list(base)
-            guess[2] = min(max(span * t_g_factor, lower[2]), upper[2])
-            guess[3] = min(max(span * width_factor, lower[3]), upper[3])
-            starts.append(guess)
-        starts.insert(0, base)
-
-        best = None
-        for guess in starts:
-            result = least_squares(
-                lambda params: model(params, t) - y,
-                guess,
-                bounds=(lower, upper),
-                loss=config["loss"],
-                max_nfev=config["max_nfev"],
-            )
-            if result.success and np.all(np.isfinite(result.x)):
-                score = float(np.sum(np.square(model(result.x, t) - y)))
-                if best is None or score < best[0]:
-                    best = (score, result.x)
-
-        if best is None:
-            return None
-        fitted = model(best[1], dense_t)
-        if not np.all(np.isfinite(fitted)):
-            return None
-        if not self.has_seasonal_shape(fitted, config):
-            return None
-        return dense_dates, fitted * amplitude + y_min
-
-    def has_seasonal_shape(self, values, config: dict):
-        import numpy as np
-
-        fitted = np.array(values, dtype=float)
-        peak = int(np.nanargmax(fitted))
-        left = fitted[: peak + 1]
-        right = fitted[peak:]
-        left_drop = float(-np.min(np.diff(left))) if len(left) > 1 else 0.0
-        right_rise = float(np.max(np.diff(right))) if len(right) > 1 else 0.0
-        total_left_drop = float(np.max(np.maximum.accumulate(left) - left)) if len(left) else 0.0
-        total_right_rise = float(np.max(right - np.minimum.accumulate(right))) if len(right) else 0.0
-        return (
-            left_drop <= config["max_pre_peak_drop"]
-            and right_rise <= config["max_post_peak_rise"]
-            and total_left_drop <= config["max_total_pre_peak_drop"]
-            and total_right_rise <= config["max_total_post_peak_rise"]
-        )
-
-    def spline_line(self, values):
-        import matplotlib.dates as mdates
-        import numpy as np
-        from scipy.interpolate import UnivariateSpline
-
-        dates = [date for date, _ in values]
-        means = [value for _, value in values]
-        if len(values) < 4:
-            return dates, means
-
-        x = mdates.date2num(dates)
-        dense_x = np.linspace(float(x[0]), float(x[-1]), max(80, len(values) * 12))
-        dense_dates = mdates.num2date(dense_x)
-        variance = float(np.var(means))
-        smoothing = max(1e-5, len(values) * variance * 0.35)
-        spline = UnivariateSpline(x, means, k=min(3, len(values) - 1), s=smoothing)
-        return dense_dates, spline(dense_x)
-
 
 class CommandTask(QgsTask):
     def __init__(self, label, command, log_callback, finished_callback, after_success=None, timeout=300):

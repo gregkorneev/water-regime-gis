@@ -14,16 +14,23 @@ SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indice
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
 CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE"}
-DOUBLE_LOGISTIC_CHART_FIT = {
-    "min_observations": 6,
+SEASONAL_CHART_FIT = {
     "loss": "soft_l1",
-    "amplitude_min": 0.03,
-    "baseline_bounds": (-0.2, 0.6),
-    "upper_bounds": (0.4, 1.2),
+    "robust_f_scale": 0.12,
+    "amplitude_floor": 0.03,
+    "baseline_bounds": (-0.5, 0.8),
+    "amplitude_bounds": (0.15, 2.5),
+    "maximum_plateau_fraction": 0.45,
+    "plateau_slope_bounds": (0.0, 0.004),
+    "maximum_growth_midpoint_fraction": 0.8,
+    "minimum_width_days": 7.0,
+    "minimum_width_fraction": 0.15,
+    "width_extra_days": 90.0,
     "rate_bounds": (0.01, 0.35),
-    "max_nfev": 800,
-    "max_pre_peak_drop": 0.015,
-    "max_post_peak_rise": 0.015,
-    "max_total_pre_peak_drop": 0.03,
-    "max_total_post_peak_rise": 0.03,
+    "downward_dip_threshold": 0.12,
+    "minimum_dip_weight": 0.2,
+    "metric_residual_cap": 0.35,
+    "plateau_penalty": 0.05,
+    "multi_starts": ((0.0, 0.05), (0.12, 0.07), (0.25, 0.1), (0.4, 0.15)),
+    "max_nfev": 900,
 }

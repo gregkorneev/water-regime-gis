@@ -454,13 +454,17 @@ class FieldIndexChartDialog(QDialog):
             by_index[row["index"]].append((date, float(value)))
 
         for index_name in sorted(by_index):
-            values = sorted(by_index[index_name])
+            values = self.values_by_date(by_index[index_name])
+            dates = [date for date, _ in values]
+            means = [value for _, value in values]
+            color = axis._get_lines.get_next_color()
+            axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
+            smooth_dates, smooth_values = self.smooth_line(values)
             axis.plot(
-                [date for date, _ in values],
-                [value for _, value in values],
-                marker="o",
+                smooth_dates,
+                smooth_values,
+                color=color,
                 linewidth=1.8,
-                markersize=4,
                 label=index_name,
             )
 
@@ -473,6 +477,30 @@ class FieldIndexChartDialog(QDialog):
         axis.grid(True, alpha=0.25)
         if by_index:
             axis.legend(loc="best")
+
+    def values_by_date(self, values):
+        import statistics
+        from collections import defaultdict
+
+        by_date = defaultdict(list)
+        for date, value in values:
+            by_date[date].append(value)
+        return [(date, statistics.median(by_date[date])) for date in sorted(by_date)]
+
+    def smooth_line(self, values):
+        import matplotlib.dates as mdates
+        import numpy as np
+        from scipy.interpolate import PchipInterpolator
+
+        dates = [date for date, _ in values]
+        means = [value for _, value in values]
+        if len(values) < 3:
+            return dates, means
+
+        x = mdates.date2num(dates)
+        dense_x = np.linspace(float(x[0]), float(x[-1]), max(80, len(values) * 12))
+        dense_dates = mdates.num2date(dense_x)
+        return dense_dates, PchipInterpolator(x, means)(dense_x)
 
 
 class CommandTask(QgsTask):

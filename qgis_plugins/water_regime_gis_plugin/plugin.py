@@ -459,7 +459,7 @@ class FieldIndexChartDialog(QDialog):
             means = [value for _, value in values]
             color = axis._get_lines.get_next_color()
             axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
-            smooth_dates, smooth_values = self.smooth_line(values)
+            smooth_dates, smooth_values = self.smooth_line(index_name, values)
             axis.plot(
                 smooth_dates,
                 smooth_values,
@@ -487,7 +487,96 @@ class FieldIndexChartDialog(QDialog):
             by_date[date].append(value)
         return [(date, statistics.median(by_date[date])) for date in sorted(by_date)]
 
-    def smooth_line(self, values):
+    def smooth_line(self, index_name: str, values):
+        fitted = self.double_logistic_line(index_name, values)
+        if fitted:
+            return fitted
+        return self.spline_line(values)
+
+    def double_logistic_line(self, index_name: str, values):
+        import datetime as dt
+
+        import numpy as np
+        from scipy.optimize import least_squares
+
+        config = settings.DOUBLE_LOGISTIC_CHART_FIT
+        if index_name not in config["indices"] or len(values) < config["min_observations"]:
+            return None
+
+        dates = [date for date, _ in values]
+        y = np.array([value for _, value in values], dtype=float)
+        if np.nanpercentile(y, 90) - np.nanpercentile(y, 10) < 0.05:
+            return None
+
+        t = np.array([(date - dates[0]).days for date in dates], dtype=float)
+        span = max(float(t[-1] - t[0]), 1.0)
+        dense_t = np.linspace(float(t[0]), float(t[-1]), max(120, len(values) * 16))
+        start_datetime = dt.datetime.combine(dates[0], dt.time())
+        dense_dates = [start_datetime + dt.timedelta(days=float(day)) for day in dense_t]
+
+        def model(params, x):
+            b, upper, t_g, width, k_g, k_s = params
+            t_s = t_g + width
+            growth = 1.0 / (1.0 + np.exp(-k_g * (x - t_g)))
+            senescence = 1.0 / (1.0 + np.exp(-k_s * (x - t_s)))
+            return b + (upper - b) * (growth - senescence)
+
+        b0 = float(np.nanpercentile(y, 10))
+        upper0 = float(np.nanpercentile(y, 90))
+        midpoint = b0 + 0.5 * (upper0 - b0)
+        peak_pos = int(np.nanargmax(y))
+        growth_candidates = t[: peak_pos + 1][y[: peak_pos + 1] >= midpoint]
+        senescence_candidates = t[peak_pos:][y[peak_pos:] <= midpoint]
+        t_g0 = float(growth_candidates[0]) if len(growth_candidates) else span * 0.35
+        t_s0 = float(t[peak_pos] + span * 0.7) if not len(senescence_candidates) else float(senescence_candidates[0])
+        width0 = max(10.0, t_s0 - t_g0)
+
+        b_bounds = config["baseline_bounds"]
+        upper_bounds = config["upper_bounds"]
+        rate_bounds = config["rate_bounds"]
+        min_tg = min(14.0, span * 0.25)
+        min_width = max(10.0, span * 0.45)
+        lower = [b_bounds[0], upper_bounds[0], min_tg, min_width, rate_bounds[0], rate_bounds[0]]
+        upper = [b_bounds[1], upper_bounds[1], span + 30.0, span + 140.0, rate_bounds[1], rate_bounds[1]]
+        base = [
+            min(max(b0, lower[0]), upper[0]),
+            min(max(upper0, lower[1]), upper[1]),
+            min(max(t_g0, lower[2]), upper[2]),
+            min(max(width0, lower[3]), upper[3]),
+            0.08,
+            0.08,
+        ]
+
+        starts = []
+        for t_g_factor, width_factor in ((0.3, 0.8), (0.35, 1.0), (0.45, 1.2)):
+            guess = list(base)
+            guess[2] = min(max(span * t_g_factor, lower[2]), upper[2])
+            guess[3] = min(max(span * width_factor, lower[3]), upper[3])
+            starts.append(guess)
+        starts.insert(0, base)
+
+        best = None
+        for guess in starts:
+            result = least_squares(
+                lambda params: model(params, t) - y,
+                guess,
+                bounds=(lower, upper),
+                loss=config["loss"],
+                max_nfev=config["max_nfev"],
+            )
+            if result.success and np.all(np.isfinite(result.x)):
+                score = float(np.sum(np.square(model(result.x, t) - y)))
+                if best is None or score < best[0]:
+                    best = (score, result.x)
+
+        if best is None:
+            return None
+        fitted = model(best[1], dense_t)
+        if not np.all(np.isfinite(fitted)):
+            return None
+        return dense_dates, fitted
+
+    def spline_line(self, values):
         import matplotlib.dates as mdates
         import numpy as np
         from scipy.interpolate import UnivariateSpline

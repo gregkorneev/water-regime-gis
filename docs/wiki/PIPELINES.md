@@ -46,7 +46,7 @@ OPTRAM не вычисляется из готовых индексов. Скр�
 
 ## 4.5. Интерактивные графики по полям
 
-Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками, поверх них строится сглаживающая spline-кривая по каждому индексу.
+Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками; для NDVI/NDRE/SAVI поверх них строится robust double logistic curve с начальной базовой полкой, для остальных индексов используется сглаживающая spline-кривая.
 
 ## 5. Изолинии и кригинг
 

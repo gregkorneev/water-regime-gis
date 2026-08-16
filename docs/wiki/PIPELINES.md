@@ -46,7 +46,7 @@ OPTRAM не вычисляется из готовых индексов. Скр�
 
 ## 4.5. Интерактивные графики по полям
 
-Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками; все индексы нормализуются в собственный диапазон и аппроксимируются одной seasonal-формой с возможной почти горизонтальной полкой, ростом до пика и снижением после пика.
+Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками; каждый `field_id + index` fit-ится отдельно. Предпочтительная модель — normalised robust double logistic с возможной полкой, ростом до пика и снижением после пика; если такая форма не проходит проверку, используется обычная сглаженная spline-линия без искусственного дорисовывания полки.
 
 ## 5. Изолинии и кригинг
 

@@ -21,5 +21,8 @@ DOUBLE_LOGISTIC_CHART_FIT = {
     "upper_bounds": (0.4, 1.2),
     "rate_bounds": (0.01, 0.35),
     "max_nfev": 800,
-    "enforce_unimodal": True,
+    "max_pre_peak_drop": 0.015,
+    "max_post_peak_rise": 0.015,
+    "max_total_pre_peak_drop": 0.03,
+    "max_total_post_peak_rise": 0.03,
 }

@@ -490,10 +490,8 @@ class FieldIndexChartDialog(QDialog):
     def smooth_line(self, index_name: str, values):
         fitted = self.double_logistic_line(index_name, values)
         if not fitted:
-            fitted = self.spline_line(values)
-        if settings.DOUBLE_LOGISTIC_CHART_FIT["enforce_unimodal"]:
-            dates, fitted_values = fitted
-            return dates, self.unimodal_curve(fitted_values)
+            return self.spline_line(values)
+        return fitted
         return fitted
 
     def double_logistic_line(self, index_name: str, values):
@@ -541,9 +539,8 @@ class FieldIndexChartDialog(QDialog):
         b_bounds = config["baseline_bounds"]
         upper_bounds = config["upper_bounds"]
         rate_bounds = config["rate_bounds"]
-        min_tg = min(14.0, span * 0.25)
         min_width = max(10.0, span * 0.45)
-        lower = [b_bounds[0], upper_bounds[0], min_tg, min_width, rate_bounds[0], rate_bounds[0]]
+        lower = [b_bounds[0], upper_bounds[0], 0.0, min_width, rate_bounds[0], rate_bounds[0]]
         upper = [b_bounds[1], upper_bounds[1], span + 30.0, span + 140.0, rate_bounds[1], rate_bounds[1]]
         base = [
             min(max(b0, lower[0]), upper[0]),
@@ -581,19 +578,27 @@ class FieldIndexChartDialog(QDialog):
         fitted = model(best[1], dense_t)
         if not np.all(np.isfinite(fitted)):
             return None
-        if config["enforce_unimodal"]:
-            fitted = self.unimodal_curve(fitted)
+        if not self.has_seasonal_shape(fitted, config):
+            return None
         return dense_dates, fitted * amplitude + y_min
 
-    def unimodal_curve(self, values):
+    def has_seasonal_shape(self, values, config: dict):
         import numpy as np
 
         fitted = np.array(values, dtype=float)
         peak = int(np.nanargmax(fitted))
-        fitted[: peak + 1] = np.maximum.accumulate(fitted[: peak + 1])
-        tail = fitted[peak:]
-        fitted[peak:] = np.maximum.accumulate(tail[::-1])[::-1]
-        return fitted
+        left = fitted[: peak + 1]
+        right = fitted[peak:]
+        left_drop = float(-np.min(np.diff(left))) if len(left) > 1 else 0.0
+        right_rise = float(np.max(np.diff(right))) if len(right) > 1 else 0.0
+        total_left_drop = float(np.max(np.maximum.accumulate(left) - left)) if len(left) else 0.0
+        total_right_rise = float(np.max(right - np.minimum.accumulate(right))) if len(right) else 0.0
+        return (
+            left_drop <= config["max_pre_peak_drop"]
+            and right_rise <= config["max_post_peak_rise"]
+            and total_left_drop <= config["max_total_pre_peak_drop"]
+            and total_right_rise <= config["max_total_post_peak_rise"]
+        )
 
     def spline_line(self, values):
         import matplotlib.dates as mdates

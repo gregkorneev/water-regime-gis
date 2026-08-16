@@ -21,4 +21,5 @@ DOUBLE_LOGISTIC_CHART_FIT = {
     "upper_bounds": (0.3, 1.0),
     "rate_bounds": (0.01, 0.35),
     "max_nfev": 800,
+    "enforce_unimodal": True,
 }

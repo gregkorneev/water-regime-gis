@@ -489,9 +489,12 @@ class FieldIndexChartDialog(QDialog):
 
     def smooth_line(self, index_name: str, values):
         fitted = self.double_logistic_line(index_name, values)
-        if fitted:
-            return fitted
-        return self.spline_line(values)
+        if not fitted:
+            fitted = self.spline_line(values)
+        if index_name in settings.DOUBLE_LOGISTIC_CHART_FIT["indices"] and settings.DOUBLE_LOGISTIC_CHART_FIT["enforce_unimodal"]:
+            dates, fitted_values = fitted
+            return dates, self.unimodal_curve(fitted_values)
+        return fitted
 
     def double_logistic_line(self, index_name: str, values):
         import datetime as dt
@@ -574,7 +577,19 @@ class FieldIndexChartDialog(QDialog):
         fitted = model(best[1], dense_t)
         if not np.all(np.isfinite(fitted)):
             return None
+        if config["enforce_unimodal"]:
+            fitted = self.unimodal_curve(fitted)
         return dense_dates, fitted
+
+    def unimodal_curve(self, values):
+        import numpy as np
+
+        fitted = np.array(values, dtype=float)
+        peak = int(np.nanargmax(fitted))
+        fitted[: peak + 1] = np.maximum.accumulate(fitted[: peak + 1])
+        tail = fitted[peak:]
+        fitted[peak:] = np.maximum.accumulate(tail[::-1])[::-1]
+        return fitted
 
     def spline_line(self, values):
         import matplotlib.dates as mdates

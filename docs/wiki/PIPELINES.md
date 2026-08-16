@@ -44,6 +44,10 @@
 
 OPTRAM не вычисляется из готовых индексов. Скрипт проверяет наличие `sentinel_analysis.tif` с B04/B08/B12 и пишет `results/reports/optram_availability.json`; для реального OPTRAM еще нужны параметры/методика wet/dry edge.
 
+## 4.5. Интерактивные графики по полям
+
+Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`.
+
 ## 5. Изолинии и кригинг
 
 Плагин открывает Processing-диалоги Isoliner. Изолинии строятся по активному растру. Кригинг доступен только для реального точечного слоя минимум с тремя объектами и числовым полем.

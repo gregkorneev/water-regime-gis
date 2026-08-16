@@ -7,18 +7,21 @@ import sys
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QCursor
 from qgis.PyQt.QtWidgets import (
     QAction,
+    QDialog,
     QDockWidget,
     QGridLayout,
     QLabel,
     QPushButton,
     QPlainTextEdit,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
 from qgis.core import Qgis, QgsApplication, QgsProject, QgsRasterLayer, QgsTask, QgsVectorLayer
-from qgis.gui import QgsMapToolEmitPoint
+from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
 
@@ -57,6 +60,8 @@ class WaterRegimeDock(QDockWidget):
         super().__init__("Water Regime GIS", iface.mainWindow())
         self.iface = iface
         self.capture_tool = None
+        self.chart_tool = None
+        self.chart_dialogs = []
         self.active_task = None
 
         panel = QWidget()
@@ -73,6 +78,7 @@ class WaterRegimeDock(QDockWidget):
         self.isolines_button = self.add_button(actions, 2, 1, "Построить изолинии", self.open_isolines)
         self.kriging_button = self.add_button(actions, 3, 0, "Кригинг измерений", self.open_kriging)
         self.project_button = self.add_button(actions, 3, 1, "Собрать проект/слои", self.build_project)
+        self.chart_button = self.add_button(actions, 4, 0, "График по полю", self.enable_field_chart_tool)
 
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
@@ -200,6 +206,67 @@ class WaterRegimeDock(QDockWidget):
             "Isoliner не включён в менеджере модулей.",
         )
 
+    def enable_field_chart_tool(self):
+        path = settings.FIELD_ZONAL_MEANS_CSV
+        if not path.exists():
+            self.notify(f"Таблица расчетов не найдена: {path}", Qgis.Warning)
+            return
+        self.load_chart_field_layers()
+        self.chart_tool = FieldChartMapTool(self.iface.mapCanvas(), self)
+        self.iface.mapCanvas().setMapTool(self.chart_tool)
+        self.log("Дважды щёлкните по полю KAA/SP, чтобы открыть график индексов.")
+        self.notify("Дважды щёлкните по полю KAA/SP для графика индексов.")
+
+    def load_chart_field_layers(self):
+        for path, name in (
+            (settings.PROJECT_ROOT / "data/processed/field_boundaries/kaa_fields.geojson", "KAA fields"),
+            (settings.PROJECT_ROOT / "data/processed/field_boundaries/sp_fields.geojson", "SP fields"),
+            (Path("/Users/korneev/Desktop/KAA.gpkg"), "Поля KAA"),
+            (Path("/Users/korneev/Desktop/SP.gpkg"), "Поля SP"),
+        ):
+            self.add_vector_layer(path, name)
+        self.iface.mapCanvas().refresh()
+
+    def open_chart_for_feature(self, feature):
+        field_id = self.field_id_for_feature(feature)
+        if not field_id:
+            self.notify("Не удалось определить field_id для выбранного поля.", Qgis.Warning)
+            return
+        rows = self.rows_for_field(field_id)
+        if not rows:
+            self.notify(f"В таблице расчетов нет данных для {field_id}.", Qgis.Warning)
+            return
+        dialog = FieldIndexChartDialog(self.iface.mainWindow(), field_id, rows)
+        dialog.setAttribute(Qt.WA_DeleteOnClose)
+        dialog.show()
+        self.chart_dialogs.append(dialog)
+        dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
+        self.log(f"Открыт график индексов: {field_id}")
+
+    def rows_for_field(self, field_id: str) -> list[dict]:
+        import csv
+
+        with settings.FIELD_ZONAL_MEANS_CSV.open(newline="", encoding="utf-8") as handle:
+            return [row for row in csv.DictReader(handle) if row.get("field_id") == field_id]
+
+    def field_id_for_feature(self, feature) -> str:
+        fields = feature.fields()
+        attrs = {field.name(): feature[field.name()] for field in fields}
+        for key in ("field_id", "fieldId", "FIELD_ID"):
+            value = attrs.get(key)
+            if value:
+                return str(value)
+
+        dataset = str(attrs.get("dataset_code") or attrs.get("dataset") or "").upper()
+        for key in ("field_code_raw", "field_name_raw", "field_external_key"):
+            value = attrs.get(key)
+            if not value:
+                continue
+            code = str(value).split(":", 1)[-1].replace(".", "_")
+            if dataset:
+                return f"{dataset}_{code}"
+        return ""
+
     def open_processing_dialog(self, algorithm_id: str, parameters: dict, missing_message: str):
         if QgsApplication.processingRegistry().algorithmById(algorithm_id) is None:
             self.notify(missing_message, Qgis.Warning)
@@ -252,6 +319,7 @@ class WaterRegimeDock(QDockWidget):
             self.isolines_button,
             self.kriging_button,
             self.project_button,
+            self.chart_button,
         ):
             button.setEnabled(enabled)
 
@@ -322,6 +390,89 @@ class WaterRegimeDock(QDockWidget):
     def layer_is_loaded(self, path: Path) -> bool:
         target = path.resolve()
         return any(Path(layer.source().split("|")[0]).resolve() == target for layer in QgsProject.instance().mapLayers().values())
+
+
+class FieldChartMapTool(QgsMapToolIdentify):
+    def __init__(self, canvas, dock: WaterRegimeDock):
+        super().__init__(canvas)
+        self.dock = dock
+
+    def canvasDoubleClickEvent(self, event):
+        feature = self.feature_at(event.x(), event.y())
+        if feature:
+            self.dock.open_chart_for_feature(feature)
+        else:
+            self.dock.notify("Под двойным щелчком не найдено поле.", Qgis.Warning)
+
+    def canvasMoveEvent(self, event):
+        feature = self.feature_at(event.x(), event.y())
+        if not feature:
+            QToolTip.hideText()
+            return
+        field_id = self.dock.field_id_for_feature(feature)
+        if field_id:
+            QToolTip.showText(QCursor.pos(), f"{field_id}\nДвойной щелчок: график индексов")
+
+    def feature_at(self, x, y):
+        results = self.identify(x, y, self.TopDownStopAtFirst, self.VectorLayer)
+        for result in results:
+            layer = result.mLayer
+            if isinstance(layer, QgsVectorLayer) and layer.geometryType() == Qgis.GeometryType.Polygon:
+                return result.mFeature
+        return None
+
+
+class FieldIndexChartDialog(QDialog):
+    def __init__(self, parent, field_id: str, rows: list[dict]):
+        super().__init__(parent)
+        self.setWindowTitle(f"Индексы поля {field_id}")
+        self.resize(980, 620)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(field_id))
+
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        from matplotlib.figure import Figure
+
+        figure = Figure(figsize=(9, 5), tight_layout=True)
+        canvas = FigureCanvasQTAgg(figure)
+        layout.addWidget(canvas)
+        axis = figure.add_subplot(111)
+        self.plot_rows(axis, rows)
+        canvas.draw()
+
+    def plot_rows(self, axis, rows: list[dict]):
+        import datetime as dt
+        from collections import defaultdict
+
+        by_index = defaultdict(list)
+        for row in rows:
+            value = row.get("zonal_mean")
+            if value in ("", None):
+                continue
+            date = dt.date.fromisoformat(row["scene_date"])
+            by_index[row["index"]].append((date, float(value)))
+
+        for index_name in sorted(by_index):
+            values = sorted(by_index[index_name])
+            axis.plot(
+                [date for date, _ in values],
+                [value for _, value in values],
+                marker="o",
+                linewidth=1.8,
+                markersize=4,
+                label=index_name,
+            )
+
+        if not by_index:
+            axis.text(0.5, 0.5, "Нет валидных значений zonal_mean", ha="center", va="center", transform=axis.transAxes)
+
+        axis.axhline(0, color="#888888", linewidth=0.8)
+        axis.set_xlabel("Дата сцены")
+        axis.set_ylabel("Зональное среднее")
+        axis.grid(True, alpha=0.25)
+        if by_index:
+            axis.legend(loc="best")
 
 
 class CommandTask(QgsTask):

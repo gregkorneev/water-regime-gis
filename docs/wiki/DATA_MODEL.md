@@ -30,6 +30,7 @@
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
+- `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI/NDWI/MNDWI`;
 - `results/data/model_dataset.csv` — объединение спутниковых и наземных измерений после появления `data/ground_measurements.csv`;
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;

@@ -13,6 +13,7 @@ RESOLVE_BOUNDARY_SCRIPT = PROJECT_ROOT / "scripts/qgis/resolve_field_boundary.py
 SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indices.py"
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
+CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE"}
 DOUBLE_LOGISTIC_CHART_FIT = {
     "min_observations": 6,
     "loss": "soft_l1",

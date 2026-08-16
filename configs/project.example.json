@@ -37,6 +37,6 @@
     "date_range_days": 60,
     "max_cloud_cover": 30,
     "preferred_scene": "least_cloudy",
-    "indices": ["NDVI", "NDMI", "NDWI", "MNDWI", "SAVI", "NDRE"]
+    "indices": ["NDVI", "NDMI", "SAVI", "NDRE"]
   }
 }

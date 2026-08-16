@@ -33,8 +33,6 @@ BANDS = {
 FORMULAS = {
     "NDVI": ("NIR", "Red"),
     "NDMI": ("NIR", "SWIR1"),
-    "NDWI": ("Green", "NIR"),
-    "MNDWI": ("Green", "SWIR1"),
     "NDRE": ("NIR", "RedEdge"),
     "SAVI": ("NIR", "Red"),
 }

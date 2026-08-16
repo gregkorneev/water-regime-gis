@@ -450,6 +450,8 @@ class FieldIndexChartDialog(QDialog):
             value = row.get("zonal_mean")
             if value in ("", None):
                 continue
+            if row["index"] not in settings.CHART_INDICES:
+                continue
             date = dt.date.fromisoformat(row["scene_date"])
             by_index[row["index"]].append((date, float(value)))
 

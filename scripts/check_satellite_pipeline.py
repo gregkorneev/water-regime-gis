@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from water_regime_gis.project import load_config
 
 
-REQUIRED = {"NDVI", "NDMI", "NDWI"}
+REQUIRED = {"NDVI", "NDMI", "NDRE", "SAVI"}
 
 
 def main() -> int:

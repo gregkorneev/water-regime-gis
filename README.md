@@ -115,7 +115,7 @@ python3 scripts/analysis/run_satellite_ground_pipeline.py
 
 По умолчанию входом служит `outputs/reports/kaa_zonal_means.csv`. Результаты пишутся в `results/`:
 
-- `results/data/prepared_satellite_data.csv` — `field_id × scene_date × NDMI/NDRE/SAVI/NDVI/NDWI/MNDWI`;
+- `results/data/prepared_satellite_data.csv` — `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;
 - `results/tables/seasonal_summary.csv` — среднее, медиана, p25 и p75 по датам;
 - `results/reports/satellite_quality_report.md` — проверка дублей, пропусков и диапазонов;
 - `results/data/model_dataset.csv` — таблица для моделей после добавления ground-данных;

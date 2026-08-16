@@ -16,7 +16,7 @@
 2. ищет Sentinel-2 L2A через Microsoft Planetary Computer STAC;
 3. выбирает наименее облачную сцену за последние 60 дней при облачности до 30%;
 4. обрезает Blue, Green, Red, Red Edge, NIR и SWIR1 через GDAL `/vsicurl/`;
-5. рассчитывает NDVI, NDMI, NDWI, MNDWI, SAVI и NDRE;
+5. рассчитывает NDVI, NDMI, SAVI и NDRE;
 6. сохраняет GeoTIFF в `outputs/rasters/`;
 7. записывает статистику индексов в `outputs/reports/latest_metrics.json`.
 
@@ -36,7 +36,7 @@
 
 ## 4.3. Зональные средние KAA
 
-`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Результат сохраняется в `outputs/reports/kaa_zonal_means.csv`, параметры запуска — в `outputs/reports/kaa_zonal_means.json`.
+`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Результат сохраняется в `outputs/reports/kaa_zonal_means.csv`, параметры запуска — в `outputs/reports/kaa_zonal_means.json`.
 
 ## 4.4. Табличный анализ индексов и ground-данных
 
@@ -46,7 +46,7 @@ OPTRAM не вычисляется из готовых индексов. Скр�
 
 ## 4.5. Интерактивные графики по полям
 
-Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDWI/MNDWI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками; каждый `field_id + index` fit-ится отдельно. Предпочтительная модель — normalised robust double logistic с возможной полкой, ростом до пика и снижением после пика; если такая форма не проходит проверку, используется обычная сглаженная spline-линия без искусственного дорисовывания полки.
+Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку строит временной график NDVI/NDMI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`. Исходные наблюдения показываются отдельными точками; каждый `field_id + index` fit-ится отдельно. Предпочтительная модель — normalised robust double logistic с возможной полкой, ростом до пика и снижением после пика; если такая форма не проходит проверку, используется обычная сглаженная spline-линия без искусственного дорисовывания полки.
 
 ## 5. Изолинии и кригинг
 

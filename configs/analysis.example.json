@@ -3,7 +3,7 @@
   "ground_csv": "data/ground_measurements.csv",
   "imagery_root": "outputs/imagery",
   "results_dir": "results",
-  "indices": ["NDMI", "NDRE", "SAVI", "NDVI", "NDWI", "MNDWI"],
+  "indices": ["NDMI", "NDRE", "SAVI", "NDVI"],
   "max_days_difference": 1,
   "temporal_test_month": 8
 }

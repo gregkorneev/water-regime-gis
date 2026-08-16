@@ -34,8 +34,6 @@ BANDS = {
 FORMULAS = {
     "NDVI": ("NIR", "Red", lambda a, b: (a - b) / (a + b)),
     "NDMI": ("NIR", "SWIR1", lambda a, b: (a - b) / (a + b)),
-    "NDWI": ("Green", "NIR", lambda a, b: (a - b) / (a + b)),
-    "MNDWI": ("Green", "SWIR1", lambda a, b: (a - b) / (a + b)),
     "NDRE": ("NIR", "RedEdge", lambda a, b: (a - b) / (a + b)),
     "SAVI": ("NIR", "Red", lambda a, b: 1.5 * (a - b) / (a + b + 0.5)),
 }

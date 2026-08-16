@@ -490,17 +490,20 @@ class FieldIndexChartDialog(QDialog):
     def smooth_line(self, values):
         import matplotlib.dates as mdates
         import numpy as np
-        from scipy.interpolate import PchipInterpolator
+        from scipy.interpolate import UnivariateSpline
 
         dates = [date for date, _ in values]
         means = [value for _, value in values]
-        if len(values) < 3:
+        if len(values) < 4:
             return dates, means
 
         x = mdates.date2num(dates)
         dense_x = np.linspace(float(x[0]), float(x[-1]), max(80, len(values) * 12))
         dense_dates = mdates.num2date(dense_x)
-        return dense_dates, PchipInterpolator(x, means)(dense_x)
+        variance = float(np.var(means))
+        smoothing = max(1e-5, len(values) * variance * 0.35)
+        spline = UnivariateSpline(x, means, k=min(3, len(values) - 1), s=smoothing)
+        return dense_dates, spline(dense_x)
 
 
 class CommandTask(QgsTask):

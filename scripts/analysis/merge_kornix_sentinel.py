@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/sp_all_fields_all_methods_daily.csv"
-DEFAULT_SENTINEL = ROOT / "outputs/reports/field_zonal_means.csv"
+DEFAULT_SENTINEL = ROOT / "outputs/reports/sp_zonal_means.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel_merge.json"
 INDICES = ("NDVI", "NDMI", "NDRE", "SAVI")
@@ -31,7 +31,7 @@ def parse_args() -> argparse.Namespace:
 
 def normalize_field_id(value: str) -> str:
     value = value.strip().upper()
-    match = re.fullmatch(r"SP[:_]([0-9]+)[._]([0-9]+)", value)
+    match = re.fullmatch(r"(?:SP[:_])?([0-9]+)[._]([0-9]+)", value)
     return f"SP:{match.group(1)}.{match.group(2)}" if match else value
 
 
@@ -80,7 +80,7 @@ def merge(kornix_rows: list[dict], sentinel_rows: list[dict], method: str) -> tu
 
 
 def self_test() -> None:
-    assert normalize_field_id("sp_1_11") == "SP:1.11"
+    assert normalize_field_id("sp_1_11") == normalize_field_id("1.11") == "SP:1.11"
     rows, report = merge(
         [{"field_short_name": "SP:1.1", "day": "2026-04-01", "method_code": "m"}],
         [{"field_id": "SP_1_1", "scene_date": "2026-04-01", "index": "NDVI", "zonal_mean": "0.4"}],

@@ -10,7 +10,7 @@
 - Каждый спутниковый расчет создает `outputs/reports/latest_metrics.json` со статистикой индексных растров.
 - `scripts/qgis/download_field_imagery.py` загружает временной ряд RGB Sentinel-2 для каждого поля из `KAA.gpkg` и `SP.gpkg` за 2026-04-01–2026-08-10, с manifest и возобновлением по датам.
 - `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
-- `scripts/qgis/calculate_kaa_zonal_means.py` считает зональное среднее NDVI/NDMI/NDRE/SAVI по каждому готовому растровому пятну KAA, исключая nodata и облака, и пишет `outputs/reports/kaa_zonal_means.csv`.
+- `scripts/qgis/calculate_kaa_zonal_means.py` считает зональное среднее NDVI/NDMI/NDRE/SAVI по каждому готовому растровому пятну KAA/SP, исключая nodata и облака. Для SP сформировано 5 436 строк в `outputs/reports/sp_zonal_means.csv`.
 - QGIS-плагин имеет инструмент `График по полю`: при наведении на KAA/SP-полигон показывает `field_id`, а двойной щелчок открывает временной график NDVI/NDMI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`; все ряды fit-ятся одной восьмипараметрической unimodal double-logistic формулой с необязательной начальной полкой, без fallback на сплайн, и получают устойчивую метрику `Qrob`.
 - `scripts/analysis/run_satellite_ground_pipeline.py` преобразует long CSV KAA в wide, пишет QA, сезонные сводки, шаблон ground-данных, model dataset и skipped-отчет M1–M4 до появления `data/ground_measurements.csv`.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
@@ -22,11 +22,10 @@
 - Поставка КОРНИКС SP за 2026-04-01—2026-08-27 включает 37 полей, 149 дней,
   четыре метода и 22 052 записи. Эталонный каталог —
   `sp_satellite_timeseries_20260401_20260827_v001`; ключ —
-  `field_short_name + method_code + day`.
+  `field_short_name + method_code + day`; `field_short_name` имеет вид `1.1`.
 - `scripts/analysis/merge_kornix_sentinel.py` объединяет КОРНИКС с валидными
-  SP-индексами Sentinel-2 по нормализованному полю и точной дате. В имеющемся
-  `field_zonal_means.csv` сейчас только KAA, поэтому SP-совпадения появятся
-  после запуска зональной статистики для SP.
+  SP-индексами Sentinel-2 по нормализованному полю и точной дате. На 2026-08-28
+  получено 448 совпадений по всем 37 полям для `ivanov_n4l_meteo_soil`.
 
 ## Следующие функции
 

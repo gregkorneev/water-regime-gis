@@ -34,9 +34,16 @@
 
 `scripts/qgis/download_field_analysis.py` читает `scene_id` из готовых `metadata.json` и докачивает B02/B03/B04/B05/B08/B11/B12/SCL без повторного выбора сцен. Каналы приводятся к общей сетке 10 м в CRS поля; SCL ресемплируется ближайшим соседом. Результат сохраняется как восьмиканальный `sentinel_analysis.tif`, а классы SCL 0/1/3/8/9/10/11 формируют `cloud_mask.tif`. В metadata дополнительно записывается облачность внутри поля.
 
-## 4.3. Зональные средние KAA
+## 4.3. Зональные средние KAA/SP
 
-`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Результат сохраняется в `outputs/reports/kaa_zonal_means.csv`, параметры запуска — в `outputs/reports/kaa_zonal_means.json`.
+`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Для SP используется:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py \
+  --dataset sp --report outputs/reports/sp_zonal_means.csv
+```
+
+Параметры запуска сохраняются рядом с отчётом в JSON.
 
 ## 4.4. Табличный анализ индексов и ground-данных
 
@@ -57,8 +64,9 @@ OPTRAM не вычисляется из готовых индексов. Скр�
 Эталонный вход —
 `data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/sp_all_fields_all_methods_daily.csv`.
 Перед объединением проверяются `manifest.json` и уникальность ключа
-`field_short_name + method_code + day`. `field_short_name` имеет вид `SP:1.1`;
-идентификатор спутникового ряда приводится к тому же виду. Спутниковые точки
+`field_short_name + method_code + day`. В КОРНИКС `field_short_name` имеет вид
+`1.1`, а `field_long_name` — `SP:1.1`; идентификатор спутникового ряда
+приводится к виду `SP:1.1`. Спутниковые точки
 `field_id + scene_date` присоединяются к модели по полю и дате (точное совпадение
 или явно заданное ближайшее окно с сохранением разницы дат).
 
@@ -74,12 +82,16 @@ Sentinel-2: для них нужны внешние RS-ET, Sentinel-1 либо �
 python3 scripts/analysis/merge_kornix_sentinel.py
 ```
 
-Скрипт приводит `SP_1_1` и `SP:1.1` к ключу `SP:1.1`, по умолчанию берёт
+Скрипт приводит `1.1`, `SP_1_1` и `SP:1.1` к ключу `SP:1.1`, по умолчанию берёт
 `ivanov_n4l_meteo_soil`, записывает объединённую таблицу в
 `results/data/sp_kornix_sentinel_daily.csv` и QA-отчёт в
 `results/reports/sp_kornix_sentinel_merge.json`. Он сопоставляет только
 валидные значения NDVI/NDMI/NDRE/SAVI и не подменяет отсутствующие даты
 ближайшими сценами.
+
+На 2026-08-28 локальный запуск дал 5 436 SP-строк зональных средних и 448
+точных совпадений по всем 37 полям КОРНИКС для метода
+`ivanov_n4l_meteo_soil`.
 
 ## 5. Изолинии и кригинг
 

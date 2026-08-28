@@ -16,7 +16,8 @@
   эталонная поставка суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
   `sp_all_fields_all_methods_daily.csv`, 37 файлов `by_field/`, словарь
   `series_catalog.csv`, методика и `manifest.json` с SHA-256. Ключ строки:
-  `field_short_name + method_code + day`; доступно четыре метода водного баланса.
+  `field_short_name + method_code + day`; `field_short_name` имеет вид `1.1`,
+  а `field_long_name` — `SP:1.1`; доступно четыре метода водного баланса.
 - `data/interim/kornix_timeseries/sp_satellite_timeseries_probe/` и архив
   `sp_satellite_timeseries_20260401_20260827_v001.tar.gz` — исходная копия поставки;
   они сохраняются для трассируемости, но не являются источником для анализа.
@@ -36,6 +37,8 @@
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
+- `outputs/reports/sp_zonal_means.csv` — зональные средние NDVI/NDMI/NDRE/SAVI
+  по растрам SP; источник для объединения с КОРНИКС;
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;
 - `results/data/model_dataset.csv` — объединение спутниковых и наземных измерений после появления `data/ground_measurements.csv`;

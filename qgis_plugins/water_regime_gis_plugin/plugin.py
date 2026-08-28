@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import QMetaType, Qt
 from qgis.PyQt.QtGui import QCursor
 from qgis.PyQt.QtWidgets import (
     QAction,
@@ -20,7 +20,20 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from qgis.core import Qgis, QgsApplication, QgsProject, QgsRasterLayer, QgsTask, QgsVectorLayer
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsFeature,
+    QgsField,
+    QgsFillSymbol,
+    QgsPalLayerSettings,
+    QgsProject,
+    QgsRasterLayer,
+    QgsTask,
+    QgsTextFormat,
+    QgsVectorLayer,
+    QgsVectorLayerSimpleLabeling,
+)
 from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
@@ -64,6 +77,7 @@ class WaterRegimeDock(QDockWidget):
         self.chart_tool = None
         self.chart_dialogs = []
         self.active_task = None
+        self.kornix_label_cache = {}
 
         panel = QWidget()
         layout = QVBoxLayout(panel)
@@ -225,7 +239,9 @@ class WaterRegimeDock(QDockWidget):
             (Path("/Users/korneev/Desktop/KAA.gpkg"), "Поля KAA"),
             (Path("/Users/korneev/Desktop/SP.gpkg"), "Поля SP"),
         ):
-            self.add_vector_layer(path, name)
+            layer = self.add_vector_layer(path, name)
+            if name == "Поля SP" and layer:
+                self.add_kornix_labels(layer)
         self.iface.mapCanvas().refresh()
 
     def open_chart_for_feature(self, feature):
@@ -262,6 +278,81 @@ class WaterRegimeDock(QDockWidget):
             return []
         with path.open(newline="", encoding="utf-8-sig") as handle:
             return [row for row in csv.DictReader(handle) if row.get("method_code") == settings.KORNIX_METHOD]
+
+    def kornix_label_for_field(self, field_id: str) -> str:
+        """Return a compact, static KORNIX summary for a field polygon label."""
+        if field_id in self.kornix_label_cache:
+            return self.kornix_label_cache[field_id]
+
+        rows = self.kornix_rows_for_field(field_id)
+        if not rows:
+            label = f"{field_id}\nКОРНИКС: нет данных"
+        else:
+            latest = max(rows, key=lambda row: row.get("day", ""))
+            crop = latest.get("crop_name") or "Культура не указана"
+            sowing = self.format_kornix_date(latest.get("crop_sowing_date"))
+            day = self.format_kornix_date(latest.get("day"))
+            label = (
+                f"{field_id}\n{crop}\nПосев: {sowing}\n"
+                f"Погода {day}: Tср {self.kornix_number(latest.get('air_temperature_mean_c'))} °C, "
+                f"осадки {self.kornix_number(latest.get('weather_precipitation_mm'))} мм, "
+                f"ET₀ {self.kornix_number(latest.get('eto_daily_mm'))} мм"
+            )
+        self.kornix_label_cache[field_id] = label
+        return label
+
+    @staticmethod
+    def format_kornix_date(value) -> str:
+        if not value:
+            return "нет данных"
+        parts = str(value).split("-")
+        return ".".join(reversed(parts)) if len(parts) == 3 else str(value)
+
+    @staticmethod
+    def kornix_number(value) -> str:
+        try:
+            return f"{float(value):.1f}"
+        except (TypeError, ValueError):
+            return "нет данных"
+
+    def add_kornix_labels(self, source_layer: QgsVectorLayer):
+        """Add a transparent companion layer so the user source GeoPackage stays unchanged."""
+        layer_name = "КОРНИКС: подписи полей SP"
+        if QgsProject.instance().mapLayersByName(layer_name):
+            return
+
+        crs = source_layer.crs().authid()
+        labels = QgsVectorLayer(f"Polygon?crs={crs}", layer_name, "memory")
+        provider = labels.dataProvider()
+        provider.addAttributes([
+            QgsField("field_id", QMetaType.Type.QString),
+            QgsField("kornix_label", QMetaType.Type.QString),
+        ])
+        labels.updateFields()
+
+        features = []
+        for source_feature in source_layer.getFeatures():
+            feature = QgsFeature(labels.fields())
+            feature.setGeometry(source_feature.geometry())
+            field_id = self.field_id_for_feature(source_feature)
+            feature.setAttributes([field_id, self.kornix_label_for_field(field_id)])
+            features.append(feature)
+        provider.addFeatures(features)
+
+        labels.renderer().setSymbol(
+            QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": "0,0,0,0"})
+        )
+        label_settings = QgsPalLayerSettings()
+        label_settings.fieldName = "kornix_label"
+        label_settings.enabled = True
+        label_settings.displayAll = True
+        text_format = QgsTextFormat()
+        text_format.setSize(7)
+        label_settings.setFormat(text_format)
+        labels.setLabeling(QgsVectorLayerSimpleLabeling(label_settings))
+        labels.setLabelsEnabled(True)
+        QgsProject.instance().addMapLayer(labels)
+        self.log(f"Добавлены подписи КОРНИКС для {len(features)} полей SP.")
 
     def field_id_for_feature(self, feature) -> str:
         fields = feature.fields()
@@ -381,15 +472,24 @@ class WaterRegimeDock(QDockWidget):
     def add_vector_layer(self, path: Path, name: str):
         if not path.exists():
             self.log(f"Layer missing: {path}")
-            return
+            return None
         if self.layer_is_loaded(path):
-            return
+            target = path.resolve()
+            return next(
+                (
+                    layer for layer in QgsProject.instance().mapLayers().values()
+                    if Path(layer.source().split("|")[0]).resolve() == target
+                ),
+                None,
+            )
         layer = QgsVectorLayer(str(path), name, "ogr")
         if layer.isValid():
             QgsProject.instance().addMapLayer(layer)
             self.log(f"Loaded layer: {path}")
+            return layer
         else:
             self.log(f"Invalid vector layer: {path}")
+            return None
 
     def add_raster_layer(self, path: Path, name: str):
         if self.layer_is_loaded(path):

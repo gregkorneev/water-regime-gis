@@ -12,6 +12,14 @@
 
 - `data/interim/satellite/latest_scene.json` — metadata выбранной Sentinel-2 сцены;
 - `data/interim/satellite/<scene_id>/*.tif` — обрезанные каналы;
+- `data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/` —
+  эталонная поставка суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
+  `sp_all_fields_all_methods_daily.csv`, 37 файлов `by_field/`, словарь
+  `series_catalog.csv`, методика и `manifest.json` с SHA-256. Ключ строки:
+  `field_short_name + method_code + day`; доступно четыре метода водного баланса.
+- `data/interim/kornix_timeseries/sp_satellite_timeseries_probe/` и архив
+  `sp_satellite_timeseries_20260401_20260827_v001.tar.gz` — исходная копия поставки;
+  они сохраняются для трассируемости, но не являются источником для анализа.
 - `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и минимальные прямоугольники.
 
 ## Результаты
@@ -37,7 +45,9 @@
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
 
-GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные входы и результаты исключены из git, кроме `.gitkeep`.
+GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные
+входы и результаты исключены из git, кроме `.gitkeep` и явно согласованной поставки
+КОРНИКС в `data/interim/kornix_timeseries/`.
 
 ## Будущие измерения
 

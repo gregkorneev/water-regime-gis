@@ -13,7 +13,16 @@ RESOLVE_BOUNDARY_SCRIPT = PROJECT_ROOT / "scripts/qgis/resolve_field_boundary.py
 SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indices.py"
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
+SP_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sp_zonal_means.csv"
+KORNIX_BY_FIELD_DIR = PROJECT_ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/by_field"
+KORNIX_METHOD = "ivanov_n4l_meteo_soil"
 CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE"}
+KORNIX_CHART_SERIES = {
+    "Покрытие": "canopy_cover_fraction_derived",
+    "Ks": "water_stress_coefficient_ks",
+    "Влага 0–10 см": "soil_surface_0_10_theta",
+    "ET/PET": "actual_to_potential_et_ratio",
+}
 SEASONAL_CHART_FIT = {
     "loss": "soft_l1",
     "robust_f_scale": 0.12,

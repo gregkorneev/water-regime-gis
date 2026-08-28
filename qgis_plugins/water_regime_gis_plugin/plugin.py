@@ -234,21 +234,34 @@ class WaterRegimeDock(QDockWidget):
             self.notify("Не удалось определить field_id для выбранного поля.", Qgis.Warning)
             return
         rows = self.rows_for_field(field_id)
-        if not rows:
-            self.notify(f"В таблице расчетов нет данных для {field_id}.", Qgis.Warning)
+        kornix_rows = self.kornix_rows_for_field(field_id)
+        if not rows and not kornix_rows:
+            self.notify(f"Нет спутниковых или модельных рядов для {field_id}.", Qgis.Warning)
             return
-        dialog = FieldIndexChartDialog(self.iface.mainWindow(), field_id, rows)
+        dialog = FieldIndexChartDialog(self.iface.mainWindow(), field_id, rows, kornix_rows)
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
         self.chart_dialogs.append(dialog)
         dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
-        self.log(f"Открыт график индексов: {field_id}")
+        self.log(f"Открыт график Sentinel-2/КОРНИКС: {field_id}")
 
     def rows_for_field(self, field_id: str) -> list[dict]:
         import csv
 
-        with settings.FIELD_ZONAL_MEANS_CSV.open(newline="", encoding="utf-8") as handle:
+        path = settings.SP_ZONAL_MEANS_CSV if field_id.startswith("SP_") else settings.FIELD_ZONAL_MEANS_CSV
+        if not path.exists():
+            return []
+        with path.open(newline="", encoding="utf-8") as handle:
             return [row for row in csv.DictReader(handle) if row.get("field_id") == field_id]
+
+    def kornix_rows_for_field(self, field_id: str) -> list[dict]:
+        import csv
+
+        path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily.csv"
+        if not path.exists():
+            return []
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            return [row for row in csv.DictReader(handle) if row.get("method_code") == settings.KORNIX_METHOD]
 
     def field_id_for_feature(self, feature) -> str:
         fields = feature.fields()
@@ -424,10 +437,10 @@ class FieldChartMapTool(QgsMapToolIdentify):
 
 
 class FieldIndexChartDialog(QDialog):
-    def __init__(self, parent, field_id: str, rows: list[dict]):
+    def __init__(self, parent, field_id: str, rows: list[dict], kornix_rows: list[dict]):
         super().__init__(parent)
-        self.setWindowTitle(f"Индексы поля {field_id}")
-        self.resize(980, 620)
+        self.setWindowTitle(f"Sentinel-2 и КОРНИКС: {field_id}")
+        self.resize(980, 760)
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(field_id))
@@ -435,11 +448,13 @@ class FieldIndexChartDialog(QDialog):
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
 
-        figure = Figure(figsize=(9, 5), tight_layout=True)
+        figure = Figure(figsize=(9, 7), tight_layout=True)
         canvas = FigureCanvasQTAgg(figure)
         layout.addWidget(canvas)
-        axis = figure.add_subplot(111)
-        self.plot_rows(axis, rows)
+        satellite_axis = figure.add_subplot(211)
+        kornix_axis = figure.add_subplot(212, sharex=satellite_axis)
+        self.plot_rows(satellite_axis, rows)
+        self.plot_kornix_rows(kornix_axis, kornix_rows)
         canvas.draw()
 
     def plot_rows(self, axis, rows: list[dict]):
@@ -475,10 +490,33 @@ class FieldIndexChartDialog(QDialog):
             axis.text(0.5, 0.5, "Нет валидных значений zonal_mean", ha="center", va="center", transform=axis.transAxes)
 
         axis.axhline(0, color="#888888", linewidth=0.8)
-        axis.set_xlabel("Дата сцены")
-        axis.set_ylabel("Зональное среднее")
+        axis.set_ylabel("Sentinel-2 индекс")
         axis.grid(True, alpha=0.25)
         if by_index:
+            axis.legend(loc="best")
+
+    def plot_kornix_rows(self, axis, rows: list[dict]):
+        import datetime as dt
+
+        plotted = False
+        for label, column in settings.KORNIX_CHART_SERIES.items():
+            values = []
+            for row in rows:
+                value = row.get(column)
+                if value in ("", None):
+                    continue
+                values.append((dt.date.fromisoformat(row["day"]), float(value)))
+            if values:
+                dates, numbers = zip(*values)
+                axis.plot(dates, numbers, linewidth=1.5, label=label)
+                plotted = True
+
+        if not plotted:
+            axis.text(0.5, 0.5, "Нет рядов КОРНИКС выбранного метода", ha="center", va="center", transform=axis.transAxes)
+        axis.set_xlabel("Дата")
+        axis.set_ylabel("КОРНИКС: модельное значение")
+        axis.grid(True, alpha=0.25)
+        if plotted:
             axis.legend(loc="best")
 
     def values_by_date(self, values):

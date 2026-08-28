@@ -52,6 +52,10 @@
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
 
+QGIS-график SP дополнительно читает отдельный CSV КОРНИКС из
+`data/interim/kornix_timeseries/.../by_field/SP_<группа>_<поле>_daily.csv`;
+для визуализации используются записи `ivanov_n4l_meteo_soil`.
+
 GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные
 входы и результаты исключены из git, кроме `.gitkeep` и явно согласованной поставки
 КОРНИКС в `data/interim/kornix_timeseries/`.

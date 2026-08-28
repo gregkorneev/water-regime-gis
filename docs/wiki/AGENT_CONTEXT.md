@@ -12,6 +12,8 @@
 - `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
 - `scripts/qgis/calculate_kaa_zonal_means.py` считает зональное среднее NDVI/NDMI/NDRE/SAVI по каждому готовому растровому пятну KAA/SP, исключая nodata и облака. Для SP сформировано 5 436 строк в `outputs/reports/sp_zonal_means.csv`.
 - QGIS-плагин имеет инструмент `График по полю`: при наведении на KAA/SP-полигон показывает `field_id`, а двойной щелчок открывает временной график NDVI/NDMI/NDRE/SAVI из `outputs/reports/field_zonal_means.csv`; все ряды fit-ятся одной восьмипараметрической unimodal double-logistic формулой с необязательной начальной полкой, без fallback на сплайн, и получают устойчивую метрику `Qrob`.
+- Для SP тот же QGIS-диалог показывает вторым графиком ежедневные модельные
+  ряды КОРНИКС выбранного метода: покрытие, Ks, влагу 0–10 см и ET/PET.
 - `scripts/analysis/run_satellite_ground_pipeline.py` преобразует long CSV KAA в wide, пишет QA, сезонные сводки, шаблон ground-данных, model dataset и skipped-отчет M1–M4 до появления `data/ground_measurements.csv`.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
 - Кригинг требует реальный точечный слой минимум с тремя объектами и числовым полем.

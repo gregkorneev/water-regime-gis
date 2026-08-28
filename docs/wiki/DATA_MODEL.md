@@ -39,6 +39,10 @@
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;
 - `results/data/model_dataset.csv` — объединение спутниковых и наземных измерений после появления `data/ground_measurements.csv`;
+- `results/data/sp_kornix_sentinel_daily.csv` — точное объединение суточных
+  рядов КОРНИКС SP выбранного метода с валидными индексами Sentinel-2;
+- `results/reports/sp_kornix_sentinel_merge.json` — число совпадений и поля,
+  отсутствующие у одной из сторон объединения;
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;
 - `results/reports/satellite_quality_report.md` — отчет о дублях, пропусках, датах и диапазонах индексов;
 - `outputs/maps/water_regime_gis.qgs`.

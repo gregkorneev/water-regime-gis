@@ -39,7 +39,7 @@ from qgis.core import (
 from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
-from .radar_series import rolling_median
+from .radar_series import relative_moisture_proxy, rolling_median
 from .seasonal_curve import fit_seasonal_curve
 
 
@@ -658,30 +658,27 @@ class FieldIndexChartDialog(QDialog):
 
     def plot_radar_rows(self, axis, rows: list[dict]):
         import datetime as dt
-        from collections import defaultdict
 
-        by_polarization = defaultdict(list)
+        vv_values = []
         for row in rows:
             value = row.get("zonal_mean_db")
             polarization = row.get("polarization", "").upper()
-            if value in ("", None) or polarization not in settings.RADAR_CHART_SERIES:
+            if value in ("", None) or polarization != "VV":
                 continue
-            by_polarization[polarization].append((dt.date.fromisoformat(row["scene_date"]), float(value)))
+            vv_values.append((dt.date.fromisoformat(row["scene_date"]), float(value)))
 
-        for polarization in sorted(by_polarization):
-            values = self.values_by_date(by_polarization[polarization])
+        values = self.values_by_date(vv_values)
+        if values:
             dates = [date for date, _ in values]
-            means = [value for _, value in values]
-            color = axis._get_lines.get_next_color()
-            axis.scatter(dates, means, s=18, color=color, alpha=0.7, zorder=3)
-            axis.plot(dates, rolling_median(means), color=color, linewidth=1.6, label=polarization)
-
-        if not by_polarization:
+            moisture = relative_moisture_proxy([value for _, value in values])
+            axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
+            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Относительная влажность (VV)")
+        else:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")
-        axis.set_ylabel("Sentinel-1, dB")
+        axis.set_ylabel("Влажность Sentinel-1, 0–1")
         axis.grid(True, alpha=0.25)
-        if by_polarization:
+        if values:
             axis.legend(loc="best")
 
     def values_by_date(self, values):

@@ -25,11 +25,11 @@ def rolling_median(values, window: int = 5):
 
 
 def relative_moisture_proxy(vv_db_values):
-    """Normalize a field's seasonal VV signal into a relative 0–1 moisture proxy."""
+    """Normalize a field's seasonal VV signal into the 0.10–0.62 moisture proxy."""
     values = [float(value) for value in vv_db_values]
     if len(values) < 2:
         return []
     low, high = min(values), max(values)
     if math.isclose(low, high):
-        return [0.5] * len(values)
-    return [(value - low) / (high - low) for value in values]
+        return [0.36] * len(values)
+    return [0.10 + 0.52 * (value - low) / (high - low) for value in values]

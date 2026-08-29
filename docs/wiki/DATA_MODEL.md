@@ -12,15 +12,12 @@
 
 - `data/interim/satellite/latest_scene.json` — metadata выбранной Sentinel-2 сцены;
 - `data/interim/satellite/<scene_id>/*.tif` — обрезанные каналы;
-- `data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/` —
-  эталонная поставка суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
+- `data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/` —
+  эталонная поставка v006 суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
   `sp_all_fields_all_methods_daily.csv`, 37 файлов `by_field/`, словарь
   `series_catalog.csv`, методика и `manifest.json` с SHA-256. Ключ строки:
   `field_short_name + method_code + day`; `field_short_name` имеет вид `1.1`,
   а `field_long_name` — `SP:1.1`; доступно четыре метода водного баланса.
-- `data/interim/kornix_timeseries/sp_satellite_timeseries_probe/` и архив
-  `sp_satellite_timeseries_20260401_20260827_v001.tar.gz` — исходная копия поставки;
-  они сохраняются для трассируемости, но не являются источником для анализа.
 - `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и минимальные прямоугольники.
 
 ## Результаты
@@ -70,15 +67,16 @@
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
 
-QGIS-график SP дополнительно читает отдельный CSV КОРНИКС из
-`data/interim/kornix_timeseries/.../by_field/SP_<группа>_<поле>_daily.csv`;
+QGIS-график SP дополнительно читает отдельный CSV КОРНИКС v006 из
+`data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field/SP_<группа>_<поле>_daily.csv`;
 для визуализации используются записи `ivanov_n4l_meteo_soil`.
 
-При включении инструмента `График по полю` плагин добавляет временный, прозрачный
+При включении инструмента `График по полю` плагин добавляет временный служебный
 слой `КОРНИКС: подписи полей SP`. Он не меняет `SP.gpkg`; в нем для каждого
 полигона хранится `field_id` и текстовая подпись. Подпись показывается только
 для полей, присутствующих в КОРНИКС, и содержит культуру, дату посева и погоду
-последнего дня ряда (среднюю температуру, осадки и ET₀).
+последнего дня ряда (среднюю температуру, осадки и ET₀); эти поля также
+выделяются цветом.
 
 GeoJSON используется для небольших геометрий, GeoTIFF — для растров. Все локальные
 входы и результаты исключены из git, кроме `.gitkeep` и явно согласованной поставки

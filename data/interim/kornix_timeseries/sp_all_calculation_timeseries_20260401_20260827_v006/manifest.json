@@ -1,0 +1,187 @@
+{
+  "schema_version": "sp_satellite_timeseries.v1",
+  "generated_at": "2026-08-29T20:01:16.752680+00:00",
+  "organization": "SP",
+  "season_year": 2026,
+  "date_from": "2026-04-01",
+  "date_to": "2026-08-27",
+  "timezone": "Europe/Moscow",
+  "published_calculation_run_id": "cwr_bootstrap_6a905ada15674b3c8341b22044d37d9a",
+  "field_count": 37,
+  "method_count": 4,
+  "methods": [
+    "ivanov_n4l_meteo_soil",
+    "ivanov_n4l_soil",
+    "simple_eto_n4l_meteo_soil",
+    "simple_eto_n4l_soil"
+  ],
+  "day_count": 149,
+  "row_count": 22052,
+  "expected_row_count": 22052,
+  "column_count": 251,
+  "field_files": 37,
+  "duplicate_key_count": 0,
+  "quality_gate": "PASS",
+  "files": {
+    "SP_KORNIX_SENTINEL2_SERIES_GUIDE.md": {
+      "bytes": 66808,
+      "sha256": "ba50182ccc393eaffaa5681bdfca5e1eb3a1e275b0208a0a9d0a065f195e35b9"
+    },
+    "by_field/SP_1_11_daily.csv": {
+      "bytes": 2067520,
+      "sha256": "ef82096e11e0883e3bd628b26cf879f5d556bb05b979a0c69430fff23c278722"
+    },
+    "by_field/SP_1_1_daily.csv": {
+      "bytes": 2067059,
+      "sha256": "6c37ce144ef2c4568a1a54bdf278446275d5a82c7839bf77845ecde3a70e3acc"
+    },
+    "by_field/SP_1_3_daily.csv": {
+      "bytes": 2068218,
+      "sha256": "287f5a20160aab56af5905b0c39d6fcfeb6dc84e35a1d3267faf7a73433abacf"
+    },
+    "by_field/SP_1_5_daily.csv": {
+      "bytes": 2070190,
+      "sha256": "ce1831d1397eff00223c1cff9785338d65f53a5711b19172f0487669b4d0159d"
+    },
+    "by_field/SP_1_6_daily.csv": {
+      "bytes": 2065864,
+      "sha256": "18ee26eff58623e364eaa16f4f132aabcecf747b2671752587634d2debe4b787"
+    },
+    "by_field/SP_2_1_daily.csv": {
+      "bytes": 2066825,
+      "sha256": "1ae457f56e5e3e16c945ea75ef3b5565c3448de2a0f5e8a5d6a9d3a6f01ec992"
+    },
+    "by_field/SP_2_5_daily.csv": {
+      "bytes": 2065743,
+      "sha256": "0337f66c6c44d431f079d75a02367d1377b9708dac19cbc2561e0520002e1469"
+    },
+    "by_field/SP_2_6_daily.csv": {
+      "bytes": 2063810,
+      "sha256": "e0698179cdd28f57059c55eaf34f531c50f4a336e800e5d8a93b53b816991a67"
+    },
+    "by_field/SP_2_7_daily.csv": {
+      "bytes": 2065673,
+      "sha256": "543dbc67642758f146043a44f6fd2723b9b4622dc1cf55e060ae34812dad523a"
+    },
+    "by_field/SP_3_1_daily.csv": {
+      "bytes": 2063052,
+      "sha256": "910c5e979b7dc8b3fa10a84fcaadc23359ed8c945e494143488a05652da909f9"
+    },
+    "by_field/SP_3_4_daily.csv": {
+      "bytes": 2067218,
+      "sha256": "2900865f0a4bc5d39ff266a6f4647290a309554cf0d6c029b0e2f2a2107488ca"
+    },
+    "by_field/SP_3_5_daily.csv": {
+      "bytes": 2064490,
+      "sha256": "fa51c7770dcf4929bc6e31468a45d3cd40026597ad2d0138cf99126de5d5a52f"
+    },
+    "by_field/SP_4_11_daily.csv": {
+      "bytes": 2070722,
+      "sha256": "bfa9c3070c35dc882bb9f46159d12e4c2cd38edf670040387b14823f7b367aae"
+    },
+    "by_field/SP_4_15_daily.csv": {
+      "bytes": 2061751,
+      "sha256": "ef242059f65b4f40cbf8707ce6e6f5312cadabf2ebab14bea64679b7da73b086"
+    },
+    "by_field/SP_4_16_daily.csv": {
+      "bytes": 2066541,
+      "sha256": "3bc32ef00b3c0ceee6c7b42469bf523d75082a6448cf45fd080fc547ea0ce91b"
+    },
+    "by_field/SP_4_1_daily.csv": {
+      "bytes": 2069543,
+      "sha256": "96665bab837b5b44451922b59f5e541d5b285d14d2a5a623e38684c2586e1e02"
+    },
+    "by_field/SP_4_3_daily.csv": {
+      "bytes": 2078032,
+      "sha256": "762aceeabf4359e715f72c109e53c14353a38f9595f2dc924589ce7c718b12ad"
+    },
+    "by_field/SP_4_6_daily.csv": {
+      "bytes": 2080707,
+      "sha256": "f38d23c6270117e2dee6362d4ca8d9277cef1d7785361b236711523207ef9a74"
+    },
+    "by_field/SP_4_8_daily.csv": {
+      "bytes": 2064690,
+      "sha256": "dfed64984c7322f73793e8df0abbb870a33da8f5a585251ee3d042b7f4a4ecfd"
+    },
+    "by_field/SP_6_1_daily.csv": {
+      "bytes": 2069188,
+      "sha256": "5b21c6e2d8b4771a6f0b12aa52ef292be106f4349f9f2775beb97852c9945578"
+    },
+    "by_field/SP_6_2_daily.csv": {
+      "bytes": 2069266,
+      "sha256": "a490ee54f17a28daad55391189ce4bc21e44cc742e1092def071b1ee39d07f39"
+    },
+    "by_field/SP_6_3_daily.csv": {
+      "bytes": 2069933,
+      "sha256": "66c18c936cd8cb57e3e368800170cce960b7adc16620644ef4baa71a73445573"
+    },
+    "by_field/SP_6_4_daily.csv": {
+      "bytes": 2064758,
+      "sha256": "0efe1164d0c51dd2fa1c87d16931268ea114840afb1504d9ca7344d9e532688c"
+    },
+    "by_field/SP_6_5_daily.csv": {
+      "bytes": 2059275,
+      "sha256": "cc3fee1cae3a385c1f7584170bf45d64ab6fd2a195e809ad5e482e0ab6af9f9d"
+    },
+    "by_field/SP_6_6_daily.csv": {
+      "bytes": 2065512,
+      "sha256": "87af39c957f459561cc0cba82df464213cce0a953a7890e69872ec996d8cbbdc"
+    },
+    "by_field/SP_6_7_daily.csv": {
+      "bytes": 2062260,
+      "sha256": "8c369a7251775dfb6c20311ceb7982a21cf5264399c22c09cdefdb19fa1bd232"
+    },
+    "by_field/SP_7_10_daily.csv": {
+      "bytes": 2072964,
+      "sha256": "93cd554142081dc60803ac3f67ffd4fe1fd99fbe72f549d3aeb7d919b1e7c10c"
+    },
+    "by_field/SP_7_11_daily.csv": {
+      "bytes": 2067431,
+      "sha256": "b570639a5d56f5751f945a2a0e23988d4ebcbd19e4df6b0471401fa8f2e7d5fc"
+    },
+    "by_field/SP_7_12_daily.csv": {
+      "bytes": 2063373,
+      "sha256": "108273ae9fa7127cb8f3425cd83ea192f26133f1e0380743045b55bb7f88d0d3"
+    },
+    "by_field/SP_7_13_daily.csv": {
+      "bytes": 2074983,
+      "sha256": "72a9fd466f2d45ffd8d8543660e7df06dcb3ef88c6385f0a1a16866fac82d39e"
+    },
+    "by_field/SP_7_14_daily.csv": {
+      "bytes": 2069965,
+      "sha256": "06575aa036df7858726cd3c9df1925a01ccfded7b8a29e2d6a5703a56117015c"
+    },
+    "by_field/SP_7_17_daily.csv": {
+      "bytes": 2072309,
+      "sha256": "ea68164e420e398b4ed98dd9e12e54fc732f06abdee32a9cb59996ca466689eb"
+    },
+    "by_field/SP_7_18_daily.csv": {
+      "bytes": 2054307,
+      "sha256": "09994126d970a4f5f1aafdf23125c5a66018ad6ef634875441b4cf2dc813266e"
+    },
+    "by_field/SP_7_3_daily.csv": {
+      "bytes": 2050640,
+      "sha256": "e4064950035e804aaa888d70a274379ec1e97cd4a663eba6cab7e2c1c786d06e"
+    },
+    "by_field/SP_7_5_daily.csv": {
+      "bytes": 2074337,
+      "sha256": "44e805d85c8cbadfccd1ee7b6fcb50edabc17e1301fda80cfb076c311d357f69"
+    },
+    "by_field/SP_7_8_daily.csv": {
+      "bytes": 2074045,
+      "sha256": "15561447fbe9e9ea63aa8c7ace3e3c307fe42778eaa661c02a3f69fa7c6248b4"
+    },
+    "by_field/SP_7_9_daily.csv": {
+      "bytes": 2057280,
+      "sha256": "6a3cac9bb70fbd6a4d79d5fd62b08a64475980fbf011498570e3267315431cee"
+    },
+    "series_catalog.csv": {
+      "bytes": 58205,
+      "sha256": "e0e6c45a687b1010699c99359ddebbb27295d984003492b4567accbe01f9f156"
+    },
+    "sp_all_fields_all_methods_daily.csv": {
+      "bytes": 76208286,
+      "sha256": "5371651b07f89fecf7ff434ed30c1b178276c712e35886adef9a8e2487871add"
+    }
+  }
+}

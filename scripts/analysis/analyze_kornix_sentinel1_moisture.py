@@ -15,7 +15,7 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/sp_all_fields_all_methods_daily.csv"
+DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily.csv"
 DEFAULT_RADAR = ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel1_moisture.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel1_moisture.json"

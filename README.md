@@ -97,6 +97,14 @@ python3 scripts/install_nspd_plugin.py
 
 Скрипт использует `scene_id` из существующих `metadata.json`, поэтому повторно не ищет и не меняет сцены. Для каждой даты создаются `sentinel_analysis.tif` с каналами B02/B03/B04/B05/B08/B11/B12/SCL и `cloud_mask.tif`. Выполнение возобновляемое; журнал сохраняется в `outputs/imagery/analysis_manifest.json`.
 
+Рассчитать Sentinel-2 FCover для уже сохранённых сцен:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_sentinel2_fcover.py --dataset sp
+```
+
+Скрипт докачивает недостающие B06/B07/B8A и геометрию наблюдения той же сцены, применяет SNAP-совместимую нейросетевую модель FCover и сохраняет `sentinel_fcover.tif` рядом с аналитическим растром.
+
 Скачать Sentinel-1 RTC с поляризациями VV/VH в отдельный каталог:
 
 ```bash
@@ -118,7 +126,7 @@ python3 scripts/install_nspd_plugin.py
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py
 ```
 
-Скрипт читает `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, исключает nodata и облачные пиксели по `cloud_mask.tif`, затем сохраняет таблицу `outputs/reports/kaa_zonal_means.csv` и манифест `outputs/reports/kaa_zonal_means.json`.
+Скрипт читает `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, исключает nodata и облачные пиксели по `cloud_mask.tif`, затем сохраняет таблицу `outputs/reports/kaa_zonal_means.csv` и манифест `outputs/reports/kaa_zonal_means.json`. Если рядом есть `sentinel_fcover.tif`, в таблицу также попадает `FCOVER`.
 
 ## Анализ спутниковых индексов и наземных измерений
 

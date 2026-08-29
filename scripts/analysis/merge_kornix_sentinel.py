@@ -15,7 +15,7 @@ DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_
 DEFAULT_SENTINEL = ROOT / "outputs/reports/sp_zonal_means.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel_merge.json"
-INDICES = ("NDVI", "NDMI", "NDRE", "SAVI")
+INDICES = ("NDVI", "NDMI", "NDRE", "SAVI", "FCOVER")
 
 
 def parse_args() -> argparse.Namespace:

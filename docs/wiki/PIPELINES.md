@@ -59,11 +59,19 @@ VV нормируется внутри каждого поля, а линия �
 
 ## 4.4. Зональные средние KAA/SP
 
-`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`; сцена также исключается, если облачность внутри поля превышает 20%. Дата не подменяется соседней сценой: график показывает ближайшее фактическое безоблачное наблюдение.
+`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. Если рядом есть `sentinel_fcover.tif`, в ту же таблицу добавляется FCOVER. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`; сцена также исключается, если облачность внутри поля превышает 20%. Дата не подменяется соседней сценой: график показывает ближайшее фактическое безоблачное наблюдение.
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py \
   --dataset sp --report outputs/reports/sp_zonal_means.csv
+```
+
+## 4.4.1. FCover Sentinel-2
+
+`scripts/qgis/calculate_sentinel2_fcover.py` рассчитывает FCover для уже сохранённых сцен. Для SNAP-совместимого биофизического процессора нужны B03/B04/B05/B06/B07/B8A/B11/B12 и средняя геометрия Солнца и наблюдения. Базовый аналитический растр уже содержит B03/B04/B05/B11/B12; B06/B07/B8A и углы скрипт берёт из исходной Sentinel-2 сцены по её `scene_id`. Результат `sentinel_fcover.tif` хранится рядом с `sentinel_analysis.tif`, а облака и невалидные пиксели исключаются при расчёте зонального среднего.
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_sentinel2_fcover.py --dataset sp
 ```
 
 Параметры запуска сохраняются рядом с отчётом в JSON.
@@ -76,7 +84,7 @@ OPTRAM не вычисляется из готовых индексов. Скр�
 
 ## 4.6. Интерактивные графики по полям
 
-Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку открывает один QGIS-диалог. Верхняя панель показывает NDVI/NDMI/NDRE/SAVI, средняя для SP — ежедневные модельные ряды КОРНИКС: покрытие, Ks, влажность 0–10 см и отношение фактической ET к потенциальной; осадки и поливы показаны столбиками на правой шкале в мм/сут. Третья панель показывает Sentinel-1 VV/VH в dB. Исходные наблюдения Sentinel-2 показываются отдельными точками; параметры подбираются отдельно для каждого `field_id + index`, но функциональная форма у всех рядов одна.
+Кнопка плагина `График по полю` включает QGIS map tool для KAA/SP-полигонов. Инструмент подгружает доступные слои `data/processed/field_boundaries/kaa_fields.geojson`, `data/processed/field_boundaries/sp_fields.geojson`, `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`, при наведении показывает вычисленный `field_id`, а по двойному щелчку открывает один QGIS-диалог. Верхняя панель показывает NDVI/NDMI/NDRE/SAVI/FCOVER, средняя для SP — ежедневные модельные ряды КОРНИКС: покрытие, Ks, влажность 0–10 см и отношение фактической ET к потенциальной; осадки и поливы показаны столбиками на правой шкале в мм/сут. Третья панель показывает Sentinel-1 VV/VH в dB. Исходные наблюдения Sentinel-2 показываются отдельными точками; параметры подбираются отдельно для каждого `field_id + index`, но функциональная форма у всех рядов одна.
 
 Ряды КОРНИКС визуализируются для метода `ivanov_n4l_meteo_soil` и явно подписаны как модельные, а не как независимые наземные наблюдения.
 
@@ -119,7 +127,7 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 `ivanov_n4l_meteo_soil`, записывает объединённую таблицу в
 `results/data/sp_kornix_sentinel_daily.csv` и QA-отчёт в
 `results/reports/sp_kornix_sentinel_merge.json`. Он сопоставляет только
-валидные значения NDVI/NDMI/NDRE/SAVI и не подменяет отсутствующие даты
+валидные значения NDVI/NDMI/NDRE/SAVI/FCOVER и не подменяет отсутствующие даты
 ближайшими сценами.
 
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк

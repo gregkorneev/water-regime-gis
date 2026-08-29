@@ -35,6 +35,7 @@
   Sentinel-1 RTC, обрезанный по отдельному полю и дате, два канала Float32:
   VV и VH;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif` — B02/B03/B04/B05/B08/B11/B12 и SCL на общей сетке 10 м;
+- `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_fcover.tif` — FCover Sentinel-2 (Float32, диапазон 0–1) по SNAP-совместимой модели; `-9999` обозначает невалидный пиксель;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/cloud_mask.tif` — бинарная маска невалидных пикселей по SCL;
 - `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
 - `outputs/imagery/sentinel1/download_manifest.json` — статус загрузки Sentinel-1 RTC;
@@ -45,7 +46,7 @@
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
-- `outputs/reports/sp_zonal_means.csv` — зональные средние NDVI/NDMI/NDRE/SAVI
+- `outputs/reports/sp_zonal_means.csv` — зональные средние NDVI/NDMI/NDRE/SAVI/FCOVER
   по растрам SP; источник для объединения с КОРНИКС;
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;

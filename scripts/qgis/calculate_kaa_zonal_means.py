@@ -36,6 +36,7 @@ FORMULAS = {
     "NDRE": ("NIR", "RedEdge"),
     "SAVI": ("NIR", "Red"),
 }
+FCOVER = "FCOVER"
 
 
 def parse_args() -> argparse.Namespace:
@@ -45,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--imagery", type=Path, default=DEFAULT_IMAGERY)
     parser.add_argument("--dataset", nargs="+", default=["kaa"])
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
-    parser.add_argument("--indices", nargs="+", default=list(FORMULAS))
+    parser.add_argument("--indices", nargs="+", default=[*FORMULAS, FCOVER])
     parser.add_argument("--limit", type=int, help="Process at most N raster patches.")
     parser.add_argument(
         "--max-aoi-cloud",
@@ -137,27 +138,38 @@ def zonal_records(
     rows = []
     for index_name in indices:
         index_name = index_name.upper()
+        if index_name == FCOVER:
+            fcover_path = analysis_path.with_name("sentinel_fcover.tif")
+            if not fcover_path.exists():
+                continue
+            fcover = gdal.Open(str(fcover_path)).ReadAsArray().astype("float32")
+            index_invalid = scene_invalid | (fcover < 0) | ~np.isfinite(fcover)
+            valid = fcover[~index_invalid]
+            rows.append(record(metadata, analysis_path, index_name, valid, index_invalid, aoi_cloud_cover))
+            continue
         if index_name not in FORMULAS:
             continue
         left, right = FORMULAS[index_name]
         values = calculate_index(index_name, arrays[left], arrays[right])
         index_invalid = scene_invalid | (arrays[left] <= 0) | (arrays[right] <= 0) | ~np.isfinite(values)
         valid = values[~index_invalid]
-        rows.append(
-            {
-                "dataset": metadata.get("dataset", ""),
-                "field_id": metadata.get("field_id", ""),
-                "scene_date": metadata.get("scene_date", ""),
-                "scene_id": metadata.get("scene_id", ""),
-                "index": index_name,
-                "zonal_mean": float(valid.mean()) if valid.size else "",
-                "valid_pixel_count": int(valid.size),
-                "nodata_pixel_count": int(index_invalid.sum()),
-                "aoi_cloud_cover": aoi_cloud_cover,
-                "analysis_raster": str(analysis_path),
-            }
-        )
+        rows.append(record(metadata, analysis_path, index_name, valid, index_invalid, aoi_cloud_cover))
     return rows
+
+
+def record(metadata: dict, analysis_path: Path, index_name: str, valid, invalid, aoi_cloud_cover: float) -> dict:
+    return {
+        "dataset": metadata.get("dataset", ""),
+        "field_id": metadata.get("field_id", ""),
+        "scene_date": metadata.get("scene_date", ""),
+        "scene_id": metadata.get("scene_id", ""),
+        "index": index_name,
+        "zonal_mean": float(valid.mean()) if valid.size else "",
+        "valid_pixel_count": int(valid.size),
+        "nodata_pixel_count": int(invalid.sum()),
+        "aoi_cloud_cover": aoi_cloud_cover,
+        "analysis_raster": str(analysis_path),
+    }
 
 
 def calculate_index(name: str, left, right):

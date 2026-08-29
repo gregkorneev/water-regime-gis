@@ -130,6 +130,25 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 валидные значения NDVI/NDMI/NDRE/SAVI/FCOVER и не подменяет отсутствующие даты
 ближайшими сценами.
 
+## 4.8. Проверка временного сдвига FCover и покрытия КОРНИКС
+
+`scripts/analysis/analyze_kornix_fcover_lag.py` сравнивает FCover с ежедневным
+`canopy_cover_fraction_derived` одного метода КОРНИКС в диапазоне лагов. Знак
+`-12` означает `FCover(t)` против `Kornix(t-12)`, то есть для наложения на
+графике кривая КОРНИКС переносится вправо на 12 суток. Скрипт формирует
+лаговый профиль, bootstrap по полям, оптимумы отдельных полей, leave-one-field-out,
+фенологические ориентиры 20/50/80% и максимум роста, а также корреляцию
+остатков после field effects и кубического `days_after_sowing`.
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/analysis/analyze_kornix_fcover_lag.py
+```
+
+Результаты сохраняются в `results/reports/sp_kornix_fcover_lag.json` и
+`results/tables/sp_kornix_fcover_field_lags.csv`. Оптимум отдельного поля при
+нескольких спутниковых датах не интерпретируется как самостоятельная калибровка:
+он служит только диагностикой неоднородности.
+
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк
 зональных средних, из них 4 748 с валидным значением, и 433 точных совпадения
 с КОРНИКС для метода `ivanov_n4l_meteo_soil`. За 2026-08-15 пригодны 86 полей,

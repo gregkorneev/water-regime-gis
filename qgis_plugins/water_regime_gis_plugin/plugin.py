@@ -650,12 +650,40 @@ class FieldIndexChartDialog(QDialog):
                 axis.plot(dates, numbers, linewidth=1.5, label=label)
                 plotted = True
 
+        for label, column, marker, color in (
+            ("Осадки", "precipitation_raw_daily_mm", "v", "#1f77b4"),
+            ("Полив", "irrigation_raw_daily_mm", "^", "#7b2cbf"),
+        ):
+            dates = [
+                dt.date.fromisoformat(row["day"])
+                for row in rows
+                if self.positive_kornix_value(row.get(column))
+            ]
+            if dates:
+                axis.scatter(
+                    dates,
+                    [1.02] * len(dates),
+                    marker=marker,
+                    s=20,
+                    color=color,
+                    transform=axis.get_xaxis_transform(),
+                    clip_on=False,
+                    label=label,
+                )
+
         if not plotted:
             axis.text(0.5, 0.5, "Нет рядов КОРНИКС выбранного метода", ha="center", va="center", transform=axis.transAxes)
         axis.set_ylabel("КОРНИКС: модельное значение")
         axis.grid(True, alpha=0.25)
         if plotted:
             axis.legend(loc="best")
+
+    @staticmethod
+    def positive_kornix_value(value) -> bool:
+        try:
+            return float(value) > 0
+        except (TypeError, ValueError):
+            return False
 
     def plot_radar_rows(self, axis, rows: list[dict]):
         import datetime as dt

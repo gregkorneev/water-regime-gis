@@ -50,26 +50,26 @@ def split_fields(rows: list[dict], train_count: int, seed: int) -> tuple[list[st
     return sorted(fields[:train_count]), sorted(fields[train_count:])
 
 
-def feature_values(row: dict, radar: bool) -> list[float]:
-    values = [row[name] for name in WATER_FEATURES]
-    if radar:
+def feature_values(row: dict, mode: str) -> list[float]:
+    values = [row[name] for name in WATER_FEATURES] if mode != "sentinel1_only" else []
+    if mode != "water_only":
         vv, vh = row["sentinel1_vv_db"], row["sentinel1_vh_db"]
         values.extend((vv, vh, vv * vh, vv * vv, vh * vh))
     return values
 
 
-def fit_ridge(rows: list[dict], radar: bool, alpha: float) -> dict:
-    features = np.array([feature_values(row, radar) for row in rows], dtype=float)
+def fit_ridge(rows: list[dict], mode: str, alpha: float) -> dict:
+    features = np.array([feature_values(row, mode) for row in rows], dtype=float)
     target = np.array([row[TARGET] for row in rows], dtype=float)
     mean, scale = features.mean(axis=0), features.std(axis=0)
     scale[scale == 0] = 1.0
     standardized = (features - mean) / scale
     coefficients = np.linalg.solve(standardized.T @ standardized + alpha * np.eye(standardized.shape[1]), standardized.T @ (target - target.mean()))
-    return {"mean": mean, "scale": scale, "target_mean": target.mean(), "coefficients": coefficients, "radar": radar}
+    return {"mean": mean, "scale": scale, "target_mean": target.mean(), "coefficients": coefficients, "mode": mode}
 
 
 def predict(model: dict, rows: list[dict]) -> np.ndarray:
-    features = np.array([feature_values(row, model["radar"]) for row in rows], dtype=float)
+    features = np.array([feature_values(row, model["mode"]) for row in rows], dtype=float)
     return (features - model["mean"]) / model["scale"] @ model["coefficients"] + model["target_mean"]
 
 
@@ -94,8 +94,12 @@ def train(rows: list[dict], train_count: int, seed: int, alpha: float) -> tuple[
     train_fields, test_fields = split_fields(rows, train_count, seed)
     training = [row for row in rows if row["field_id"] in train_fields]
     testing = [row for row in rows if row["field_id"] in test_fields]
-    water_model, hybrid_model = fit_ridge(training, False, alpha), fit_ridge(training, True, alpha)
-    water_prediction, hybrid_prediction = predict(water_model, testing), predict(hybrid_model, testing)
+    sentinel_model = fit_ridge(training, "sentinel1_only", alpha)
+    water_model = fit_ridge(training, "water_only", alpha)
+    hybrid_model = fit_ridge(training, "sentinel1_plus_water", alpha)
+    sentinel_reconstruction = predict(sentinel_model, testing)
+    water_reconstruction = predict(water_model, testing)
+    hybrid_reconstruction = predict(hybrid_model, testing)
     actual = np.array([row[TARGET] for row in testing], dtype=float)
     predictions = [
         {
@@ -103,11 +107,12 @@ def train(rows: list[dict], train_count: int, seed: int, alpha: float) -> tuple[
             "day": row["day"],
             "split": "test",
             "kornix_moisture_0_10": row[TARGET],
-            "water_only_prediction": water,
-            "sentinel1_prediction": hybrid,
-            "sentinel1_residual": row[TARGET] - hybrid,
+            "sentinel1_only_reconstruction": sentinel,
+            "water_only_reconstruction": water,
+            "sentinel1_plus_water_reconstruction": hybrid,
+            "sentinel1_plus_water_residual": row[TARGET] - hybrid,
         }
-        for row, water, hybrid in zip(testing, water_prediction, hybrid_prediction)
+        for row, sentinel, water, hybrid in zip(testing, sentinel_reconstruction, water_reconstruction, hybrid_reconstruction)
     ]
     report = {
         "target": TARGET,
@@ -116,11 +121,12 @@ def train(rows: list[dict], train_count: int, seed: int, alpha: float) -> tuple[
         "test_fields": test_fields,
         "training_rows": len(training),
         "test_rows": len(testing),
-        "water_only_test": metrics(actual, water_prediction),
-        "sentinel1_plus_water_test": metrics(actual, hybrid_prediction),
-        "test_r_squared_gain_from_sentinel1": metrics(actual, hybrid_prediction)["r_squared"] - metrics(actual, water_prediction)["r_squared"],
-        "features": {"water_only": list(WATER_FEATURES), "sentinel1_plus_water": [*WATER_FEATURES, "VV", "VH", "VV*VH", "VV^2", "VH^2"]},
-        "interpretation": "Поля в test_fields не использовались при обучении; модель воспроизводит расчетную влагу КОРНИКС, а не независимое наземное измерение.",
+        "sentinel1_only_test": metrics(actual, sentinel_reconstruction),
+        "water_only_test": metrics(actual, water_reconstruction),
+        "sentinel1_plus_water_test": metrics(actual, hybrid_reconstruction),
+        "test_r_squared_gain_from_sentinel1": metrics(actual, hybrid_reconstruction)["r_squared"] - metrics(actual, water_reconstruction)["r_squared"],
+        "features": {"sentinel1_only": ["VV", "VH", "VV*VH", "VV^2", "VH^2"], "water_only": list(WATER_FEATURES), "sentinel1_plus_water": [*WATER_FEATURES, "VV", "VH", "VV*VH", "VV^2", "VH^2"]},
+        "interpretation": "Это ретроспективная реконструкция КОРНИКС в даты Sentinel-1. Поля в test_fields не использовались при обучении; модель не является независимым наземным измерением.",
     }
     return predictions, report
 
@@ -129,7 +135,8 @@ def self_test() -> None:
     rows = [{"field_id": f"SP_{index}_1", "day": "2026-04-01", TARGET: 0.2, **{name: 1.0 for name in WATER_FEATURES}, "sentinel1_vv_db": -8.0, "sentinel1_vh_db": -16.0} for index in range(4)]
     train_fields, test_fields = split_fields(rows, 3, 1)
     assert len(train_fields) == 3 and len(test_fields) == 1
-    assert len(feature_values(rows[0], True)) == len(WATER_FEATURES) + 5
+    assert len(feature_values(rows[0], "sentinel1_only")) == 5
+    assert len(feature_values(rows[0], "sentinel1_plus_water")) == len(WATER_FEATURES) + 5
 
 
 def main() -> int:

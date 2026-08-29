@@ -58,8 +58,9 @@
   Sentinel-1 VV/VH с влагой КОРНИКС 0–10 см и суммами осадков/полива за 3 и 7 суток;
 - `results/reports/sp_kornix_sentinel1_moisture.json` — оценка связи Sentinel-1
   и КОРНИКС после учета поступления воды;
-- `results/data/sp_kornix_sentinel1_field_holdout_predictions.csv` — прогноз
-  влаги КОРНИКС 0–10 см для 14 полей, не участвовавших в обучении;
+- `results/data/sp_kornix_sentinel1_field_holdout_predictions.csv` —
+  ретроспективная реконструкция влаги КОРНИКС 0–10 см для 14 полей, не
+  участвовавших в обучении;
 - `results/reports/sp_kornix_sentinel1_field_holdout.json` — состав split 23/14
   и метрики воспроизведения КОРНИКС по Sentinel-1 и поступлению воды;
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;

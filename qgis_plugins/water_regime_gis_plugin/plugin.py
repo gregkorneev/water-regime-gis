@@ -253,8 +253,9 @@ class WaterRegimeDock(QDockWidget):
             self.log(f"Не удалось отфильтровать {layer.name()}: нет field_external_key.")
             return
         field_keys = sorted(
-            path.name.removesuffix("_daily.csv").replace("SP_", "SP:", 1).replace("_", ".")
+            field_id.replace("SP_", "SP:", 1).replace("_", ".")
             for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily.csv")
+            if (field_id := path.name.removesuffix("_daily.csv")) not in settings.ANALYSIS_EXCLUDED_FIELDS
         )
         if not field_keys:
             self.log("Ряды КОРНИКС не найдены: слой SP не изменён.")
@@ -267,6 +268,9 @@ class WaterRegimeDock(QDockWidget):
         field_id = self.field_id_for_feature(feature)
         if not field_id:
             self.notify("Не удалось определить field_id для выбранного поля.", Qgis.Warning)
+            return
+        if field_id in settings.ANALYSIS_EXCLUDED_FIELDS:
+            self.notify(f"Поле {field_id} исключено из анализа.", Qgis.Warning)
             return
         rows = self.rows_for_field(field_id)
         kornix_rows = self.kornix_rows_for_field(field_id)

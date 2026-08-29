@@ -34,17 +34,28 @@ def correlation(pairs: list[tuple[float, float]]) -> float | None:
     return numerator / denominator if denominator else None
 
 
+def agreement_group(pearson_r: float | None, rmse: float) -> str:
+    if pearson_r is not None and pearson_r >= 0.9 and rmse <= 0.15:
+        return "Высокое"
+    if pearson_r is not None and pearson_r >= 0.5 and rmse <= 0.3:
+        return "Умеренное"
+    return "Слабое"
+
+
 def summary(field_id: str, pairs: list[tuple[float, float]]) -> dict:
     errors = [observed - expected for expected, observed in pairs]
+    pearson_r = correlation(pairs)
+    rmse = math.sqrt(sum(error ** 2 for error in errors) / len(errors))
     return {
         "field_id": field_id,
         "pair_count": len(pairs),
-        "pearson_r": correlation(pairs),
+        "agreement_group": agreement_group(pearson_r, rmse),
+        "pearson_r": pearson_r,
         "mean_expected_fcover": sum(expected for expected, _ in pairs) / len(pairs),
         "mean_sentinel2_fcover": sum(observed for _, observed in pairs) / len(pairs),
         "bias_sentinel2_minus_expected": sum(errors) / len(errors),
         "mae": sum(abs(error) for error in errors) / len(errors),
-        "rmse": math.sqrt(sum(error ** 2 for error in errors) / len(errors)),
+        "rmse": rmse,
     }
 
 
@@ -72,6 +83,7 @@ def self_test() -> None:
     assert row["pair_count"] == 3
     assert round(row["pearson_r"], 6) == 1.0
     assert round(row["bias_sentinel2_minus_expected"], 6) == 0.2
+    assert row["agreement_group"] == "Умеренное"
 
 
 def main() -> int:

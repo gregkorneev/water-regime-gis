@@ -161,7 +161,8 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 `satellite_fcover_expected` с фактическим FCOVER Sentinel-2 строго в ту же
 дату. Для каждого поля отдельно записываются Pearson r, bias
 `Sentinel-2 − expected`, MAE и RMSE; лаг или межполяное объединение не
-применяются.
+применяются. Группа совпадения: `Высокое` при `r ≥ 0,9` и `RMSE ≤ 0,15`,
+`Умеренное` при `r ≥ 0,5` и `RMSE ≤ 0,3`, иначе `Слабое`.
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_expected_fcover.py

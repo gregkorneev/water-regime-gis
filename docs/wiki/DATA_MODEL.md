@@ -55,7 +55,7 @@
 - `results/tables/sp_kornix_expected_fcover_by_field.csv` — прямое
   сопоставление `satellite_fcover_expected` КОРНИКС с FCOVER Sentinel-2 на
   совпадающие даты, отдельно по каждому полю: число пар, Pearson r, средние,
-  bias, MAE и RMSE;
+  bias, MAE, RMSE и воспроизводимая группа совпадения;
 - `results/data/sp_kornix_sentinel1_moisture.csv` — точное объединение
   Sentinel-1 VV/VH с влагой КОРНИКС 0–10 см и суммами осадков/полива за 3 и 7 суток;
 - `results/reports/sp_kornix_sentinel1_moisture.json` — оценка связи Sentinel-1

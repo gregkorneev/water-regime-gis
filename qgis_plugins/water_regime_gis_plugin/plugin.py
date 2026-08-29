@@ -232,14 +232,12 @@ class WaterRegimeDock(QDockWidget):
         self.load_chart_field_layers()
         self.chart_tool = FieldChartMapTool(self.iface.mapCanvas(), self)
         self.iface.mapCanvas().setMapTool(self.chart_tool)
-        self.log("Дважды щёлкните по полю KAA/SP, чтобы открыть график индексов.")
-        self.notify("Дважды щёлкните по полю KAA/SP для графика индексов.")
+        self.log("Дважды щёлкните по полю SP, чтобы открыть график индексов.")
+        self.notify("Дважды щёлкните по полю SP для графика индексов.")
 
     def load_chart_field_layers(self):
         for path, name in (
-            (settings.PROJECT_ROOT / "data/processed/field_boundaries/kaa_fields.geojson", "KAA fields"),
             (settings.PROJECT_ROOT / "data/processed/field_boundaries/sp_fields.geojson", "SP fields"),
-            (Path("/Users/korneev/Desktop/KAA.gpkg"), "Поля KAA"),
             (Path("/Users/korneev/Desktop/SP.gpkg"), "Поля SP"),
         ):
             layer = self.add_vector_layer(path, name)

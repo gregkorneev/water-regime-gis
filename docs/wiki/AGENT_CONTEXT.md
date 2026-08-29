@@ -27,6 +27,9 @@
   поставки КОРНИКС. Для `SP.gpkg` добавляется прозрачный временный слой
   `КОРНИКС: подписи полей SP` с культурой, датой посева, средней температурой,
   осадками и ET₀ последнего дня ряда. Исходные GeoPackage и GeoJSON не меняются.
+- KAA-границы и группы изображений в QGIS выключены, но снимки KAA в
+  `outputs/imagery/kaa/` не удаляются. Инструмент `График по полю` загружает
+  только SP-слои.
 - `scripts/analysis/run_satellite_ground_pipeline.py` преобразует long CSV KAA в wide, пишет QA, сезонные сводки, шаблон ground-данных, model dataset и skipped-отчет M1–M4 до появления `data/ground_measurements.csv`.
 - Isoliner открывает `isoliner:raster_to_isolines` и `isoliner:kriging2d`.
 - Кригинг требует реальный точечный слой минимум с тремя объектами и числовым полем.

@@ -30,6 +30,7 @@ def main() -> int:
     assert '"isoliner:kriging2d"' in plugin
     assert "apply_kornix_filter" in plugin
     assert '"field_external_key" IN' in plugin
+    assert 'Path("/Users/korneev/Desktop/KAA.gpkg")' not in plugin
     assert "project.write()" in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")

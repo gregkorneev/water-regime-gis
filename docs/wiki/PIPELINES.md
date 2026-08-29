@@ -28,7 +28,7 @@
 
 ## 4.1. RGB-снимки Sentinel-2 и Sentinel-1 RTC
 
-`scripts/qgis/download_field_imagery.py` обходит объекты `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. По умолчанию он ищет Sentinel-2 L2A, оставляет одну наименее облачную сцену на календарный день, загружает B04/B03/B02, обрезает их по геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск продолжает обработку, пропуская готовые даты.
+`scripts/qgis/download_field_imagery.py` обходит объекты `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. По умолчанию он ищет Sentinel-2 L2A, оставляет одну наименее облачную сцену на календарный день и допускает только сцены с глобальной облачностью до 10%, загружает B04/B03/B02, обрезает их по геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск продолжает обработку, пропуская готовые даты.
 
 Для Sentinel-1 используется та же возобновляемая команда с параметрами
 `--collection sentinel-1-rtc --asset vv vh --output-name sentinel_rtc.tif
@@ -44,7 +44,7 @@
 
 ## 4.3. Зональные средние KAA/SP
 
-`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`. Для SP используется:
+`scripts/qgis/calculate_kaa_zonal_means.py` обходит готовые `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, рассчитывает NDVI/NDMI/NDRE/SAVI и берет среднее по валидным пикселям каждого обрезанного пятна. По умолчанию облака, тени, снег, насыщение и nodata исключаются через `cloud_mask.tif`; сцена также исключается, если облачность внутри поля превышает 20%. Дата не подменяется соседней сценой: график показывает ближайшее фактическое безоблачное наблюдение.
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py \

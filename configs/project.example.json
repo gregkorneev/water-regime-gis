@@ -35,7 +35,7 @@
     "provider": "planetary-computer-stac",
     "collection": "sentinel-2-l2a",
     "date_range_days": 60,
-    "max_cloud_cover": 30,
+    "max_cloud_cover": 10,
     "preferred_scene": "least_cloudy",
     "indices": ["NDVI", "NDMI", "SAVI", "NDRE"]
   }

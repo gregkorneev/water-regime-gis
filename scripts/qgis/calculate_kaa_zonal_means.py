@@ -47,6 +47,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--indices", nargs="+", default=list(FORMULAS))
     parser.add_argument("--limit", type=int, help="Process at most N raster patches.")
+    parser.add_argument(
+        "--max-aoi-cloud",
+        type=float,
+        default=20.0,
+        help="Skip a scene when clouds/shadows cover more than this percent of the field (default: 20).",
+    )
     parser.add_argument("--include-clouds", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
@@ -80,7 +86,14 @@ def main() -> int:
             continue
         try:
             records.extend(
-                zonal_records(metadata, analysis_path, mask_path, args.indices, args.include_clouds)
+                zonal_records(
+                    metadata,
+                    analysis_path,
+                    mask_path,
+                    args.indices,
+                    args.include_clouds,
+                    args.max_aoi_cloud,
+                )
             )
             print(f"OK {label}")
         except Exception as exc:
@@ -99,12 +112,17 @@ def zonal_records(
     mask_path: Path,
     indices: list[str],
     include_clouds: bool,
+    max_aoi_cloud: float | None,
 ) -> list[dict]:
     import numpy as np
 
     dataset = gdal.Open(str(analysis_path))
     if dataset is None or dataset.RasterCount < len(BANDS):
         raise RuntimeError(f"Invalid analysis raster: {analysis_path}")
+
+    aoi_cloud_cover = float(metadata.get("aoi_cloud_cover") or 0)
+    if not scene_is_acceptable(aoi_cloud_cover, max_aoi_cloud):
+        return []
 
     arrays = {
         name: dataset.GetRasterBand(number).ReadAsArray().astype("float32") / 10000.0
@@ -135,7 +153,7 @@ def zonal_records(
                 "zonal_mean": float(valid.mean()) if valid.size else "",
                 "valid_pixel_count": int(valid.size),
                 "nodata_pixel_count": int(index_invalid.sum()),
-                "aoi_cloud_cover": metadata.get("aoi_cloud_cover", ""),
+                "aoi_cloud_cover": aoi_cloud_cover,
                 "analysis_raster": str(analysis_path),
             }
         )
@@ -149,6 +167,10 @@ def calculate_index(name: str, left, right):
         if name == "SAVI":
             return 1.5 * (left - right) / (left + right + 0.5)
         return (left - right) / (left + right)
+
+
+def scene_is_acceptable(aoi_cloud_cover: float, max_aoi_cloud: float | None) -> bool:
+    return max_aoi_cloud is None or aoi_cloud_cover <= max_aoi_cloud
 
 
 def write_csv(path: Path, rows: list[dict]) -> None:
@@ -180,6 +202,7 @@ def write_manifest(path: Path, args: argparse.Namespace, rows: list[dict]) -> No
         "dataset": args.dataset,
         "indices": args.indices,
         "include_clouds": args.include_clouds,
+        "max_aoi_cloud": args.max_aoi_cloud,
         "row_count": len(rows),
     }
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -196,6 +219,8 @@ def self_test() -> None:
     savi = calculate_index("SAVI", nir, red)
     assert np.allclose(ndvi, np.array([[0.5, 1 / 3]], dtype="float32"))
     assert np.allclose(savi, np.array([[6 / 13, 3 / 11]], dtype="float32"))
+    assert scene_is_acceptable(20.0, 20.0)
+    assert not scene_is_acceptable(20.1, 20.0)
 
 
 if __name__ == "__main__":

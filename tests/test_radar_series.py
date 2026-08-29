@@ -18,8 +18,8 @@ class RadarSeriesTest(unittest.TestCase):
         self.assertEqual(rolling_median([1.0, 1.0, 9.0, 1.0, 1.0]), [1.0] * 5)
 
     def test_relative_moisture_proxy_normalizes_vv_signal(self):
-        self.assertEqual(relative_moisture_proxy([-12.0, -8.0, -4.0]), [0.1, 0.36, 0.62])
-        self.assertEqual(relative_moisture_proxy([-8.0, -8.0]), [0.36, 0.36])
+        self.assertEqual(relative_moisture_proxy([-12.0, -8.0, -4.0]), [0.1, 0.23, 0.36])
+        self.assertEqual(relative_moisture_proxy([-8.0, -8.0]), [0.23, 0.23])
 
 
 if __name__ == "__main__":

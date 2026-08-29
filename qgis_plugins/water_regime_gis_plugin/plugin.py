@@ -609,7 +609,7 @@ class FieldIndexChartDialog(QDialog):
         radar_axis = figure.add_subplot(313, sharex=satellite_axis)
         self.plot_rows(satellite_axis, rows)
         self.plot_kornix_rows(kornix_axis, kornix_rows)
-        self.plot_radar_rows(radar_axis, radar_rows)
+        self.plot_radar_rows(radar_axis, radar_rows, kornix_rows)
         canvas.draw()
 
     def plot_rows(self, axis, rows: list[dict]):
@@ -704,8 +704,9 @@ class FieldIndexChartDialog(QDialog):
         except (TypeError, ValueError):
             return False
 
-    def plot_radar_rows(self, axis, rows: list[dict]):
+    def plot_radar_rows(self, axis, rows: list[dict], kornix_rows: list[dict]):
         import datetime as dt
+        import statistics
 
         vv_values = []
         for row in rows:
@@ -718,13 +719,22 @@ class FieldIndexChartDialog(QDialog):
         values = self.values_by_date(vv_values)
         if values:
             dates = [date for date, _ in values]
-            moisture = relative_moisture_proxy([value for _, value in values])
+            kornix_by_date = {
+                dt.date.fromisoformat(row["day"]): float(row["soil_surface_0_10_theta"])
+                for row in kornix_rows
+                if row.get("soil_surface_0_10_theta") not in ("", None)
+            }
+            target_values = [kornix_by_date[date] for date in dates if date in kornix_by_date]
+            moisture = relative_moisture_proxy(
+                [value for _, value in values],
+                target_mean=statistics.mean(target_values) if target_values else None,
+            )
             axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
-            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Относительная влажность (VV)")
+            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Влажность VV (среднее = КОРНИКС)")
         else:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")
-        axis.set_ylabel("Влажность Sentinel-1, 0.15–0.3730")
+        axis.set_ylabel("Влажность Sentinel-1")
         axis.grid(True, alpha=0.25)
         if values:
             axis.legend(loc="best")

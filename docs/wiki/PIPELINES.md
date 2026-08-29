@@ -154,6 +154,19 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 Локальные множители растяжения сохраняются в
 `results/tables/sp_kornix_fcover_piecewise_warp.csv`.
 
+### 4.7. Прямое сравнение ожидаемого и спутникового FCover
+
+`scripts/analysis/compare_kornix_expected_fcover.py` использует уже
+объединённые строки `sp_kornix_sentinel_daily.csv` и сравнивает
+`satellite_fcover_expected` с фактическим FCOVER Sentinel-2 строго в ту же
+дату. Для каждого поля отдельно записываются Pearson r, bias
+`Sentinel-2 − expected`, MAE и RMSE; лаг или межполяное объединение не
+применяются.
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_expected_fcover.py
+```
+
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк
 зональных средних, из них 4 748 с валидным значением, и 433 точных совпадения
 с КОРНИКС для метода `ivanov_n4l_meteo_soil`. За 2026-08-15 пригодны 86 полей,

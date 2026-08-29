@@ -21,6 +21,7 @@ CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE", "FCOVER"}
 RADAR_CHART_SERIES = {"VV", "VH"}
 KORNIX_CHART_SERIES = {
     "Покрытие": "canopy_cover_fraction_derived",
+    "FCover expected (КОРНИКС)": "satellite_fcover_expected",
     "Ks": "water_stress_coefficient_ks",
     "Влага 0–10 см": "soil_surface_0_10_theta",
     "ET/PET": "actual_to_potential_et_ratio",

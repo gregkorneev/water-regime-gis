@@ -650,33 +650,36 @@ class FieldIndexChartDialog(QDialog):
                 axis.plot(dates, numbers, linewidth=1.5, label=label)
                 plotted = True
 
-        for label, column, marker, color in (
-            ("Осадки", "precipitation_raw_daily_mm", "v", "#1f77b4"),
-            ("Полив", "irrigation_raw_daily_mm", "^", "#7b2cbf"),
-        ):
-            dates = [
-                dt.date.fromisoformat(row["day"])
-                for row in rows
-                if self.positive_kornix_value(row.get(column))
-            ]
-            if dates:
-                axis.scatter(
-                    dates,
-                    [1.02] * len(dates),
-                    marker=marker,
-                    s=20,
-                    color=color,
-                    transform=axis.get_xaxis_transform(),
-                    clip_on=False,
-                    label=label,
+        water_by_date = {}
+        for row in rows:
+            date = dt.date.fromisoformat(row["day"])
+            precipitation = self.positive_kornix_value(row.get("precipitation_raw_daily_mm"))
+            irrigation = self.positive_kornix_value(row.get("irrigation_raw_daily_mm"))
+            if precipitation or irrigation:
+                water_by_date[date] = (
+                    float(row.get("precipitation_raw_daily_mm") or 0),
+                    float(row.get("irrigation_raw_daily_mm") or 0),
                 )
+        if water_by_date:
+            dates = sorted(water_by_date)
+            precipitation = [water_by_date[date][0] for date in dates]
+            irrigation = [water_by_date[date][1] for date in dates]
+            water_axis = axis.twinx()
+            water_axis.bar(dates, precipitation, width=0.8, color="#1f77b4", alpha=0.5, label="Осадки")
+            water_axis.bar(dates, irrigation, width=0.8, bottom=precipitation, color="#7b2cbf", alpha=0.5, label="Полив")
+            water_axis.set_ylabel("Вода, мм/сут")
 
         if not plotted:
             axis.text(0.5, 0.5, "Нет рядов КОРНИКС выбранного метода", ha="center", va="center", transform=axis.transAxes)
         axis.set_ylabel("КОРНИКС: модельное значение")
         axis.grid(True, alpha=0.25)
         if plotted:
-            axis.legend(loc="best")
+            handles, labels = axis.get_legend_handles_labels()
+            if water_by_date:
+                water_handles, water_labels = water_axis.get_legend_handles_labels()
+                handles += water_handles
+                labels += water_labels
+            axis.legend(handles, labels, loc="best")
 
     @staticmethod
     def positive_kornix_value(value) -> bool:

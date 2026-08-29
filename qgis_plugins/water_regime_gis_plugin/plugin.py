@@ -728,9 +728,10 @@ class FieldIndexChartDialog(QDialog):
             moisture = relative_moisture_proxy(
                 [value for _, value in values],
                 target_mean=statistics.mean(target_values) if target_values else None,
+                target_stddev=statistics.stdev(target_values) if len(target_values) > 1 else None,
             )
             axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
-            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Влажность VV (среднее = КОРНИКС)")
+            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Влажность VV (среднее и дисперсия = КОРНИКС)")
         else:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")

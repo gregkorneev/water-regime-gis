@@ -22,6 +22,10 @@ class RadarSeriesTest(unittest.TestCase):
         self.assertEqual(relative_moisture_proxy([-8.0, -8.0]), [0.2615, 0.2615])
         self.assertEqual(relative_moisture_proxy([-12.0, -8.0, -4.0], target_mean=0.25), [0.15, 0.25, 0.35])
         self.assertEqual(relative_moisture_proxy([-8.0, -8.0], target_mean=0.25), [0.25, 0.25])
+        self.assertEqual(
+            [round(value, 12) for value in relative_moisture_proxy([-12.0, -8.0, -4.0], target_mean=0.25, target_stddev=0.05)],
+            [0.2, 0.25, 0.3],
+        )
 
 
 if __name__ == "__main__":

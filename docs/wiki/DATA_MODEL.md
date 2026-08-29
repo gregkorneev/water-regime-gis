@@ -31,9 +31,13 @@
 - `outputs/rasters/ndre.tif`;
 - `outputs/reports/latest_metrics.json` — сцена, дата, облачность, CRS и статистика каждого индекса;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_true_color.tif` — RGB Sentinel-2, обрезанный по отдельному полю и дате;
+- `outputs/imagery/sentinel1/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_rtc.tif` —
+  Sentinel-1 RTC, обрезанный по отдельному полю и дате, два канала Float32:
+  VV и VH;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif` — B02/B03/B04/B05/B08/B11/B12 и SCL на общей сетке 10 м;
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/cloud_mask.tif` — бинарная маска невалидных пикселей по SCL;
 - `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
+- `outputs/imagery/sentinel1/download_manifest.json` — статус загрузки Sentinel-1 RTC;
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;

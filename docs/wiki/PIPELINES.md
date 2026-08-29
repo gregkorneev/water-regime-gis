@@ -26,9 +26,17 @@
 
 `scripts/qgis/compare_observearth_ndmi.py` рассчитывает NDMI установленным движком Observearth на тех же NIR/SWIR1 и сравнивает пиксели с проектным GeoTIFF при допуске `1e-6`.
 
-## 4.1. RGB-снимки для всех полей KAA/SP
+## 4.1. RGB-снимки Sentinel-2 и Sentinel-1 RTC
 
-`scripts/qgis/download_field_imagery.py` обходит объекты `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. Для каждого поля он ищет все Sentinel-2 L2A сцены с 2026-04-01 по 2026-08-10, оставляет одну наименее облачную сцену на календарный день, загружает B04/B03/B02, обрезает их по геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск продолжает обработку, пропуская готовые даты.
+`scripts/qgis/download_field_imagery.py` обходит объекты `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. По умолчанию он ищет Sentinel-2 L2A, оставляет одну наименее облачную сцену на календарный день, загружает B04/B03/B02, обрезает их по геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск продолжает обработку, пропуская готовые даты.
+
+Для Sentinel-1 используется та же возобновляемая команда с параметрами
+`--collection sentinel-1-rtc --asset vv vh --output-name sentinel_rtc.tif
+--no-cloud-filter` и отдельным `--output outputs/imagery/sentinel1`. В этом
+режиме сохраняется один двухканальный Float32 GeoTIFF VV/VH на календарную дату;
+фильтр облачности не применяется. Для SP приоритет полей из поставки КОРНИКС
+задается двумя запусками OGR-фильтра: сначала `field_external_key IN (...)`,
+затем `NOT IN (...)`.
 
 ## 4.2. Аналитические каналы KAA/SP
 

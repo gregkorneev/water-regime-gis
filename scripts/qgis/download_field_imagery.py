@@ -31,12 +31,16 @@ RGB_ASSETS = ("B04", "B03", "B02")
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Download Sentinel-2 true-color imagery for GPKG fields.")
+    parser = argparse.ArgumentParser(description="Download Sentinel-2 or Sentinel-1 imagery for GPKG fields.")
     parser.add_argument("--input", nargs="+", type=Path, default=list(DEFAULT_INPUTS))
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--date-from", type=dt.date.fromisoformat, default=DEFAULT_DATE_FROM)
     parser.add_argument("--date-to", type=dt.date.fromisoformat, default=DEFAULT_DATE_TO)
     parser.add_argument("--max-cloud", type=float)
+    parser.add_argument("--collection", help="STAC collection; defaults to Sentinel-2 from project config.")
+    parser.add_argument("--asset", nargs="+", help="Assets to download; defaults to B04 B03 B02.")
+    parser.add_argument("--output-name", default="sentinel_true_color.tif")
+    parser.add_argument("--no-cloud-filter", action="store_true", help="Do not apply eo:cloud_cover filter (for Sentinel-1).")
     parser.add_argument("--where", help="OGR attribute filter, for example: calculation_ready = 1")
     parser.add_argument("--limit", type=int, help="Process at most N fields across all inputs.")
     parser.add_argument("--overwrite", action="store_true")
@@ -53,11 +57,14 @@ def main() -> int:
     if end < start:
         raise ValueError("--date-to must not be earlier than --date-from")
     max_cloud = args.max_cloud if args.max_cloud is not None else float(config["satellite"]["max_cloud_cover"])
+    collection = args.collection or config["satellite"]["collection"]
+    assets = tuple(args.asset or RGB_ASSETS)
     output_root = args.output.expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     manifest_path = output_root / "download_manifest.json"
     records = []
     processed = 0
+    total_fields = 0
 
     for source_path in args.input:
         source_path = source_path.expanduser().resolve()
@@ -69,6 +76,7 @@ def main() -> int:
             raise ValueError(f"GeoPackage has no layers: {source_path}")
         if args.where:
             layer.SetAttributeFilter(args.where)
+        total_fields += layer.GetFeatureCount()
         dataset_name = safe_name(source_path.stem).lower()
         fid_column = layer.GetFIDColumn() or "fid"
         source_crs = layer.GetSpatialRef()
@@ -87,14 +95,14 @@ def main() -> int:
                 if geometry is None or geometry.IsEmpty():
                     raise ValueError("Field geometry is empty")
                 bbox, center = geometry_bbox_wgs84(geometry, source_crs)
-                items = find_scenes(bbox, center, start, end, max_cloud, config["satellite"]["collection"])
+                items = find_scenes(bbox, center, start, end, max_cloud, collection, assets, args.no_cloud_filter)
                 target_crs = utm_crs_for_lon_lat(*center)
                 cutline_where = f'"{fid_column}" = {feature.GetFID()}'
                 for item in items:
                     scene_datetime = item["properties"].get("datetime", "")
                     scene_date = scene_datetime[:10]
                     scene_dir = field_dir / scene_date
-                    output_path = scene_dir / "sentinel_true_color.tif"
+                    output_path = scene_dir / args.output_name
                     metadata_path = scene_dir / "metadata.json"
                     if output_path.exists() and metadata_path.exists() and not args.overwrite:
                         record = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -104,15 +112,19 @@ def main() -> int:
                         continue
                     try:
                         scene_dir.mkdir(parents=True, exist_ok=True)
-                        band_paths = download_rgb_bands(
+                        band_paths = download_bands(
                             item,
                             source_path,
                             layer.GetName(),
                             cutline_where,
                             target_crs,
                             scene_dir,
+                            assets,
                         )
-                        write_true_color(band_paths, output_path)
+                        if assets == RGB_ASSETS:
+                            write_true_color(band_paths, output_path)
+                        else:
+                            write_multiband(band_paths, assets, output_path)
                         for path in band_paths:
                             path.unlink(missing_ok=True)
                         record = {
@@ -126,6 +138,8 @@ def main() -> int:
                             "scene_date": scene_date,
                             "scene_datetime": scene_datetime,
                             "cloud_cover": item["properties"].get("eo:cloud_cover"),
+                            "collection": collection,
+                            "assets": list(assets),
                             "analysis_crs": target_crs,
                             "output": str(output_path),
                         }
@@ -166,6 +180,7 @@ def main() -> int:
                     write_manifest(manifest_path, records, start, end, max_cloud)
                     raise
             write_manifest(manifest_path, records, start, end, max_cloud)
+            print_progress(processed, min(total_fields, args.limit) if args.limit is not None else total_fields)
 
         dataset = None
         if args.limit is not None and processed >= args.limit:
@@ -173,6 +188,8 @@ def main() -> int:
 
     ok = sum(record["status"] in {"OK", "skipped_existing"} for record in records)
     errors = sum(record["status"] == "error" for record in records)
+    if processed:
+        print()
     print(f"Finished: {ok} ready, {errors} errors")
     print(f"Manifest: {manifest_path}")
     return 1 if errors else 0
@@ -207,14 +224,17 @@ def find_scenes(
     end: dt.date,
     max_cloud: float,
     collection: str,
+    assets: tuple[str, ...],
+    no_cloud_filter: bool,
 ) -> list[dict]:
     payload = {
         "collections": [collection],
         "bbox": bbox,
         "datetime": f"{start.isoformat()}T00:00:00Z/{end.isoformat()}T23:59:59Z",
-        "query": {"eo:cloud_cover": {"lt": max_cloud}},
-        "limit": 100,
+        "limit": 1000,
     }
+    if not no_cloud_filter:
+        payload["query"] = {"eo:cloud_cover": {"lt": max_cloud}}
     request = Request(
         STAC_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -229,10 +249,10 @@ def find_scenes(
     by_date = {}
     for item in sorted(candidates, key=cloud_cover):
         scene_date = item["properties"].get("datetime", "")[:10]
-        if scene_date and all(asset in item.get("assets", {}) for asset in RGB_ASSETS):
+        if scene_date and all(asset in item.get("assets", {}) for asset in assets):
             by_date.setdefault(scene_date, item)
     if not by_date:
-        raise RuntimeError("Sentinel-2 scenes have no RGB assets")
+        raise RuntimeError(f"{collection} scenes have none of the requested assets: {', '.join(assets)}")
     return [by_date[scene_date] for scene_date in sorted(by_date)]
 
 
@@ -245,17 +265,18 @@ def cloud_cover(item: dict) -> float:
     return float(value) if value is not None else 1000.0
 
 
-def download_rgb_bands(
+def download_bands(
     item: dict,
     source_path: Path,
     layer_name: str,
     cutline_where: str,
     target_crs: str,
     field_dir: Path,
+    assets: tuple[str, ...],
 ) -> list[Path]:
     paths = []
     try:
-        for asset_name in RGB_ASSETS:
+        for asset_name in assets:
             asset = item["assets"].get(asset_name)
             if asset is None:
                 raise RuntimeError(f"Scene has no {asset_name} asset")
@@ -324,6 +345,29 @@ def write_true_color(band_paths: list[Path], output: Path) -> None:
     result = None
 
 
+def write_multiband(band_paths: list[Path], asset_names: tuple[str, ...], output: Path) -> None:
+    datasets = [gdal.Open(str(path)) for path in band_paths]
+    if any(dataset is None for dataset in datasets):
+        raise RuntimeError("Could not open downloaded raster bands")
+    output.unlink(missing_ok=True)
+    result = gdal.GetDriverByName("GTiff").Create(
+        str(output),
+        datasets[0].RasterXSize,
+        datasets[0].RasterYSize,
+        len(datasets),
+        gdal.GDT_Float32,
+        options=["COMPRESS=DEFLATE", "TILED=YES"],
+    )
+    result.SetGeoTransform(datasets[0].GetGeoTransform())
+    result.SetProjection(datasets[0].GetProjection())
+    for index, (dataset, asset_name) in enumerate(zip(datasets, asset_names), start=1):
+        band = result.GetRasterBand(index)
+        band.WriteArray(dataset.ReadAsArray().astype("float32"))
+        band.SetDescription(asset_name.upper())
+        band.SetNoDataValue(0)
+    result = None
+
+
 def write_manifest(path: Path, records: list[dict], start: dt.date, end: dt.date, max_cloud: float) -> None:
     payload = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -338,6 +382,15 @@ def write_manifest(path: Path, records: list[dict], start: dt.date, end: dt.date
 def safe_name(value: str) -> str:
     cleaned = "".join(char if char.isalnum() or char in "-_" else "_" for char in value.strip())
     return cleaned[:120] or "field"
+
+
+def print_progress(current: int, total: int) -> None:
+    if not total:
+        return
+    width = 24
+    filled = round(width * current / total)
+    bar = "#" * filled + "-" * (width - filled)
+    print(f"\r[{bar}] {current}/{total} полей ({current / total:.0%})", end="", flush=True)
 
 
 if __name__ == "__main__":

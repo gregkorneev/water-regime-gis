@@ -65,7 +65,7 @@ python3 scripts/install_nspd_plugin.py
 
 Скрипт создает слои SP/KAA и минимальные прямоугольники в `data/processed/field_boundaries/`. Их можно добавить в QGIS обычной командой `Слой -> Добавить слой -> Добавить векторный слой`.
 
-## Снимки Sentinel-2 для KAA и SP
+## Снимки Sentinel-2 и Sentinel-1 для KAA/SP
 
 Загрузить временной ряд RGB-снимков для каждого из 156 полей с 1 апреля по 10 августа 2026 года:
 
@@ -96,6 +96,21 @@ python3 scripts/install_nspd_plugin.py
 ```
 
 Скрипт использует `scene_id` из существующих `metadata.json`, поэтому повторно не ищет и не меняет сцены. Для каждой даты создаются `sentinel_analysis.tif` с каналами B02/B03/B04/B05/B08/B11/B12/SCL и `cloud_mask.tif`. Выполнение возобновляемое; журнал сохраняется в `outputs/imagery/analysis_manifest.json`.
+
+Скачать Sentinel-1 RTC с поляризациями VV/VH в отдельный каталог:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/download_field_imagery.py \
+  --input /Users/korneev/Desktop/SP.gpkg \
+  --output outputs/imagery/sentinel1 \
+  --collection sentinel-1-rtc --asset vv vh \
+  --output-name sentinel_rtc.tif --no-cloud-filter \
+  --date-from 2026-04-01 --date-to 2026-08-27
+```
+
+Результат `sentinel_rtc.tif` — двухканальный Float32 GeoTIFF (VV, VH) с
+разрешением 10 м. Для приоритизации полей КОРНИКС передайте в `--where` фильтр
+по `field_external_key`; второй запуск с `NOT IN` завершит остальные поля SP.
 
 Посчитать зональное среднее индексов по каждому растровому пятну KAA:
 

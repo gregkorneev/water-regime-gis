@@ -12,6 +12,10 @@
 Sentinel-1 и тезисами для статьи/доклада расположен в
 `docs/reports/kornix_sentinel1_reconstruction.md`.
 
+Выводы интерактивного сопоставления графиков влажности КОРНИКС и Sentinel-1,
+включая общую нормировку, корреляции и тренды, зафиксированы в
+`docs/reports/kornix_sentinel1_chart_comparison_20260830.md`.
+
 Набор суточных модельных рядов КОРНИКС для полей SP расположен в
 `data/interim/kornix_timeseries/`; его состав и способ сопоставления со
 спутниковыми индексами описаны в `DATA_MODEL.md` и `PIPELINES.md`.

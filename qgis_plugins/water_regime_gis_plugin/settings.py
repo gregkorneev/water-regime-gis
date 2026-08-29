@@ -14,9 +14,11 @@ SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indice
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
 SP_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sp_zonal_means.csv"
+SENTINEL1_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 KORNIX_BY_FIELD_DIR = PROJECT_ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/by_field"
 KORNIX_METHOD = "ivanov_n4l_meteo_soil"
 CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE"}
+RADAR_CHART_SERIES = {"VV", "VH"}
 KORNIX_CHART_SERIES = {
     "Покрытие": "canopy_cover_fraction_derived",
     "Ks": "water_stress_coefficient_ks",

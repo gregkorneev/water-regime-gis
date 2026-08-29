@@ -37,6 +37,7 @@ from qgis.core import (
 from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
+from .radar_series import rolling_median
 from .seasonal_curve import fit_seasonal_curve
 
 
@@ -251,10 +252,11 @@ class WaterRegimeDock(QDockWidget):
             return
         rows = self.rows_for_field(field_id)
         kornix_rows = self.kornix_rows_for_field(field_id)
-        if not rows and not kornix_rows:
+        radar_rows = self.sentinel1_rows_for_field(field_id)
+        if not rows and not kornix_rows and not radar_rows:
             self.notify(f"Нет спутниковых или модельных рядов для {field_id}.", Qgis.Warning)
             return
-        dialog = FieldIndexChartDialog(self.iface.mainWindow(), field_id, rows, kornix_rows)
+        dialog = FieldIndexChartDialog(self.iface.mainWindow(), field_id, rows, kornix_rows, radar_rows)
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
         self.chart_dialogs.append(dialog)
@@ -278,6 +280,15 @@ class WaterRegimeDock(QDockWidget):
             return []
         with path.open(newline="", encoding="utf-8-sig") as handle:
             return [row for row in csv.DictReader(handle) if row.get("method_code") == settings.KORNIX_METHOD]
+
+    def sentinel1_rows_for_field(self, field_id: str) -> list[dict]:
+        import csv
+
+        path = settings.SENTINEL1_ZONAL_MEANS_CSV
+        if not path.exists():
+            return []
+        with path.open(newline="", encoding="utf-8") as handle:
+            return [row for row in csv.DictReader(handle) if row.get("field_id") == field_id]
 
     def kornix_label_for_field(self, field_id: str) -> str:
         """Return a compact, static KORNIX summary for a field polygon label."""
@@ -537,10 +548,10 @@ class FieldChartMapTool(QgsMapToolIdentify):
 
 
 class FieldIndexChartDialog(QDialog):
-    def __init__(self, parent, field_id: str, rows: list[dict], kornix_rows: list[dict]):
+    def __init__(self, parent, field_id: str, rows: list[dict], kornix_rows: list[dict], radar_rows: list[dict]):
         super().__init__(parent)
-        self.setWindowTitle(f"Sentinel-2 и КОРНИКС: {field_id}")
-        self.resize(980, 760)
+        self.setWindowTitle(f"Sentinel-2, КОРНИКС и Sentinel-1: {field_id}")
+        self.resize(980, 900)
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(field_id))
@@ -548,13 +559,15 @@ class FieldIndexChartDialog(QDialog):
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
 
-        figure = Figure(figsize=(9, 7), tight_layout=True)
+        figure = Figure(figsize=(9, 9), tight_layout=True)
         canvas = FigureCanvasQTAgg(figure)
         layout.addWidget(canvas)
-        satellite_axis = figure.add_subplot(211)
-        kornix_axis = figure.add_subplot(212, sharex=satellite_axis)
+        satellite_axis = figure.add_subplot(311)
+        kornix_axis = figure.add_subplot(312, sharex=satellite_axis)
+        radar_axis = figure.add_subplot(313, sharex=satellite_axis)
         self.plot_rows(satellite_axis, rows)
         self.plot_kornix_rows(kornix_axis, kornix_rows)
+        self.plot_radar_rows(radar_axis, radar_rows)
         canvas.draw()
 
     def plot_rows(self, axis, rows: list[dict]):
@@ -613,10 +626,37 @@ class FieldIndexChartDialog(QDialog):
 
         if not plotted:
             axis.text(0.5, 0.5, "Нет рядов КОРНИКС выбранного метода", ha="center", va="center", transform=axis.transAxes)
-        axis.set_xlabel("Дата")
         axis.set_ylabel("КОРНИКС: модельное значение")
         axis.grid(True, alpha=0.25)
         if plotted:
+            axis.legend(loc="best")
+
+    def plot_radar_rows(self, axis, rows: list[dict]):
+        import datetime as dt
+        from collections import defaultdict
+
+        by_polarization = defaultdict(list)
+        for row in rows:
+            value = row.get("zonal_mean_db")
+            polarization = row.get("polarization", "").upper()
+            if value in ("", None) or polarization not in settings.RADAR_CHART_SERIES:
+                continue
+            by_polarization[polarization].append((dt.date.fromisoformat(row["scene_date"]), float(value)))
+
+        for polarization in sorted(by_polarization):
+            values = self.values_by_date(by_polarization[polarization])
+            dates = [date for date, _ in values]
+            means = [value for _, value in values]
+            color = axis._get_lines.get_next_color()
+            axis.scatter(dates, means, s=18, color=color, alpha=0.7, zorder=3)
+            axis.plot(dates, rolling_median(means), color=color, linewidth=1.6, label=polarization)
+
+        if not by_polarization:
+            axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
+        axis.set_xlabel("Дата")
+        axis.set_ylabel("Sentinel-1, dB")
+        axis.grid(True, alpha=0.25)
+        if by_polarization:
             axis.legend(loc="best")
 
     def values_by_date(self, values):

@@ -38,6 +38,10 @@
 - `outputs/imagery/<dataset>/<field_id>/<YYYY-MM-DD>/cloud_mask.tif` — бинарная маска невалидных пикселей по SCL;
 - `outputs/imagery/download_manifest.json` — статус загрузки всех полей KAA/SP;
 - `outputs/imagery/sentinel1/download_manifest.json` — статус загрузки Sentinel-1 RTC;
+- `outputs/reports/sentinel1_zonal_means.csv` — зональные средние Sentinel-1
+  по каждому полю, дате и поляризации VV/VH. `zonal_mean_db` хранит
+  `10*log10` от среднего линейного обратного рассеяния с исключением нулевых и
+  nodata-пикселей; это источник третьего графика QGIS для SP;
 - `outputs/imagery/analysis_manifest.json` — статус докачки аналитических каналов KAA/SP;
 - `outputs/reports/kaa_zonal_means.csv` — зональные средние индексов по каждому готовому растровому пятну KAA;
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;

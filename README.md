@@ -1,6 +1,7 @@
 # Water Regime GIS
 
-Личный QGIS-плагин для выбора сельскохозяйственного поля, загрузки Sentinel-2 и расчета индексов водного режима.
+Личный QGIS-плагин для выбора сельскохозяйственного поля, расчета индексов
+Sentinel-2 и сопоставления рядов Sentinel-1, Sentinel-2 и КОРНИКС для полей SP.
 
 ## Требования
 
@@ -41,6 +42,15 @@ python3 scripts/install_nspd_plugin.py
 `Открыть Observearth` нужен для интерактивной проверки спутниковых сцен. Перед открытием выделите одно поле в полигональном слое.
 
 `Кригинг измерений` работает только с активным точечным слоем, содержащим минимум три объекта и числовое поле измерения. Без реальных наземных точек расчет намеренно не запускается.
+
+`График по полю` открывает временной график для полей SP, по которым есть
+суточные ряды КОРНИКС. На верхней панели показаны NDVI, NDMI, NDRE, SAVI и
+FCOVER Sentinel-2; на средней — модельные ряды КОРНИКС метода
+`ivanov_n4l_meteo_soil`, включая ожидаемый FCover, покрытие, Ks, влагу 0–10 см
+и ET/PET. Нижняя панель — относительный индикатор по Sentinel-1 VV: значения
+нормируются в общую шкалу 0.153527–0.367581, поэтому это не процентная
+влажность почвы. Поле SP 7.3 намеренно исключено из этого интерактивного
+анализа; исходные данные не удаляются.
 
 ## Результаты
 
@@ -127,6 +137,43 @@ python3 scripts/install_nspd_plugin.py
 ```
 
 Скрипт читает `outputs/imagery/kaa/<field_id>/<YYYY-MM-DD>/sentinel_analysis.tif`, исключает nodata и облачные пиксели по `cloud_mask.tif`, затем сохраняет таблицу `outputs/reports/kaa_zonal_means.csv` и манифест `outputs/reports/kaa_zonal_means.json`. Если рядом есть `sentinel_fcover.tif`, в таблицу также попадает `FCOVER`.
+
+Для SP укажите набор данных и отдельный отчет:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py \
+  --dataset sp --report outputs/reports/sp_zonal_means.csv
+```
+
+Посчитать средние VV/VH Sentinel-1 для третьей панели графика SP:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_sentinel1_zonal_means.py
+```
+
+Отчет сохраняется в `outputs/reports/sentinel1_zonal_means.csv`; значения
+выражены в dB как `10*log10(mean(linear RTC values))`.
+
+## Сопоставление КОРНИКС и Sentinel-2 для SP
+
+Сначала объедините валидные спутниковые индексы с рядами КОРНИКС по
+нормализованному полю и строго совпадающей дате:
+
+```bash
+python3 scripts/analysis/merge_kornix_sentinel.py
+```
+
+Проверить отдельно по каждому полю ожидаемый `satellite_fcover_expected`
+КОРНИКС и фактический FCOVER Sentinel-2:
+
+```bash
+python3 scripts/analysis/compare_kornix_expected_fcover.py
+```
+
+Результат `results/tables/sp_kornix_expected_fcover_by_field.csv` содержит
+число совпадений, Pearson r, bias, MAE, RMSE и группу совпадения. Это проверка
+модельного и спутникового продуктов, а не наземная калибровка влажности или
+покрытия.
 
 ## Анализ спутниковых индексов и наземных измерений
 

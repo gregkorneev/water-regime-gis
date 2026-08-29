@@ -26,7 +26,7 @@
 ## Внешние сервисы
 
 - НСПД: уточнение кадастрового контура через WMS `GetFeatureInfo`;
-- Microsoft Planetary Computer STAC: поиск Sentinel-2 L2A;
-- Sentinel-2 COG: чтение каналов GDAL через `/vsicurl/`.
+- Microsoft Planetary Computer STAC: поиск Sentinel-2 L2A и Sentinel-1 RTC;
+- Sentinel-2 и Sentinel-1 COG: чтение каналов GDAL через `/vsicurl/`.
 
 PostGIS, DEM и наземная база измерений пока отсутствуют.

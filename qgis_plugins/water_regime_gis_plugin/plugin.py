@@ -23,12 +23,14 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (
     Qgis,
     QgsApplication,
+    QgsCategorizedSymbolRenderer,
     QgsFeature,
     QgsField,
     QgsFillSymbol,
     QgsPalLayerSettings,
     QgsProject,
     QgsRasterLayer,
+    QgsRendererCategory,
     QgsTask,
     QgsTextFormat,
     QgsVectorLayer,
@@ -329,8 +331,8 @@ class WaterRegimeDock(QDockWidget):
     def add_kornix_labels(self, source_layer: QgsVectorLayer):
         """Add a transparent companion layer so the user source GeoPackage stays unchanged."""
         layer_name = "КОРНИКС: подписи полей SP"
-        if QgsProject.instance().mapLayersByName(layer_name):
-            return
+        for existing_layer in QgsProject.instance().mapLayersByName(layer_name):
+            QgsProject.instance().removeMapLayer(existing_layer.id())
 
         crs = source_layer.crs().authid()
         labels = QgsVectorLayer(f"Polygon?crs={crs}", layer_name, "memory")
@@ -338,6 +340,7 @@ class WaterRegimeDock(QDockWidget):
         provider.addAttributes([
             QgsField("field_id", QMetaType.Type.QString),
             QgsField("kornix_label", QMetaType.Type.QString),
+            QgsField("has_kornix", QMetaType.Type.Int),
         ])
         labels.updateFields()
 
@@ -346,12 +349,34 @@ class WaterRegimeDock(QDockWidget):
             feature = QgsFeature(labels.fields())
             feature.setGeometry(source_feature.geometry())
             field_id = self.field_id_for_feature(source_feature)
-            feature.setAttributes([field_id, self.kornix_label_for_field(field_id)])
+            has_kornix = bool(self.kornix_rows_for_field(field_id))
+            feature.setAttributes([field_id, self.kornix_label_for_field(field_id), int(has_kornix)])
             features.append(feature)
         provider.addFeatures(features)
 
-        labels.renderer().setSymbol(
-            QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": "0,0,0,0"})
+        labels.setRenderer(QgsCategorizedSymbolRenderer(
+            "has_kornix",
+            [
+                QgsRendererCategory(
+                    1,
+                    QgsFillSymbol.createSimple({
+                        "color": "0,220,185,95",
+                        "outline_color": "0,150,130,255",
+                        "outline_width": "0.8",
+                    }),
+                    "КОРНИКС: данные есть",
+                ),
+                QgsRendererCategory(
+                    0,
+                    QgsFillSymbol.createSimple({"color": "0,0,0,0", "outline_color": "0,0,0,0"}),
+                    "КОРНИКС: нет данных",
+                ),
+            ],
+        ))
+        labels.triggerRepaint()
+        self.iface.mapCanvas().refresh()
+        self.log(
+            f"Выделены поля КОРНИКС: {sum(feature['has_kornix'] for feature in features)} из {len(features)}."
         )
         label_settings = QgsPalLayerSettings()
         label_settings.fieldName = "kornix_label"

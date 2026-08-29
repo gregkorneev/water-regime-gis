@@ -36,6 +36,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--dataset", nargs="+", default=["kaa", "sp"])
+    parser.add_argument("--date-from", type=dt.date.fromisoformat)
+    parser.add_argument("--date-to", type=dt.date.fromisoformat)
     parser.add_argument("--limit", type=int, help="Process at most N field/date records.")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--fail-fast", action="store_true")
@@ -53,12 +55,16 @@ def main() -> int:
         gdal.SetConfigOption(key, value)
 
     args = parse_args()
+    if args.date_from and args.date_to and args.date_to < args.date_from:
+        raise ValueError("--date-to must not be earlier than --date-from")
     output_root = args.output.expanduser().resolve()
     manifest_path = output_root / "analysis_manifest.json"
     metadata_paths = sorted(
         path
         for dataset in args.dataset
         for path in (output_root / dataset).glob("*/*/metadata.json")
+        if (args.date_from is None or path.parent.name >= args.date_from.isoformat())
+        and (args.date_to is None or path.parent.name <= args.date_to.isoformat())
     )
     records = []
     sources = {}

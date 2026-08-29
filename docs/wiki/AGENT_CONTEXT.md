@@ -8,7 +8,7 @@
 - Observearth 1.0.2 и Isoliner 5.6.21 установлены в профиль QGIS.
 - Работают выбор точки, fallback AOI, попытка уточнения НСПД, Sentinel-2 и индексы NDVI/NDMI/SAVI/NDRE.
 - Каждый спутниковый расчет создает `outputs/reports/latest_metrics.json` со статистикой индексных растров.
-- `scripts/qgis/download_field_imagery.py` загружает временной ряд RGB Sentinel-2 для каждого поля из `KAA.gpkg` и `SP.gpkg` за 2026-04-01–2026-08-10, с manifest и возобновлением по датам.
+- `scripts/qgis/download_field_imagery.py` загружает временной ряд RGB Sentinel-2 для каждого поля из `KAA.gpkg` и `SP.gpkg` за заданный диапазон дат, с manifest и возобновлением. При нескольких обработках одной сцены сначала выбирается вариант с минимальной деградацией MSI, затем с меньшей облачностью.
 - Тот же скачиватель поддерживает Sentinel-1 RTC: параметры `--collection sentinel-1-rtc --asset vv vh --output-name sentinel_rtc.tif --no-cloud-filter` создают двухканальный VV/VH GeoTIFF в `outputs/imagery/sentinel1/`. При докачке SP сначала запускаются 37 полей из поставки КОРНИКС, затем остальные.
 - `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
 - `scripts/qgis/calculate_kaa_zonal_means.py` считает зональное среднее NDVI/NDMI/NDRE/SAVI по каждому готовому растровому пятну KAA/SP, исключая nodata, облака и сцены с облачностью внутри поля свыше 20%; загрузчик по умолчанию принимает только Sentinel-2 сцены с глобальной облачностью до 10%.
@@ -31,8 +31,9 @@
   `sp_satellite_timeseries_20260401_20260827_v001`; ключ —
   `field_short_name + method_code + day`; `field_short_name` имеет вид `1.1`.
 - `scripts/analysis/merge_kornix_sentinel.py` объединяет КОРНИКС с валидными
-  SP-индексами Sentinel-2 по нормализованному полю и точной дате. На 2026-08-28
-  получено 448 совпадений по всем 37 полям для `ivanov_n4l_meteo_soil`.
+  SP-индексами Sentinel-2 по нормализованному полю и точной дате. После
+  обновления SP-ряда до 2026-08-20 получено 433 совпадения для
+  `ivanov_n4l_meteo_soil`.
 
 ## Следующие функции
 

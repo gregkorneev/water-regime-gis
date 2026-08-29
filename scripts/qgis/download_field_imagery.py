@@ -247,7 +247,7 @@ def find_scenes(
     covering = [item for item in items if bbox_contains(item.get("bbox", []), center)]
     candidates = covering or items
     by_date = {}
-    for item in sorted(candidates, key=cloud_cover):
+    for item in sorted(candidates, key=scene_quality):
         scene_date = item["properties"].get("datetime", "")[:10]
         if scene_date and all(asset in item.get("assets", {}) for asset in assets):
             by_date.setdefault(scene_date, item)
@@ -263,6 +263,17 @@ def bbox_contains(item_bbox: list[float], point: tuple[float, float]) -> bool:
 def cloud_cover(item: dict) -> float:
     value = item.get("properties", {}).get("eo:cloud_cover")
     return float(value) if value is not None else 1000.0
+
+
+def scene_quality(item: dict) -> tuple[float, float, float]:
+    properties = item.get("properties", {})
+    degraded = properties.get("s2:degraded_msi_data_percentage")
+    nodata = properties.get("s2:nodata_pixel_percentage")
+    return (
+        float(degraded) if degraded is not None else 0.0,
+        cloud_cover(item),
+        float(nodata) if nodata is not None else 0.0,
+    )
 
 
 def download_bands(

@@ -138,8 +138,16 @@ def analyze(rows: list[dict]) -> dict:
     water = ("precipitation_3d_mm", "irrigation_3d_mm", "precipitation_7d_mm", "irrigation_7d_mm")
     water_model = fit_model(rows, water)
     radar_model = fit_model(rows, water + ("sentinel1_vv_db", "sentinel1_vh_db"))
+    pooled_moisture = np.array([row["kornix_moisture_0_10"] for row in rows], dtype=float)
+    within_moisture = within_field(rows, "kornix_moisture_0_10")
+    correlations = {"pooled": {}, "within_field": {}}
     partial = {}
     for column in ("sentinel1_vv_db", "sentinel1_vh_db"):
+        pooled_radar = np.array([row[column] for row in rows], dtype=float)
+        correlations["pooled"][column] = correlation(
+            pooled_moisture - pooled_moisture.mean(), pooled_radar - pooled_radar.mean()
+        )
+        correlations["within_field"][column] = correlation(within_moisture, within_field(rows, column))
         partial[column] = correlation(
             residual_after_controls(rows, "kornix_moisture_0_10", water),
             residual_after_controls(rows, column, water),
@@ -150,6 +158,7 @@ def analyze(rows: list[dict]) -> dict:
         "water_only": {key: value for key, value in water_model.items() if key != "residual"},
         "water_plus_radar": {key: value for key, value in radar_model.items() if key != "residual"},
         "radar_r_squared_gain_after_water": radar_model["r_squared_within_field"] - water_model["r_squared_within_field"],
+        "pearson_correlation": correlations,
         "partial_correlation_after_water": partial,
         "interpretation": "Связь оценивается внутри каждого поля после учета суммы осадков и полива за 3 и 7 суток; это наблюдательная, а не причинная оценка.",
     }

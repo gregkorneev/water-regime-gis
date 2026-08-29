@@ -19,6 +19,7 @@ DEFAULT_MERGED = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_satellite_timeseries_20260401_20260827_v001/sp_all_fields_all_methods_daily.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_lag.json"
 DEFAULT_FIELD_REPORT = ROOT / "results/tables/sp_kornix_fcover_field_lags.csv"
+DEFAULT_WARP_REPORT = ROOT / "results/tables/sp_kornix_fcover_piecewise_warp.csv"
 METHOD = "ivanov_n4l_meteo_soil"
 
 
@@ -33,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=20260829)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--field-report", type=Path, default=DEFAULT_FIELD_REPORT)
+    parser.add_argument("--warp-report", type=Path, default=DEFAULT_WARP_REPORT)
     parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
 
@@ -242,6 +244,57 @@ def phenology(obs, cover) -> dict:
     return {"usable_fields": usable, "lag_days_fcover_minus_kornix": {label: {"count": len(values), "median": float(np.median(values)), "p25": float(np.quantile(values, .25)), "p75": float(np.quantile(values, .75))} for label, values in differences.items()}}
 
 
+def piecewise_time_warp(obs, cover, bootstrap: int, seed: int) -> tuple[list[dict], dict]:
+    """Estimate the local time scale FCover duration / KORNIX duration by growth stage."""
+    fractions = (.20, .35, .50, .65, .80)
+    by_field = defaultdict(list)
+    for row in obs:
+        by_field[row["field_id"]].append((row["day"], row["fcover"]))
+    rows = []
+    for field, fcover_points in by_field.items():
+        fcover_points.sort()
+        kornix_points = sorted((day, value[0]) for day, value in cover.get(field, {}).items() if fcover_points[0][0] <= day <= fcover_points[-1][0])
+        if len(fcover_points) < 5 or len(kornix_points) < 5 or max(value for _, value in fcover_points) - min(value for _, value in fcover_points) < .05:
+            continue
+        f_days = [crossing_day(fcover_points, fraction) for fraction in fractions]
+        k_days = [crossing_day(kornix_points, fraction) for fraction in fractions]
+        for left, right, f_start, f_end, k_start, k_end in zip(fractions, fractions[1:], f_days, f_days[1:], k_days, k_days[1:]):
+            if None in (f_start, f_end, k_start, k_end):
+                continue
+            f_duration, k_duration = f_end - f_start, k_end - k_start
+            if f_duration <= 0 or k_duration <= 0:
+                continue
+            rows.append({
+                "field_id": field,
+                "stage_from_fraction": left,
+                "stage_to_fraction": right,
+                "fcover_duration_days": f_duration,
+                "kornix_duration_days": k_duration,
+                "stretch_factor_fcover_over_kornix": f_duration / k_duration,
+                "additional_stretch_percent": 100 * (f_duration / k_duration - 1),
+                "fcover_lag_at_stage_start_days": f_start - k_start,
+                "fcover_lag_at_stage_end_days": f_end - k_end,
+            })
+    rng = np.random.default_rng(seed)
+    summary = []
+    for left, right in zip(fractions, fractions[1:]):
+        stage_rows = [row for row in rows if row["stage_from_fraction"] == left and row["stage_to_fraction"] == right]
+        factors = np.array([row["stretch_factor_fcover_over_kornix"] for row in stage_rows])
+        if not len(factors):
+            continue
+        samples = [float(np.median(rng.choice(factors, len(factors), replace=True))) for _ in range(bootstrap)]
+        summary.append({
+            "stage": f"{int(left * 100)}–{int(right * 100)}%",
+            "fields": len(factors),
+            "median_stretch_factor": float(np.median(factors)),
+            "p25_stretch_factor": float(np.quantile(factors, .25)),
+            "p75_stretch_factor": float(np.quantile(factors, .75)),
+            "bootstrap_ci95_stretch_factor": [float(np.quantile(samples, .025)), float(np.quantile(samples, .975))],
+            "median_additional_stretch_percent": float(100 * (np.median(factors) - 1)),
+        })
+    return rows, {"stage_fractions": list(fractions), "definition": "factor = duration of FCover stage / duration of the corresponding KORNIX stage; values above 1 mean that this KORNIX segment must be stretched in time.", "summary": summary}
+
+
 def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -271,6 +324,7 @@ def main() -> int:
     profile = lag_profile(obs, cover, lags)
     optimum = best_lag(profile)
     fields = field_lags(obs, cover, lags)
+    warp_rows, warp = piecewise_time_warp(obs, cover, args.bootstrap, args.seed)
     report = {
         "method_code": args.method,
         "sign_convention": "lag=-12 means FCover(t) is compared with Kornix canopy cover(t-12), equivalent to shifting the Kornix curve 12 days right.",
@@ -282,9 +336,11 @@ def main() -> int:
         "field_optima": {"median_lag_days": float(np.median([row['optimal_lag_days'] for row in fields])), "lag_counts": {str(lag): sum(row['optimal_lag_days'] == lag for row in fields) for lag in sorted({row['optimal_lag_days'] for row in fields})}},
         "leave_one_field_out": leave_one_field_out(obs, cover, lags),
         "phenology": phenology(obs, cover),
+        "piecewise_time_warp": warp,
         "residual_after_field_and_cubic_das": {"at_zero": residual_correlation(obs, cover, 0), "at_best_lag": residual_correlation(obs, cover, optimum)},
     }
     write_csv(args.field_report, fields)
+    write_csv(args.warp_report, warp_rows)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     best = next(row for row in profile if row["lag_days"] == optimum)

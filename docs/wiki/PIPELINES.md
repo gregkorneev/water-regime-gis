@@ -139,6 +139,9 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 лаговый профиль, bootstrap по полям, оптимумы отдельных полей, leave-one-field-out,
 фенологические ориентиры 20/50/80% и максимум роста, а также корреляцию
 остатков после field effects и кубического `days_after_sowing`.
+Дополнительно он оценивает piecewise time warp на внутренних интервалах
+20–35–50–65–80% сезонной амплитуды: `duration_FCover / duration_Kornix` — это
+во сколько раз нужно растянуть соответствующий участок модели по времени.
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/analysis/analyze_kornix_fcover_lag.py
@@ -148,6 +151,8 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 `results/tables/sp_kornix_fcover_field_lags.csv`. Оптимум отдельного поля при
 нескольких спутниковых датах не интерпретируется как самостоятельная калибровка:
 он служит только диагностикой неоднородности.
+Локальные множители растяжения сохраняются в
+`results/tables/sp_kornix_fcover_piecewise_warp.csv`.
 
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк
 зональных средних, из них 4 748 с валидным значением, и 433 точных совпадения

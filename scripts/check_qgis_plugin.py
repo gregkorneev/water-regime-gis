@@ -28,6 +28,8 @@ def main() -> int:
     assert 'plugins.get("observearth")' in plugin
     assert '"isoliner:raster_to_isolines"' in plugin
     assert '"isoliner:kriging2d"' in plugin
+    assert "apply_kornix_filter" in plugin
+    assert '"field_external_key" IN' in plugin
     assert "project.write()" in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")

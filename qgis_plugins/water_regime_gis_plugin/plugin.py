@@ -243,9 +243,27 @@ class WaterRegimeDock(QDockWidget):
             (Path("/Users/korneev/Desktop/SP.gpkg"), "Поля SP"),
         ):
             layer = self.add_vector_layer(path, name)
-            if name == "Поля SP" and layer:
-                self.add_kornix_labels(layer)
+            if name in ("SP fields", "Поля SP") and layer:
+                self.apply_kornix_filter(layer)
+                if name == "Поля SP":
+                    self.add_kornix_labels(layer)
         self.iface.mapCanvas().refresh()
+
+    def apply_kornix_filter(self, layer: QgsVectorLayer):
+        """Show only SP polygons that have a supplied KORNIX daily series."""
+        if "field_external_key" not in layer.fields().names():
+            self.log(f"Не удалось отфильтровать {layer.name()}: нет field_external_key.")
+            return
+        field_keys = sorted(
+            path.name.removesuffix("_daily.csv").replace("SP_", "SP:", 1).replace("_", ".")
+            for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily.csv")
+        )
+        if not field_keys:
+            self.log("Ряды КОРНИКС не найдены: слой SP не изменён.")
+            return
+        quoted_keys = ", ".join(f"'{key}'" for key in field_keys)
+        layer.setSubsetString(f'"field_external_key" IN ({quoted_keys})')
+        self.log(f"Слой {layer.name()}: показаны {len(field_keys)} полей с данными КОРНИКС.")
 
     def open_chart_for_feature(self, feature):
         field_id = self.field_id_for_feature(feature)

@@ -83,6 +83,7 @@ def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str) -
         rows.append({
             "field_id": field_id,
             "day": day.isoformat(),
+            "days_after_sowing": number(row.get("days_after_sowing")),
             "kornix_moisture_0_10": moisture[field_id, day],
             "sentinel1_vv_db": values["VV"],
             "sentinel1_vh_db": values["VH"],

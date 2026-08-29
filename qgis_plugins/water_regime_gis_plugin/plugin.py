@@ -724,7 +724,7 @@ class FieldIndexChartDialog(QDialog):
         else:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")
-        axis.set_ylabel("Влажность Sentinel-1, 0.10–0.36")
+        axis.set_ylabel("Влажность Sentinel-1, 0.15–0.3730")
         axis.grid(True, alpha=0.25)
         if values:
             axis.legend(loc="best")

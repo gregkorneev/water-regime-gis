@@ -16,8 +16,7 @@ DEFAULT_INPUT = ROOT / "results/data/sp_kornix_sentinel1_moisture.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel1_field_holdout_predictions.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel1_field_holdout.json"
 TARGET = "kornix_moisture_0_10"
-WATER_FEATURES = (
-    "days_after_sowing",
+WATER_INPUTS = (
     "precipitation_3d_mm",
     "irrigation_3d_mm",
     "precipitation_7d_mm",
@@ -51,7 +50,7 @@ def split_fields(rows: list[dict], train_count: int, seed: int) -> tuple[list[st
 
 
 def feature_values(row: dict, mode: str) -> list[float]:
-    values = [row[name] for name in WATER_FEATURES] if mode != "sentinel1_only" else []
+    values = [row[name] for name in WATER_INPUTS] if mode != "sentinel1_only" else []
     if mode != "water_only":
         vv, vh = row["sentinel1_vv_db"], row["sentinel1_vh_db"]
         values.extend((vv, vh, vv * vh, vv * vv, vh * vh))
@@ -125,18 +124,18 @@ def train(rows: list[dict], train_count: int, seed: int, alpha: float) -> tuple[
         "water_only_test": metrics(actual, water_reconstruction),
         "sentinel1_plus_water_test": metrics(actual, hybrid_reconstruction),
         "test_r_squared_gain_from_sentinel1": metrics(actual, hybrid_reconstruction)["r_squared"] - metrics(actual, water_reconstruction)["r_squared"],
-        "features": {"sentinel1_only": ["VV", "VH", "VV*VH", "VV^2", "VH^2"], "water_only": list(WATER_FEATURES), "sentinel1_plus_water": [*WATER_FEATURES, "VV", "VH", "VV*VH", "VV^2", "VH^2"]},
+        "features": {"sentinel1_only": ["VV", "VH", "VV*VH", "VV^2", "VH^2"], "water_only": list(WATER_INPUTS), "sentinel1_plus_water": [*WATER_INPUTS, "VV", "VH", "VV*VH", "VV^2", "VH^2"]},
         "interpretation": "Это ретроспективная реконструкция КОРНИКС в даты Sentinel-1. Поля в test_fields не использовались при обучении; модель не является независимым наземным измерением.",
     }
     return predictions, report
 
 
 def self_test() -> None:
-    rows = [{"field_id": f"SP_{index}_1", "day": "2026-04-01", TARGET: 0.2, **{name: 1.0 for name in WATER_FEATURES}, "sentinel1_vv_db": -8.0, "sentinel1_vh_db": -16.0} for index in range(4)]
+    rows = [{"field_id": f"SP_{index}_1", "day": "2026-04-01", TARGET: 0.2, **{name: 1.0 for name in WATER_INPUTS}, "sentinel1_vv_db": -8.0, "sentinel1_vh_db": -16.0} for index in range(4)]
     train_fields, test_fields = split_fields(rows, 3, 1)
     assert len(train_fields) == 3 and len(test_fields) == 1
     assert len(feature_values(rows[0], "sentinel1_only")) == 5
-    assert len(feature_values(rows[0], "sentinel1_plus_water")) == len(WATER_FEATURES) + 5
+    assert len(feature_values(rows[0], "sentinel1_plus_water")) == len(WATER_INPUTS) + 5
 
 
 def main() -> int:

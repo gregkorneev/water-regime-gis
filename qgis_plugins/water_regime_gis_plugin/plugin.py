@@ -379,7 +379,8 @@ class WaterRegimeDock(QDockWidget):
             f"Выделены поля КОРНИКС: {sum(feature['has_kornix'] for feature in features)} из {len(features)}."
         )
         label_settings = QgsPalLayerSettings()
-        label_settings.fieldName = "kornix_label"
+        label_settings.fieldName = 'CASE WHEN "has_kornix" = 1 THEN "kornix_label" END'
+        label_settings.isExpression = True
         label_settings.enabled = True
         label_settings.displayAll = True
         text_format = QgsTextFormat()

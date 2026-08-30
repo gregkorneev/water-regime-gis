@@ -11,6 +11,7 @@
 ## Промежуточные данные
 
 - `data/interim/satellite/latest_scene.json` — metadata выбранной Sentinel-2 сцены;
+- `data/interim/external_timeseries/<timestamp>/` — неизменяемая выгрузка CSV или ZIP внешнего сервиса; `latest.json` хранит URL, период и список CSV последней выгрузки. Для запуска автоматического обновления в одном из CSV обязательна колонка `day` или `date` с датой ISO-8601.
 - `data/interim/satellite/<scene_id>/*.tif` — обрезанные каналы;
 - `data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/` —
   эталонная поставка v006 суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
@@ -47,6 +48,7 @@
   по растрам SP; источник для объединения с КОРНИКС;
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;
+- `results/tables/external_index_models.csv` — линейные модели внешняя числовая переменная → индекс Sentinel-2, построенные только по точным совпадениям `field_id + date`; для каждой связи хранятся коэффициенты, Pearson r, R² и число пар.
 - `results/data/model_dataset.csv` — объединение спутниковых и наземных измерений после появления `data/ground_measurements.csv`;
 - `results/data/sp_kornix_sentinel_daily.csv` — точное объединение суточных
   рядов КОРНИКС SP выбранного метода с валидными индексами Sentinel-2;

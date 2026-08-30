@@ -19,7 +19,7 @@
 
 ## Выполнение
 
-Плагин вызывает QGIS Python `/Applications/QGIS.app/Contents/MacOS/python`. Долгие команды выполняются через `QgsTask`. Результаты добавляются в текущую сессию QGIS, а `Собрать проект/слои` сохраняет ее в `outputs/maps/water_regime_gis.qgs`.
+Плагин вызывает QGIS Python `/Applications/QGIS.app/Contents/MacOS/python`. Долгие команды выполняются через `QgsTask`. Пользователь выбирает локальный полигональный слой, а URL CSV/ZIP выгрузки внешней модели; после новой выгрузки автоматически запускается последовательность Sentinel-2, облачной маски, индексов, Sentinel-1 и зональных рядов только для этого слоя. `PROGRESS` этапов передается в progress bar панели. Новые снимки добавляются в текущую сессию QGIS, а `Собрать проект/слои` сохраняет ее в `outputs/maps/water_regime_gis.qgs`.
 
 Жесткие пути собраны в `qgis_plugins/water_regime_gis_plugin/settings.py` и `src/water_regime_gis/qgis_runtime.py`.
 

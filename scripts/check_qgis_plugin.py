@@ -31,6 +31,10 @@ def main() -> int:
     assert "apply_kornix_filter" in plugin
     assert '"field_external_key" IN' in plugin
     assert 'Path("/Users/korneev/Desktop/KAA.gpkg")' not in plugin
+    assert "Загрузить контуры полей" in plugin
+    assert "Загрузить ряды из сервиса" in plugin
+    assert "Обновить Sentinel-1/2" in plugin
+    assert "QProgressBar" in plugin
     assert "project.write()" in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")

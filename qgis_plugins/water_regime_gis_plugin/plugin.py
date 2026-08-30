@@ -11,11 +11,13 @@ from qgis.PyQt.QtGui import QCursor
 from qgis.PyQt.QtWidgets import (
     QAction,
     QDialog,
+    QFileDialog,
     QDockWidget,
     QGridLayout,
     QLabel,
     QPushButton,
     QPlainTextEdit,
+    QProgressBar,
     QToolTip,
     QVBoxLayout,
     QWidget,
@@ -82,23 +84,31 @@ class WaterRegimeDock(QDockWidget):
         self.chart_dialogs = []
         self.active_task = None
         self.kornix_label_cache = {}
+        stored_path = str(QgsProject.instance().customProperty("water_regime_gis/field_contours", ""))
+        self.field_contours_path = Path(stored_path) if stored_path else None
 
         panel = QWidget()
         layout = QVBoxLayout(panel)
-        layout.addWidget(QLabel("Личный QGIS-сценарий анализа поля"))
+        layout.addWidget(QLabel("Автоматизированный QGIS-сценарий анализа полей"))
 
         actions = QGridLayout()
         layout.addLayout(actions)
-        self.check_button = self.add_button(actions, 0, 0, "Проверить среду", self.check_environment)
-        self.pick_button = self.add_button(actions, 0, 1, "Взять точку с карты", self.enable_point_capture)
-        self.boundary_button = self.add_button(actions, 1, 0, "Уточнить границу", self.resolve_boundary)
-        self.indices_button = self.add_button(actions, 1, 1, "Рассчитать индексы", self.process_indices)
+        self.contours_button = self.add_button(actions, 0, 0, "Загрузить контуры полей", self.load_field_contours)
+        self.timeseries_button = self.add_button(actions, 0, 1, "Загрузить ряды из сервиса", self.download_external_timeseries)
+        self.refresh_button = self.add_button(actions, 1, 0, "Обновить Sentinel-1/2", self.refresh_field_timeseries)
+        self.check_button = self.add_button(actions, 1, 1, "Проверить среду", self.check_environment)
         self.observearth_button = self.add_button(actions, 2, 0, "Открыть Observearth", self.open_observearth)
         self.isolines_button = self.add_button(actions, 2, 1, "Построить изолинии", self.open_isolines)
         self.kriging_button = self.add_button(actions, 3, 0, "Кригинг измерений", self.open_kriging)
         self.project_button = self.add_button(actions, 3, 1, "Собрать проект/слои", self.build_project)
         self.chart_button = self.add_button(actions, 4, 0, "График по полю", self.enable_field_chart_tool)
         self.average_chart_button = self.add_button(actions, 4, 1, "Средний график", self.open_average_chart)
+
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 100)
+        self.progress.setValue(0)
+        self.progress.setFormat("Ожидание загрузки снимков")
+        layout.addWidget(self.progress)
 
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
@@ -184,6 +194,59 @@ class WaterRegimeDock(QDockWidget):
             after_success=self.load_raster_layers,
             timeout=1800,
         )
+
+    def load_field_contours(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Контуры полей", str(self.field_contours_path.parent if self.field_contours_path else settings.PROJECT_ROOT),
+            "Векторные слои (*.gpkg *.geojson *.json *.shp);;Все файлы (*)",
+        )
+        if not path:
+            return
+        source = Path(path).resolve()
+        layer = self.add_vector_layer(source, "Контуры полей пользователя")
+        if not layer:
+            return
+        if layer.geometryType() != Qgis.GeometryType.Polygon:
+            self.notify("Нужен полигональный слой контуров полей.", Qgis.Warning)
+            return
+        self.field_contours_path = source
+        QgsProject.instance().setCustomProperty("water_regime_gis/field_contours", str(source))
+        self.log(f"Контуры полей загружены: {source} ({layer.featureCount()} объектов).")
+        self.notify("Контуры полей добавлены в проект.")
+
+    def download_external_timeseries(self):
+        from qgis.PyQt.QtWidgets import QInputDialog
+
+        url, accepted = QInputDialog.getText(
+            self, "Временные ряды", "URL выгрузки CSV или ZIP из внешнего сервиса:"
+        )
+        if not accepted or not url.strip():
+            return
+        self.run_task(
+            "Загрузка временных рядов из внешнего сервиса",
+            [settings.QGIS_PYTHON, settings.EXTERNAL_TIMESERIES_SCRIPT, "--url", url.strip()],
+            after_success=self.refresh_field_timeseries,
+            timeout=1800,
+        )
+
+    def refresh_field_timeseries(self):
+        if not self.field_contours_path or not self.field_contours_path.exists():
+            self.notify("Сначала загрузите локальный полигональный слой контуров полей.", Qgis.Warning)
+            return
+        self.progress.setValue(0)
+        self.progress.setFormat("Подготовка обновления Sentinel-1/2")
+        self.run_task(
+            "Обновление Sentinel-1/2 и расчетов",
+            [settings.QGIS_PYTHON, settings.REFRESH_TIMESERIES_SCRIPT, "--fields", self.field_contours_path],
+            after_success=self.load_downloaded_rasters,
+            timeout=14400,
+        )
+
+    def load_downloaded_rasters(self):
+        for path in sorted((settings.PROJECT_ROOT / "outputs/imagery").glob("**/sentinel_*.tif")):
+            self.add_raster_layer(path, path.parent.name + ": " + path.stem)
+        self.iface.mapCanvas().refresh()
+        self.log("Новые снимки добавлены в текущий проект QGIS.")
 
     def open_observearth(self):
         from qgis.utils import plugins
@@ -529,14 +592,22 @@ class WaterRegimeDock(QDockWidget):
             self.notify("Дождитесь завершения текущей операции.", Qgis.Warning)
             return
         task = CommandTask(label, command, self.log, self.task_finished, after_success, timeout)
+        task.progressChanged.connect(self.update_progress)
         self.active_task = task
         self.set_buttons_enabled(False)
         self.log(f"\n== {label} ==")
         QgsApplication.taskManager().addTask(task)
 
+    def update_progress(self, value: float):
+        self.progress.setValue(round(value))
+        self.progress.setFormat(f"Загрузка и обработка снимков: {round(value)}%")
+
     def task_finished(self, task):
         self.active_task = None
         self.set_buttons_enabled(True)
+        if task.returncode == 0:
+            self.progress.setValue(100)
+            self.progress.setFormat("Обновление завершено")
         if task.returncode == 0:
             self.notify(f"{task.description()}: OK")
         else:
@@ -544,10 +615,10 @@ class WaterRegimeDock(QDockWidget):
 
     def set_buttons_enabled(self, enabled: bool):
         for button in (
+            self.contours_button,
+            self.timeseries_button,
+            self.refresh_button,
             self.check_button,
-            self.pick_button,
-            self.boundary_button,
-            self.indices_button,
             self.observearth_button,
             self.isolines_button,
             self.kriging_button,
@@ -683,10 +754,27 @@ class FieldIndexChartDialog(QDialog):
         satellite_axis = figure.add_subplot(311)
         kornix_axis = figure.add_subplot(312, sharex=satellite_axis)
         radar_axis = figure.add_subplot(313, sharex=satellite_axis)
+        satellite_start = self.first_satellite_date(rows)
         self.plot_rows(satellite_axis, rows)
-        self.plot_kornix_rows(kornix_axis, kornix_rows)
-        self.plot_radar_rows(radar_axis, radar_rows)
+        self.plot_kornix_rows(kornix_axis, kornix_rows, satellite_start)
+        self.plot_radar_rows(radar_axis, radar_rows, satellite_start)
+        if satellite_start:
+            satellite_axis.set_xlim(left=satellite_start)
         canvas.draw()
+
+    @staticmethod
+    def first_satellite_date(rows: list[dict]):
+        import datetime as dt
+
+        dates = []
+        for row in rows:
+            if row.get("index") not in settings.CHART_INDICES or row.get("zonal_mean") in ("", None):
+                continue
+            try:
+                dates.append(dt.date.fromisoformat(row["scene_date"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+        return min(dates) if dates else None
 
     def plot_rows(self, axis, rows: list[dict]):
         import datetime as dt
@@ -726,9 +814,10 @@ class FieldIndexChartDialog(QDialog):
         if by_index:
             axis.legend(loc="best")
 
-    def plot_kornix_rows(self, axis, rows: list[dict]):
+    def plot_kornix_rows(self, axis, rows: list[dict], satellite_start=None):
         import datetime as dt
 
+        rows = self.rows_from_date(rows, "day", satellite_start)
         plotted = False
         for label, column in settings.KORNIX_CHART_SERIES.items():
             values = []
@@ -780,9 +869,10 @@ class FieldIndexChartDialog(QDialog):
         except (TypeError, ValueError):
             return False
 
-    def plot_radar_rows(self, axis, rows: list[dict]):
+    def plot_radar_rows(self, axis, rows: list[dict], satellite_start=None):
         import datetime as dt
 
+        rows = self.rows_from_date(rows, "scene_date", satellite_start)
         vv_values = []
         for row in rows:
             value = row.get("zonal_mean_db")
@@ -818,6 +908,12 @@ class FieldIndexChartDialog(QDialog):
             by_date[date].append(value)
         return [(date, statistics.median(by_date[date])) for date in sorted(by_date)]
 
+    @staticmethod
+    def rows_from_date(rows: list[dict], date_column: str, start_date):
+        if not start_date:
+            return rows
+        return [row for row in rows if row.get(date_column, "") >= start_date.isoformat()]
+
 class CommandTask(QgsTask):
     def __init__(self, label, command, log_callback, finished_callback, after_success=None, timeout=300):
         super().__init__(label, QgsTask.CanCancel)
@@ -837,19 +933,26 @@ class CommandTask(QgsTask):
         src = str(settings.PROJECT_ROOT / "src")
         env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else f"{src}{os.pathsep}{env['PYTHONPATH']}"
         try:
-            result = subprocess.run(
+            process = subprocess.Popen(
                 self.command,
                 cwd=settings.PROJECT_ROOT,
                 env=env,
                 text=True,
-                capture_output=True,
-                timeout=self.timeout,
-                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=1,
             )
-            self.returncode = result.returncode
-            self.stdout = result.stdout
-            self.stderr = result.stderr
-            return result.returncode == 0
+            lines = []
+            for line in process.stdout:
+                lines.append(line)
+                if line.startswith("PROGRESS "):
+                    try:
+                        self.setProgress(float(line.split()[1]))
+                    except (IndexError, ValueError):
+                        pass
+            self.returncode = process.wait(timeout=self.timeout)
+            self.stdout = "".join(lines)
+            return self.returncode == 0
         except Exception as exc:
             self.stderr = str(exc)
             self.returncode = 1

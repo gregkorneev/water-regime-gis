@@ -35,6 +35,8 @@ def main() -> int:
     assert "Загрузить ряды из сервиса" in plugin
     assert "Обновить Sentinel-1/2" in plugin
     assert "QProgressBar" in plugin
+    assert "set_toolbar_action_color" in plugin
+    assert "QToolButton { color: #f2f2f2; }" in plugin
     assert 'readEntry("water_regime_gis", "field_contours"' in plugin
     assert 'writeEntry("water_regime_gis", "field_contours"' in plugin
     assert "project.write()" in plugin

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QMetaType, Qt
-from qgis.PyQt.QtGui import QCursor
+from qgis.PyQt.QtGui import QCursor, QPalette
 from qgis.PyQt.QtWidgets import (
     QAction,
     QDialog,
@@ -19,6 +19,7 @@ from qgis.PyQt.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QToolTip,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -57,6 +58,16 @@ class WaterRegimeGisPlugin:
         self.action.triggered.connect(self.show_dock)
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Water Regime GIS", self.action)
+        self.set_toolbar_action_color()
+
+    def set_toolbar_action_color(self):
+        """Keep the plugin name readable in QGIS dark themes."""
+        palette = self.iface.mainWindow().palette()
+        if palette.color(QPalette.Window).value() >= 128:
+            return
+        for button in self.iface.mainWindow().findChildren(QToolButton):
+            if button.defaultAction() == self.action:
+                button.setStyleSheet("QToolButton { color: #f2f2f2; }")
 
     def unload(self):
         if self.action:

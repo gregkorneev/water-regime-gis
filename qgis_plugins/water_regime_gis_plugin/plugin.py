@@ -372,9 +372,10 @@ class WaterRegimeDock(QDockWidget):
         import csv
 
         rows = []
-        columns = tuple(settings.AVERAGE_CHART_KORNIX_SERIES.values()) + (
-            "precipitation_raw_daily_mm", "irrigation_raw_daily_mm",
-        )
+        columns = tuple(dict.fromkeys(
+            (*settings.AVERAGE_CHART_KORNIX_SERIES.values(), *settings.AVERAGE_CHART_RADAR_KORNIX_SERIES.values(),
+             "precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
+        ))
         for field_id in field_ids:
             path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily.csv"
             with path.open(newline="", encoding="utf-8-sig") as handle:

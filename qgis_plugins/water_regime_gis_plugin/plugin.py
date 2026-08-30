@@ -84,7 +84,7 @@ class WaterRegimeDock(QDockWidget):
         self.chart_dialogs = []
         self.active_task = None
         self.kornix_label_cache = {}
-        stored_path = str(QgsProject.instance().customProperty("water_regime_gis/field_contours", ""))
+        stored_path, _ = QgsProject.instance().readEntry("water_regime_gis", "field_contours", "")
         self.field_contours_path = Path(stored_path) if stored_path else None
 
         panel = QWidget()
@@ -210,7 +210,7 @@ class WaterRegimeDock(QDockWidget):
             self.notify("Нужен полигональный слой контуров полей.", Qgis.Warning)
             return
         self.field_contours_path = source
-        QgsProject.instance().setCustomProperty("water_regime_gis/field_contours", str(source))
+        QgsProject.instance().writeEntry("water_regime_gis", "field_contours", str(source))
         self.log(f"Контуры полей загружены: {source} ({layer.featureCount()} объектов).")
         self.notify("Контуры полей добавлены в проект.")
 

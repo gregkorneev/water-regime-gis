@@ -35,6 +35,8 @@ def main() -> int:
     assert "Загрузить ряды из сервиса" in plugin
     assert "Обновить Sentinel-1/2" in plugin
     assert "QProgressBar" in plugin
+    assert 'readEntry("water_regime_gis", "field_contours"' in plugin
+    assert 'writeEntry("water_regime_gis", "field_contours"' in plugin
     assert "project.write()" in plugin
     print(f"Plugin source: OK {SOURCE}")
     print(f"QGIS profile target: {TARGET}")

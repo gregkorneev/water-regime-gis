@@ -7,11 +7,48 @@ Sentinel-2 и сопоставления рядов Sentinel-1, Sentinel-2 и К
 
 - macOS;
 - QGIS в `/Applications/QGIS.app`;
-- репозиторий в `/Users/korneev/Desktop/water-regime-gis`;
+- локальный клон репозитория с заданным в `settings.py` путём `PROJECT_ROOT`;
 - профиль QGIS `default`;
 - интернет для НСПД, Planetary Computer STAC и спутниковых COG.
 
 Observearth и Isoliner устанавливаются через стандартный менеджер модулей QGIS. Для кадастрового контура используется `rosreestr-search-qgis-plugin`.
+
+## Развёртывание на новом Mac
+
+1. Установите QGIS для macOS в стандартный каталог
+   `/Applications/QGIS.app`. В QGIS откройте `Модули → Управление модулями` и
+   установите `Observearth` и `Isoliner`.
+2. Клонируйте репозиторий вместе со снимками и результатами. Для доступа по SSH
+   предварительно добавьте ключ к GitHub:
+
+   ```bash
+   git clone git@github.com:gregkorneev/water-regime-gis.git ~/Desktop/water-regime-gis
+   cd ~/Desktop/water-regime-gis
+   ```
+
+   Если SSH не настроен, используйте URL `https://github.com/gregkorneev/water-regime-gis.git`.
+3. Укажите фактический путь к клону в
+   `qgis_plugins/water_regime_gis_plugin/settings.py`: замените значение
+   `PROJECT_ROOT` на путь из команды `pwd`. Это необходимо, если имя учётной
+   записи или расположение каталога отличается от исходного Mac.
+4. Установите локальный плагин и кадастровый модуль, затем выполните проверки:
+
+   ```bash
+   python3 scripts/install_qgis_plugin.py
+   python3 scripts/install_nspd_plugin.py
+   python3 scripts/check_project.py
+   python3 scripts/check_qgis_plugin.py
+   /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/check_qgis_context.py
+   ```
+
+5. Перезапустите QGIS и включите `Water Regime GIS` и
+   `rosreestr-search-qgis-plugin` в менеджере модулей. Откройте панель плагина,
+   нажмите `Проверить среду`, затем `Собрать проект/слои`.
+
+Все данные, результаты и снимки Sentinel хранятся в репозитории. Файл
+`outputs/maps/water_regime_gis.qgs` может содержать абсолютные пути исходного
+Mac, поэтому на новом компьютере его следует пересоздать кнопкой
+`Собрать проект/слои` после смены `PROJECT_ROOT`.
 
 ## Установка
 
@@ -86,7 +123,7 @@ Sentinel-1 остаются видимыми.
 - QGIS-проект: `outputs/maps/water_regime_gis.qgs`;
 - импортированные и разделенные границы: `data/processed/field_boundaries/`.
 
-Локальные данные и результаты исключены из git.
+Данные и результаты, включая снимки Sentinel, хранятся в git.
 
 ## Импорт готовых границ
 

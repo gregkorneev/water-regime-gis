@@ -34,6 +34,8 @@ class AggregateSeriesTest(unittest.TestCase):
 
     def test_average_chart_hides_cover_and_shifts_expected_fcover(self):
         self.assertNotIn("canopy_cover_fraction_derived", settings.AVERAGE_CHART_KORNIX_SERIES.values())
+        self.assertNotIn("soil_surface_0_10_theta", settings.AVERAGE_CHART_KORNIX_SERIES.values())
+        self.assertEqual(settings.AVERAGE_CHART_RADAR_KORNIX_SERIES, {"Влага КОРНИКС 0–10 см": "soil_surface_0_10_theta"})
         self.assertEqual(settings.AVERAGE_CHART_DATE_OFFSETS["satellite_fcover_expected"], 12)
 
 

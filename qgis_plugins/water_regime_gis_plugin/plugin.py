@@ -341,6 +341,7 @@ class WaterRegimeDock(QDockWidget):
             radar_rows,
             kornix_series=settings.AVERAGE_CHART_KORNIX_SERIES,
             kornix_date_offsets=settings.AVERAGE_CHART_DATE_OFFSETS,
+            radar_kornix_series=settings.AVERAGE_CHART_RADAR_KORNIX_SERIES,
         )
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
@@ -774,10 +775,12 @@ class FieldIndexChartDialog(QDialog):
         radar_rows: list[dict],
         kornix_series=None,
         kornix_date_offsets=None,
+        radar_kornix_series=None,
     ):
         super().__init__(parent)
         self.kornix_series = kornix_series or settings.KORNIX_CHART_SERIES
         self.kornix_date_offsets = kornix_date_offsets or {}
+        self.radar_kornix_series = radar_kornix_series or {}
         self.setWindowTitle(f"Sentinel-2, КОРНИКС и Sentinel-1: {field_id}")
         self.resize(980, 900)
 
@@ -796,7 +799,7 @@ class FieldIndexChartDialog(QDialog):
         satellite_period = self.satellite_date_range(rows)
         self.plot_rows(satellite_axis, rows)
         self.plot_kornix_rows(kornix_axis, kornix_rows, satellite_period)
-        self.plot_radar_rows(radar_axis, radar_rows, satellite_period)
+        self.plot_radar_rows(radar_axis, radar_rows, kornix_rows, satellite_period)
         if satellite_period:
             satellite_axis.set_xlim(*satellite_period)
         canvas.draw()
@@ -920,7 +923,7 @@ class FieldIndexChartDialog(QDialog):
         except (TypeError, ValueError):
             return False
 
-    def plot_radar_rows(self, axis, rows: list[dict], satellite_period=None):
+    def plot_radar_rows(self, axis, rows: list[dict], kornix_rows: list[dict], satellite_period=None):
         import datetime as dt
 
         rows = self.rows_in_period(rows, "scene_date", satellite_period)
@@ -933,7 +936,8 @@ class FieldIndexChartDialog(QDialog):
             vv_values.append((dt.date.fromisoformat(row["scene_date"]), float(value)))
 
         values = self.values_by_date(vv_values)
-        if values:
+        radar_plotted = bool(values)
+        if radar_plotted:
             dates = [date for date, _ in values]
             moisture = relative_moisture_proxy(
                 [value for _, value in values],
@@ -942,12 +946,23 @@ class FieldIndexChartDialog(QDialog):
             )
             axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
             axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Влажность VV")
-        else:
-            axis.text(0.5, 0.5, "Нет данных Sentinel-1 для поля", ha="center", va="center", transform=axis.transAxes)
+        kornix_plotted = False
+        for label, column in self.radar_kornix_series.items():
+            values = [
+                (dt.date.fromisoformat(row["day"]), float(row[column]))
+                for row in self.rows_in_period(kornix_rows, "day", satellite_period)
+                if row.get(column) not in ("", None)
+            ]
+            if values:
+                dates, moisture = zip(*values)
+                axis.plot(dates, moisture, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.6, label=label)
+                kornix_plotted = True
+        if not radar_plotted and not kornix_plotted:
+            axis.text(0.5, 0.5, "Нет данных Sentinel-1 или КОРНИКС", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")
-        axis.set_ylabel("Влажность Sentinel-1")
+        axis.set_ylabel("Влажность")
         axis.grid(True, alpha=0.25)
-        if values:
+        if radar_plotted or kornix_plotted:
             axis.legend(loc="best")
 
     def values_by_date(self, values):

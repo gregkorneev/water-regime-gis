@@ -42,8 +42,9 @@ KORNIX_CHART_SERIES = {
 AVERAGE_CHART_KORNIX_SERIES = {
     label: column
     for label, column in KORNIX_CHART_SERIES.items()
-    if column != "canopy_cover_fraction_derived"
+    if column not in {"canopy_cover_fraction_derived", "soil_surface_0_10_theta"}
 }
+AVERAGE_CHART_RADAR_KORNIX_SERIES = {"Влага КОРНИКС 0–10 см": "soil_surface_0_10_theta"}
 AVERAGE_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}
 KORNIX_CHART_COLORS = {
     "canopy_cover_fraction_derived": "#1f77b4",

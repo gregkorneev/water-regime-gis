@@ -754,16 +754,16 @@ class FieldIndexChartDialog(QDialog):
         satellite_axis = figure.add_subplot(311)
         kornix_axis = figure.add_subplot(312, sharex=satellite_axis)
         radar_axis = figure.add_subplot(313, sharex=satellite_axis)
-        satellite_start = self.first_satellite_date(rows)
+        satellite_period = self.satellite_date_range(rows)
         self.plot_rows(satellite_axis, rows)
-        self.plot_kornix_rows(kornix_axis, kornix_rows, satellite_start)
-        self.plot_radar_rows(radar_axis, radar_rows, satellite_start)
-        if satellite_start:
-            satellite_axis.set_xlim(left=satellite_start)
+        self.plot_kornix_rows(kornix_axis, kornix_rows, satellite_period)
+        self.plot_radar_rows(radar_axis, radar_rows, satellite_period)
+        if satellite_period:
+            satellite_axis.set_xlim(*satellite_period)
         canvas.draw()
 
     @staticmethod
-    def first_satellite_date(rows: list[dict]):
+    def satellite_date_range(rows: list[dict]):
         import datetime as dt
 
         dates = []
@@ -774,7 +774,7 @@ class FieldIndexChartDialog(QDialog):
                 dates.append(dt.date.fromisoformat(row["scene_date"]))
             except (KeyError, TypeError, ValueError):
                 continue
-        return min(dates) if dates else None
+        return (min(dates), max(dates)) if dates else None
 
     def plot_rows(self, axis, rows: list[dict]):
         import datetime as dt
@@ -794,7 +794,7 @@ class FieldIndexChartDialog(QDialog):
             values = self.values_by_date(by_index[index_name])
             dates = [date for date, _ in values]
             means = [value for _, value in values]
-            color = axis._get_lines.get_next_color()
+            color = settings.FCOVER_COLOR if index_name == "FCOVER" else axis._get_lines.get_next_color()
             axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
             fit = fit_seasonal_curve(values, settings.SEASONAL_CHART_FIT)
             axis.plot(
@@ -814,10 +814,10 @@ class FieldIndexChartDialog(QDialog):
         if by_index:
             axis.legend(loc="best")
 
-    def plot_kornix_rows(self, axis, rows: list[dict], satellite_start=None):
+    def plot_kornix_rows(self, axis, rows: list[dict], satellite_period=None):
         import datetime as dt
 
-        rows = self.rows_from_date(rows, "day", satellite_start)
+        rows = self.rows_in_period(rows, "day", satellite_period)
         plotted = False
         for label, column in settings.KORNIX_CHART_SERIES.items():
             values = []
@@ -828,7 +828,8 @@ class FieldIndexChartDialog(QDialog):
                 values.append((dt.date.fromisoformat(row["day"]), float(value)))
             if values:
                 dates, numbers = zip(*values)
-                axis.plot(dates, numbers, linewidth=1.5, label=label)
+                color = settings.FCOVER_COLOR if column == "satellite_fcover_expected" else None
+                axis.plot(dates, numbers, color=color, linewidth=1.5, label=label)
                 plotted = True
 
         water_by_date = {}
@@ -869,10 +870,10 @@ class FieldIndexChartDialog(QDialog):
         except (TypeError, ValueError):
             return False
 
-    def plot_radar_rows(self, axis, rows: list[dict], satellite_start=None):
+    def plot_radar_rows(self, axis, rows: list[dict], satellite_period=None):
         import datetime as dt
 
-        rows = self.rows_from_date(rows, "scene_date", satellite_start)
+        rows = self.rows_in_period(rows, "scene_date", satellite_period)
         vv_values = []
         for row in rows:
             value = row.get("zonal_mean_db")
@@ -909,10 +910,15 @@ class FieldIndexChartDialog(QDialog):
         return [(date, statistics.median(by_date[date])) for date in sorted(by_date)]
 
     @staticmethod
-    def rows_from_date(rows: list[dict], date_column: str, start_date):
-        if not start_date:
+    def rows_in_period(rows: list[dict], date_column: str, satellite_period):
+        if not satellite_period:
             return rows
-        return [row for row in rows if row.get(date_column, "") >= start_date.isoformat()]
+        start_date, end_date = satellite_period
+        return [
+            row
+            for row in rows
+            if start_date.isoformat() <= row.get(date_column, "") <= end_date.isoformat()
+        ]
 
 class CommandTask(QgsTask):
     def __init__(self, label, command, log_callback, finished_callback, after_success=None, timeout=300):

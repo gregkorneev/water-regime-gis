@@ -20,6 +20,7 @@ SENTINEL1_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sentinel1_zonal_mean
 KORNIX_BY_FIELD_DIR = PROJECT_ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field"
 KORNIX_METHOD = "ivanov_n4l_meteo_soil"
 ANALYSIS_EXCLUDED_FIELDS = {"SP_7_3"}
+AVERAGE_CHART_EXCLUDED_FIELDS = ANALYSIS_EXCLUDED_FIELDS | {"SP_2_7", "SP_4_3", "SP_6_6", "SP_6_7"}
 RADAR_MOISTURE_RANGE = (0.153527, 0.367581)
 CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE", "FCOVER"}
 RADAR_CHART_SERIES = {"VV", "VH"}

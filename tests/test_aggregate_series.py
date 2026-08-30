@@ -1,6 +1,7 @@
 import unittest
 
 from qgis_plugins.water_regime_gis_plugin.aggregate_series import average_by_date
+from qgis_plugins.water_regime_gis_plugin import settings
 
 
 class AggregateSeriesTest(unittest.TestCase):
@@ -24,6 +25,12 @@ class AggregateSeriesTest(unittest.TestCase):
         result = average_by_date(rows, "day", ("value",))
 
         self.assertEqual(result, [{"day": "2026-06-01", "value": 0.4}])
+
+    def test_average_chart_excludes_unstable_lag_fields(self):
+        self.assertEqual(
+            settings.AVERAGE_CHART_EXCLUDED_FIELDS,
+            {"SP_2_7", "SP_4_3", "SP_6_6", "SP_6_7", "SP_7_3"},
+        )
 
 
 if __name__ == "__main__":

@@ -319,13 +319,13 @@ class WaterRegimeDock(QDockWidget):
         dialog.show()
         self.chart_dialogs.append(dialog)
         dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
-        self.log(f"Открыт средний график по {len(field_ids)} полям КОРНИКС; SP_7_3 исключено.")
+        self.log(f"Открыт средний график по {len(field_ids)} полям КОРНИКС; исключены поля с нестабильным лагом.")
 
     def kornix_field_ids(self) -> set[str]:
         return {
             path.name.removesuffix("_daily.csv")
             for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily.csv")
-            if path.name.removesuffix("_daily.csv") not in settings.ANALYSIS_EXCLUDED_FIELDS
+            if path.name.removesuffix("_daily.csv") not in settings.AVERAGE_CHART_EXCLUDED_FIELDS
         }
 
     def average_satellite_rows(self, field_ids: set[str]) -> list[dict]:

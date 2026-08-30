@@ -187,6 +187,16 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 /Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_expected_fcover.py
 ```
 
+Для группировки полей именно по коэффициенту детерминации применяется
+`scripts/analysis/compare_kornix_fcover_satellite_r2.py`. Он сравнивает
+`satellite_fcover_expected` КОРНИКС с FCOVER, NDVI, NDMI, NDRE и SAVI
+Sentinel-2 только по одинаковым полю и дате. Группы `R²`: высокая (`>= 0.70`),
+умеренная (`0.40--0.70`), слабая (`0.10--0.40`) и очень слабая (`< 0.10`).
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_fcover_satellite_r2.py
+```
+
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк
 зональных средних, из них 4 748 с валидным значением, и 433 точных совпадения
 с КОРНИКС для метода `ivanov_n4l_meteo_soil`. За 2026-08-15 пригодны 86 полей,

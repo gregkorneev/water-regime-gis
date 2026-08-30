@@ -24,6 +24,13 @@ AVERAGE_CHART_EXCLUDED_FIELDS = ANALYSIS_EXCLUDED_FIELDS | {"SP_2_7", "SP_4_3", 
 RADAR_MOISTURE_RANGE = (0.153527, 0.367581)
 CHART_INDICES = {"NDVI", "NDMI", "SAVI", "NDRE", "FCOVER"}
 FCOVER_COLOR = "#2ca02c"
+CHART_INDEX_COLORS = {
+    "FCOVER": FCOVER_COLOR,
+    "NDMI": "#1f77b4",
+    "NDRE": "#ff7f0e",
+    "NDVI": "#d62728",
+    "SAVI": "#9467bd",
+}
 RADAR_CHART_SERIES = {"VV", "VH"}
 KORNIX_CHART_SERIES = {
     "Покрытие": "canopy_cover_fraction_derived",
@@ -31,6 +38,15 @@ KORNIX_CHART_SERIES = {
     "Ks": "water_stress_coefficient_ks",
     "Влага 0–10 см": "soil_surface_0_10_theta",
     "ET/PET": "actual_to_potential_et_ratio",
+}
+KORNIX_CHART_COLORS = {
+    "canopy_cover_fraction_derived": "#1f77b4",
+    "satellite_fcover_expected": FCOVER_COLOR,
+    "water_stress_coefficient_ks": "#ff7f0e",
+    "soil_surface_0_10_theta": "#d62728",
+    "actual_to_potential_et_ratio": "#9467bd",
+    "precipitation": "#17becf",
+    "irrigation": "#8c564b",
 }
 SEASONAL_CHART_FIT = {
     "loss": "soft_l1",

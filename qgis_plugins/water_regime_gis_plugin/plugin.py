@@ -805,7 +805,7 @@ class FieldIndexChartDialog(QDialog):
             values = self.values_by_date(by_index[index_name])
             dates = [date for date, _ in values]
             means = [value for _, value in values]
-            color = settings.FCOVER_COLOR if index_name == "FCOVER" else axis._get_lines.get_next_color()
+            color = settings.CHART_INDEX_COLORS[index_name]
             axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
             fit = fit_seasonal_curve(values, settings.SEASONAL_CHART_FIT)
             axis.plot(
@@ -839,7 +839,7 @@ class FieldIndexChartDialog(QDialog):
                 values.append((dt.date.fromisoformat(row["day"]), float(value)))
             if values:
                 dates, numbers = zip(*values)
-                color = settings.FCOVER_COLOR if column == "satellite_fcover_expected" else None
+                color = settings.KORNIX_CHART_COLORS[column]
                 axis.plot(dates, numbers, color=color, linewidth=1.5, label=label)
                 plotted = True
 
@@ -858,8 +858,14 @@ class FieldIndexChartDialog(QDialog):
             precipitation = [water_by_date[date][0] for date in dates]
             irrigation = [water_by_date[date][1] for date in dates]
             water_axis = axis.twinx()
-            water_axis.bar(dates, precipitation, width=0.8, color="#1f77b4", alpha=0.5, label="Осадки")
-            water_axis.bar(dates, irrigation, width=0.8, bottom=precipitation, color="#7b2cbf", alpha=0.5, label="Полив")
+            water_axis.bar(
+                dates, precipitation, width=0.8,
+                color=settings.KORNIX_CHART_COLORS["precipitation"], alpha=0.5, label="Осадки",
+            )
+            water_axis.bar(
+                dates, irrigation, width=0.8, bottom=precipitation,
+                color=settings.KORNIX_CHART_COLORS["irrigation"], alpha=0.5, label="Полив",
+            )
             water_axis.set_ylabel("Вода, мм/сут")
 
         if not plotted:

@@ -58,7 +58,7 @@ def robust_spline(values, trim_fraction: float = 0.05):
         x_keep,
         y_keep,
         k=min(3, len(keep) - 1),
-        s=len(keep) * float(np.var(y_keep)) * 0.20,
+        s=len(keep) * float(np.var(y_keep)) * 0.28,
     )
     dense_x = np.linspace(x[0], x[-1], max(120, len(values) * 4))
     return [(dates[0] + dt.timedelta(days=float(day)), float(value)) for day, value in zip(dense_x, spline(dense_x))]

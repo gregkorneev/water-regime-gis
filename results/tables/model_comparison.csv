@@ -1,0 +1,5 @@
+Model,Features,Validation,N,R2,RMSE,MAE,Status
+M1,OPTRAM,All,0,,,,ground_measurements_missing
+M2,NDMI,All,0,,,,ground_measurements_missing
+M3,OPTRAM + NDMI,All,0,,,,ground_measurements_missing
+M4,OPTRAM + NDMI + LAI + FCOVER,All,0,,,,ground_measurements_missing

@@ -1,0 +1,54 @@
+{
+  "matched_field_dates": 2178,
+  "fields": 37,
+  "water_only": {
+    "columns": [
+      "precipitation_3d_mm",
+      "irrigation_3d_mm",
+      "precipitation_7d_mm",
+      "irrigation_7d_mm"
+    ],
+    "r_squared_within_field": 0.5669452945481436,
+    "coefficients": {
+      "precipitation_3d_mm": 0.00029809036175445244,
+      "irrigation_3d_mm": 0.0016267714944869062,
+      "precipitation_7d_mm": 0.002798759460921216,
+      "irrigation_7d_mm": -0.0005598860833540582
+    }
+  },
+  "water_plus_radar": {
+    "columns": [
+      "precipitation_3d_mm",
+      "irrigation_3d_mm",
+      "precipitation_7d_mm",
+      "irrigation_7d_mm",
+      "sentinel1_vv_db",
+      "sentinel1_vh_db"
+    ],
+    "r_squared_within_field": 0.5710904211479046,
+    "coefficients": {
+      "precipitation_3d_mm": 0.00023361611394701466,
+      "irrigation_3d_mm": 0.0016579160809265898,
+      "precipitation_7d_mm": 0.002727922019918489,
+      "irrigation_7d_mm": -0.00048463762628093445,
+      "sentinel1_vv_db": -0.00031443837823533254,
+      "sentinel1_vh_db": 0.001217723716705051
+    }
+  },
+  "radar_r_squared_gain_after_water": 0.004145126599761073,
+  "pearson_correlation": {
+    "pooled": {
+      "sentinel1_vv_db": 0.23661508554762592,
+      "sentinel1_vh_db": 0.34848215288921475
+    },
+    "within_field": {
+      "sentinel1_vv_db": 0.2558521113420805,
+      "sentinel1_vh_db": 0.36565180300193917
+    }
+  },
+  "partial_correlation_after_water": {
+    "sentinel1_vv_db": 0.02853706281855366,
+    "sentinel1_vh_db": 0.09555886302108059
+  },
+  "interpretation": "Связь оценивается внутри каждого поля после учета суммы осадков и полива за 3 и 7 суток; это наблюдательная, а не причинная оценка."
+}

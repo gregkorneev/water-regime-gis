@@ -1,0 +1,12 @@
+{
+  "status": "bands_available_parameters_missing",
+  "analysis_raster_count": 724,
+  "required_bands": [
+    "Red/B04",
+    "NIR/B08",
+    "SWIR2/B12"
+  ],
+  "available_by_pipeline_contract": true,
+  "computed": false,
+  "reason": "sentinel_analysis.tif contains B04/B08/B12, but OPTRAM edge/calibration parameters are not defined yet."
+}

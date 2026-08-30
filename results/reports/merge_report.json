@@ -1,0 +1,6 @@
+{
+  "status": "ground_missing",
+  "ground_csv": "/Users/korneev/Desktop/water-regime-gis/data/ground_measurements.csv",
+  "matched_rows": 0,
+  "message": "Add ground measurements CSV and rerun."
+}

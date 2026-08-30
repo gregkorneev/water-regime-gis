@@ -1,0 +1,58 @@
+{
+  "status": "ground_missing_or_empty",
+  "models": [
+    {
+      "model": "M1",
+      "target": "soil_moisture",
+      "features": [
+        "OPTRAM"
+      ],
+      "validation": "All",
+      "N": 0,
+      "status": "skipped",
+      "reason": "ground_measurements_missing"
+    },
+    {
+      "model": "M2",
+      "target": "soil_moisture",
+      "features": [
+        "NDMI"
+      ],
+      "validation": "All",
+      "N": 0,
+      "status": "skipped",
+      "reason": "ground_measurements_missing"
+    },
+    {
+      "model": "M3",
+      "target": "soil_moisture",
+      "features": [
+        "OPTRAM",
+        "NDMI"
+      ],
+      "validation": "All",
+      "N": 0,
+      "status": "skipped",
+      "reason": "ground_measurements_missing"
+    },
+    {
+      "model": "M4",
+      "target": "soil_moisture",
+      "features": [
+        "OPTRAM",
+        "NDMI",
+        "LAI",
+        "FCOVER"
+      ],
+      "validation": "All",
+      "N": 0,
+      "status": "skipped",
+      "reason": "ground_measurements_missing"
+    }
+  ],
+  "correlation_matrix": {},
+  "vif": {},
+  "warnings": [
+    "Ground measurements are missing, so M1-M4 are not fitted yet."
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "source_rows": 4344,
+  "duplicate_field_date_index": 0,
+  "duplicate_examples": [],
+  "nan_rows": 0,
+  "empty_zonal_mean_rows": 276,
+  "unknown_indices": {},
+  "prepared_rows": 724,
+  "field_count": 55,
+  "dates_per_field": {
+    "KAA_КУР-ГОР-0031-2": 21,
+    "KAA_КУР-ГОР-0056-02": 17,
+    "KAA_КУР-ГОР-0057-02": 17,
+    "KAA_КУР-ГОР-0057-03": 17,
+    "KAA_КУР-ГОР-0058-02": 17,
+    "KAA_КУР-ГОР-0058-03": 17,
+    "KAA_КУР-ГОР-0058-04": 17,
+    "KAA_КУР-ГОР-0059-02-3": 17,
+    "KAA_КУР-ГОР-0059-03": 17,
+    "KAA_КУР-ГОР-0060-02": 17,
+    "KAA_КУР-ГОР-0060-03": 17,
+    "KAA_КУР-ГОР-0060-04": 17,
+    "KAA_КУР-ГОР-0061-02": 17,
+    "KAA_КУР-ГОР-0061-03": 12,
+    "KAA_КУР-ГОР-0062-02": 21,
+    "KAA_КУР-ГОР-0062-03": 21,
+    "KAA_КУР-ГОР-0062-04": 21,
+    "KAA_КУР-ГОР-0062-05-3": 12,
+    "KAA_КУР-ГОР-0063-02": 25,
+    "KAA_КУР-ГОР-0063-03": 17,
+    "KAA_КУР-ГОР-0064-02": 23,
+    "KAA_КУР-ГОР-0064-03": 17,
+    "KAA_КУР-СОЛ-0001-02": 10,
+    "KAA_КУР-СОЛ-0002-02": 10,
+    "KAA_КУР-СОЛ-0005-02": 10,
+    "KAA_КУР-СОЛ-0007-02": 10,
+    "KAA_КУР-СОЛ-0008-02": 10,
+    "KAA_КУР-СОЛ-0010-02": 10,
+    "KAA_КУР-СОЛ-0011-03": 10,
+    "KAA_КУР-СОЛ-0011-04": 10,
+    "KAA_КУР-СОЛ-0012-02": 10,
+    "KAA_КУР-СОЛ-0013-02": 10,
+    "KAA_КУР-СОЛ-0013-03": 10,
+    "KAA_КУР-СОЛ-0014-02": 10,
+    "KAA_КУР-СОЛ-0014-03": 10,
+    "KAA_КУР-СОЛ-0015-02": 10,
+    "KAA_КУР-СОЛ-0016-02": 10,
+    "KAA_КУР-СОЛ-0016-03": 10,
+    "KAA_КУР-СОЛ-0017-02": 10,
+    "KAA_КУР-СОЛ-0017-03": 10,
+    "KAA_КУР-СОЛ-0019-02": 10,
+    "KAA_КУР-СОЛ-0020-02": 10,
+    "KAA_КУР-СОЛ-0021-02": 10,
+    "KAA_КУР-СОЛ-0021-03": 10,
+    "KAA_КУР-СОЛ-0027-02": 10,
+    "KAA_КУР-СОЛ-0027-03": 10,
+    "KAA_КУР-СОЛ-0028-02": 10,
+    "KAA_КУР-СОЛ-0029-1": 10,
+    "KAA_КУР-СОЛ-0029-12": 10,
+    "KAA_КУР-СОЛ-0030-02": 10,
+    "KAA_КУР-СОЛ-0031-2": 10,
+    "KAA_КУР-СОЛ-0031-3": 10,
+    "KAA_КУР-СОЛ-0032-02": 10,
+    "KAA_КУР-СОЛ-0036-02": 10,
+    "KAA_КУР-СОЛ-0036-03": 10
+  },
+  "valid_observations_by_index": {
+    "NDMI": 678,
+    "NDRE": 678,
+    "SAVI": 678,
+    "NDVI": 678,
+    "NDWI": 678,
+    "MNDWI": 678
+  },
+  "missing_by_index": {
+    "NDMI": 46,
+    "NDRE": 46,
+    "SAVI": 46,
+    "NDVI": 46,
+    "NDWI": 46,
+    "MNDWI": 46
+  },
+  "ranges_by_index": {
+    "NDMI": {
+      "min": -0.302938342094,
+      "max": 0.519855439663
+    },
+    "NDRE": {
+      "min": 0.0351087115705,
+      "max": 0.598146438599
+    },
+    "SAVI": {
+      "min": 0.0366482958198,
+      "max": 0.738567173481
+    },
+    "NDVI": {
+      "min": 0.0598003342748,
+      "max": 0.751195371151
+    },
+    "NDWI": {
+      "min": -0.670465409756,
+      "max": -0.0680447369814
+    },
+    "MNDWI": {
+      "min": -0.422350913286,
+      "max": -0.0255352649838
+    }
+  },
+  "rows_with_many_missing_values": [
+    {
+      "field_id": "KAA_КУР-ГОР-0031-2",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0031-2",
+      "scene_date": "2026-05-09",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0056-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0057-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0057-02",
+      "scene_date": "2026-07-01",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0057-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-02",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-03",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-04",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0058-04",
+      "scene_date": "2026-07-01",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0059-02-3",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0059-02-3",
+      "scene_date": "2026-08-08",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0059-03",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0059-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0059-03",
+      "scene_date": "2026-07-01",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0060-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0060-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0060-04",
+      "scene_date": "2026-05-20",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0060-04",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0060-04",
+      "scene_date": "2026-07-01",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0061-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0061-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-02",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-02",
+      "scene_date": "2026-05-09",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-03",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-03",
+      "scene_date": "2026-07-19",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-04",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-04",
+      "scene_date": "2026-05-09",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0062-05-3",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0063-02",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0063-02",
+      "scene_date": "2026-06-24",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0063-02",
+      "scene_date": "2026-07-19",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0063-02",
+      "scene_date": "2026-07-28",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0064-02",
+      "scene_date": "2026-04-12",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0064-02",
+      "scene_date": "2026-06-24",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-ГОР-0064-02",
+      "scene_date": "2026-07-31",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0001-02",
+      "scene_date": "2026-07-01",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0007-02",
+      "scene_date": "2026-07-31",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0016-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0021-02",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0021-03",
+      "scene_date": "2026-06-11",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0021-03",
+      "scene_date": "2026-07-31",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0031-2",
+      "scene_date": "2026-08-10",
+      "missing_indices": 6
+    },
+    {
+      "field_id": "KAA_КУР-СОЛ-0031-3",
+      "scene_date": "2026-08-10",
+      "missing_indices": 6
+    }
+  ],
+  "rows_with_many_missing_values_count": 46
+}

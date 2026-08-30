@@ -1,0 +1,28 @@
+{
+  "status": "OK",
+  "dataset": "sp",
+  "field_id": "SP_4_21",
+  "source": "/Users/korneev/Desktop/SP.gpkg",
+  "source_layer": "sp_fields",
+  "source_fid": 7,
+  "scene_id": "S2B_MSIL2A_20260810T082559_R021_T37UDA_20260810T105805",
+  "scene_date": "2026-08-10",
+  "scene_datetime": "2026-08-10T08:25:59.024000Z",
+  "cloud_cover": 6.578769,
+  "analysis_crs": "EPSG:32637",
+  "output": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/sp/SP_4_21/2026-08-10/sentinel_true_color.tif",
+  "analysis_status": "OK",
+  "analysis_output": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/sp/SP_4_21/2026-08-10/sentinel_analysis.tif",
+  "analysis_bands": [
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B08",
+    "B11",
+    "B12",
+    "SCL"
+  ],
+  "cloud_mask": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/sp/SP_4_21/2026-08-10/cloud_mask.tif",
+  "aoi_cloud_cover": 17.282717282717282
+}

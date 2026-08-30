@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-08-29T11:29:28.610377+00:00",
+  "imagery": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/sentinel1",
+  "dataset": [
+    "sp"
+  ],
+  "polarizations": [
+    "VV",
+    "VH"
+  ],
+  "units": "dB",
+  "aggregation": "10*log10(mean(linear RTC values))",
+  "row_count": 4440
+}

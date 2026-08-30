@@ -1,0 +1,19 @@
+{
+  "status": "OK",
+  "dataset": "sp",
+  "field_id": "SP_7_13",
+  "source": "/Users/korneev/Desktop/SP.gpkg",
+  "source_layer": "sp_fields",
+  "source_fid": 19,
+  "scene_id": "S1A_IW_GRDH_1SDV_20260412T033800_20260412T033825_064041_080EBE_rtc",
+  "scene_date": "2026-04-12",
+  "scene_datetime": "2026-04-12T03:38:12.539843Z",
+  "cloud_cover": null,
+  "collection": "sentinel-1-rtc",
+  "assets": [
+    "vv",
+    "vh"
+  ],
+  "analysis_crs": "EPSG:32637",
+  "output": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/sentinel1/sp/SP_7_13/2026-04-12/sentinel_rtc.tif"
+}

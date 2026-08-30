@@ -1,0 +1,90 @@
+{
+  "target": "kornix_moisture_0_10",
+  "method": "ridge regression with field holdout",
+  "train_fields": [
+    "SP_2_5",
+    "SP_2_6",
+    "SP_2_7",
+    "SP_3_4",
+    "SP_3_5",
+    "SP_4_1",
+    "SP_4_11",
+    "SP_4_15",
+    "SP_4_16",
+    "SP_4_3",
+    "SP_4_6",
+    "SP_4_8",
+    "SP_6_2",
+    "SP_6_6",
+    "SP_7_11",
+    "SP_7_12",
+    "SP_7_13",
+    "SP_7_14",
+    "SP_7_17",
+    "SP_7_18",
+    "SP_7_5",
+    "SP_7_8",
+    "SP_7_9"
+  ],
+  "test_fields": [
+    "SP_1_1",
+    "SP_1_11",
+    "SP_1_3",
+    "SP_1_5",
+    "SP_1_6",
+    "SP_2_1",
+    "SP_3_1",
+    "SP_6_1",
+    "SP_6_3",
+    "SP_6_4",
+    "SP_6_5",
+    "SP_6_7",
+    "SP_7_10",
+    "SP_7_3"
+  ],
+  "training_rows": 1380,
+  "test_rows": 798,
+  "sentinel1_only_test": {
+    "mae": 0.03314961934720384,
+    "rmse": 0.043345501034223625,
+    "r_squared": 0.15942935105921285
+  },
+  "water_only_test": {
+    "mae": 0.025221785811130264,
+    "rmse": 0.03142402340311703,
+    "r_squared": 0.5582162415557965
+  },
+  "sentinel1_plus_water_test": {
+    "mae": 0.024838862606988494,
+    "rmse": 0.03117328172773587,
+    "r_squared": 0.5652383628482733
+  },
+  "test_r_squared_gain_from_sentinel1": 0.007022121292476813,
+  "features": {
+    "sentinel1_only": [
+      "VV",
+      "VH",
+      "VV*VH",
+      "VV^2",
+      "VH^2"
+    ],
+    "water_only": [
+      "precipitation_3d_mm",
+      "irrigation_3d_mm",
+      "precipitation_7d_mm",
+      "irrigation_7d_mm"
+    ],
+    "sentinel1_plus_water": [
+      "precipitation_3d_mm",
+      "irrigation_3d_mm",
+      "precipitation_7d_mm",
+      "irrigation_7d_mm",
+      "VV",
+      "VH",
+      "VV*VH",
+      "VV^2",
+      "VH^2"
+    ]
+  },
+  "interpretation": "Это ретроспективная реконструкция КОРНИКС в даты Sentinel-1. Поля в test_fields не использовались при обучении; модель не является независимым наземным измерением."
+}

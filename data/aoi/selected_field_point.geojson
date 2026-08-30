@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Selected field point",
+        "analysis_crs": "EPSG:32637"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          37.657562013380534,
+          51.48598377164571
+        ]
+      }
+    }
+  ]
+}

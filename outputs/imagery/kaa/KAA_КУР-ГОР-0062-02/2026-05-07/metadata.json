@@ -1,0 +1,28 @@
+{
+  "status": "OK",
+  "dataset": "kaa",
+  "field_id": "KAA_КУР-ГОР-0062-02",
+  "source": "/Users/korneev/Desktop/KAA.gpkg",
+  "source_layer": "kaa_fields",
+  "source_fid": 41,
+  "scene_id": "S2C_MSIL2A_20260507T082651_R021_T37UDT_20260508T133027",
+  "scene_date": "2026-05-07",
+  "scene_datetime": "2026-05-07T08:26:51.024000Z",
+  "cloud_cover": 0.716268,
+  "analysis_crs": "EPSG:32637",
+  "output": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/kaa/KAA_КУР-ГОР-0062-02/2026-05-07/sentinel_true_color.tif",
+  "analysis_status": "OK",
+  "analysis_output": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/kaa/KAA_КУР-ГОР-0062-02/2026-05-07/sentinel_analysis.tif",
+  "analysis_bands": [
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B08",
+    "B11",
+    "B12",
+    "SCL"
+  ],
+  "cloud_mask": "/Users/korneev/Desktop/water-regime-gis/outputs/imagery/kaa/KAA_КУР-ГОР-0062-02/2026-05-07/cloud_mask.tif",
+  "aoi_cloud_cover": 0.0
+}

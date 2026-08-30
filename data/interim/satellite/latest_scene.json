@@ -1,0 +1,85 @@
+{
+  "satellite_status": "OK",
+  "provider": "planetary-computer-stac",
+  "collection": "sentinel-2-l2a",
+  "scene_id": "S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557",
+  "datetime": "2026-08-03T08:35:59.024000Z",
+  "cloud_cover": 0.00011,
+  "bands": {
+    "Blue": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b02_blue.tif",
+    "Green": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b03_green.tif",
+    "Red": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b04_red.tif",
+    "RedEdge": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b05_rededge.tif",
+    "NIR": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b08_nir.tif",
+    "SWIR1": "data/interim/satellite/S2B_MSIL2A_20260803T083559_R064_T37UDT_20260803T123557/b11_swir1.tif"
+  },
+  "analysis_crs": "EPSG:32637",
+  "indices": [
+    {
+      "name": "NDVI",
+      "status": "OK",
+      "path": "outputs/rasters/ndvi.tif",
+      "valid_pixel_count": 7855,
+      "nodata_pixel_count": 2145,
+      "minimum": 0.1575998067855835,
+      "maximum": 0.7103286981582642,
+      "mean": 0.46750888228416443,
+      "standard_deviation": 0.16009874641895294
+    },
+    {
+      "name": "NDMI",
+      "status": "OK",
+      "path": "outputs/rasters/ndmi.tif",
+      "valid_pixel_count": 7782,
+      "nodata_pixel_count": 2218,
+      "minimum": -0.15739773213863373,
+      "maximum": 0.39202117919921875,
+      "mean": 0.2007826566696167,
+      "standard_deviation": 0.10015273094177246
+    },
+    {
+      "name": "NDWI",
+      "status": "OK",
+      "path": "outputs/rasters/ndwi.tif",
+      "valid_pixel_count": 7855,
+      "nodata_pixel_count": 2145,
+      "minimum": -0.6559262275695801,
+      "maximum": -0.19090008735656738,
+      "mean": -0.44499561190605164,
+      "standard_deviation": 0.12741442024707794
+    },
+    {
+      "name": "MNDWI",
+      "status": "OK",
+      "path": "outputs/rasters/mndwi.tif",
+      "valid_pixel_count": 7782,
+      "nodata_pixel_count": 2218,
+      "minimum": -0.40932437777519226,
+      "maximum": -0.18536704778671265,
+      "mean": -0.2757628560066223,
+      "standard_deviation": 0.06932847201824188
+    },
+    {
+      "name": "SAVI",
+      "status": "OK",
+      "path": "outputs/rasters/savi.tif",
+      "valid_pixel_count": 7855,
+      "nodata_pixel_count": 2145,
+      "minimum": 0.10802098363637924,
+      "maximum": 0.6714497804641724,
+      "mean": 0.3829083740711212,
+      "standard_deviation": 0.16276688873767853
+    },
+    {
+      "name": "NDRE",
+      "status": "OK",
+      "path": "outputs/rasters/ndre.tif",
+      "valid_pixel_count": 7782,
+      "nodata_pixel_count": 2218,
+      "minimum": 0.09879302978515625,
+      "maximum": 0.6045210361480713,
+      "mean": 0.3656380772590637,
+      "standard_deviation": 0.15195898711681366
+    }
+  ]
+}

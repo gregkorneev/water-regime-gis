@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime as dt
 import math
 import statistics
 
 import numpy as np
+from scipy.interpolate import UnivariateSpline
 
 
 def mean_backscatter_db(array, nodata=None):
@@ -34,3 +36,29 @@ def relative_moisture_proxy(vv_db_values, minimum: float = 0.153527, maximum: fl
         return [(minimum + maximum) / 2] * len(values)
     normalized = [(value - low) / (high - low) for value in values]
     return [minimum + (maximum - minimum) * value for value in normalized]
+
+
+def robust_spline(values, trim_fraction: float = 0.05):
+    """Smooth dated values after removing the largest local positive and negative residuals."""
+    if len(values) < 4:
+        return values
+    dates, numbers = zip(*values)
+    baseline = rolling_median(list(numbers))
+    residuals = [value - trend for value, trend in zip(numbers, baseline)]
+    trim_count = max(1, round(len(values) * trim_fraction))
+    lowest = set(sorted(range(len(values)), key=lambda index: residuals[index])[:trim_count])
+    highest = set(sorted(range(len(values)), key=lambda index: residuals[index], reverse=True)[:trim_count])
+    keep = [index for index in range(len(values)) if index not in lowest | highest]
+    if len(keep) < 4:
+        return values
+    x = np.asarray([(date - dates[0]).days for date in dates], dtype=float)
+    x_keep = x[keep]
+    y_keep = np.asarray([numbers[index] for index in keep], dtype=float)
+    spline = UnivariateSpline(
+        x_keep,
+        y_keep,
+        k=min(3, len(keep) - 1),
+        s=len(keep) * float(np.var(y_keep)) * 0.35,
+    )
+    dense_x = np.linspace(x[0], x[-1], max(120, len(values) * 4))
+    return [(dates[0] + dt.timedelta(days=float(day)), float(value)) for day, value in zip(dense_x, spline(dense_x))]

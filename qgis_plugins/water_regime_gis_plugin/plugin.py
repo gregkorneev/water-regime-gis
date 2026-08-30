@@ -342,6 +342,7 @@ class WaterRegimeDock(QDockWidget):
             kornix_series=settings.AVERAGE_CHART_KORNIX_SERIES,
             kornix_date_offsets=settings.AVERAGE_CHART_DATE_OFFSETS,
             radar_kornix_series=settings.AVERAGE_CHART_RADAR_KORNIX_SERIES,
+            connect_satellite_points=True,
         )
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
@@ -777,11 +778,13 @@ class FieldIndexChartDialog(QDialog):
         kornix_series=None,
         kornix_date_offsets=None,
         radar_kornix_series=None,
+        connect_satellite_points=False,
     ):
         super().__init__(parent)
         self.kornix_series = kornix_series or settings.KORNIX_CHART_SERIES
         self.kornix_date_offsets = kornix_date_offsets or {}
         self.radar_kornix_series = radar_kornix_series or {}
+        self.connect_satellite_points = connect_satellite_points
         self.setWindowTitle(f"Sentinel-2, КОРНИКС и Sentinel-1: {field_id}")
         self.resize(980, 900)
 
@@ -839,14 +842,17 @@ class FieldIndexChartDialog(QDialog):
             means = [value for _, value in values]
             color = settings.CHART_INDEX_COLORS[index_name]
             axis.scatter(dates, means, s=28, color=color, alpha=0.85, zorder=3)
-            fit = fit_seasonal_curve(values, settings.SEASONAL_CHART_FIT)
-            axis.plot(
-                fit.dates,
-                fit.values,
-                color=color,
-                linewidth=1.8,
-                label=f"{index_name} (Qrob={fit.quality:.2f})",
-            )
+            if self.connect_satellite_points:
+                axis.plot(dates, means, color=color, linewidth=1.8, label=index_name)
+            else:
+                fit = fit_seasonal_curve(values, settings.SEASONAL_CHART_FIT)
+                axis.plot(
+                    fit.dates,
+                    fit.values,
+                    color=color,
+                    linewidth=1.8,
+                    label=f"{index_name} (Qrob={fit.quality:.2f})",
+                )
 
         if not by_index:
             axis.text(0.5, 0.5, "Нет валидных значений zonal_mean", ha="center", va="center", transform=axis.transAxes)
@@ -946,7 +952,8 @@ class FieldIndexChartDialog(QDialog):
                 maximum=settings.RADAR_MOISTURE_RANGE[1],
             )
             axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
-            axis.plot(dates, rolling_median(moisture), color="#1f77b4", linewidth=1.6, label="Влажность VV")
+            line = moisture if self.connect_satellite_points else rolling_median(moisture)
+            axis.plot(dates, line, color="#1f77b4", linewidth=1.6, label="Влажность VV")
         kornix_plotted = False
         for label, column in self.radar_kornix_series.items():
             values = [

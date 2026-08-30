@@ -59,11 +59,11 @@
   совпадающие даты, отдельно по каждому полю: число пар, Pearson r, средние,
   bias, MAE, RMSE и воспроизводимая группа совпадения;
 - `results/tables/sp_kornix_fcover_satellite_r2_by_field.csv` — `R²` по
-  каждому полю между ожидаемым FCover КОРНИКС и FCOVER/NDVI/NDMI/NDRE/SAVI
-  Sentinel-2 на совпадающие даты; `r_squared_group` задает группу поля для
-  каждого спутникового ряда;
+  каждому полю между ожидаемым FCover КОРНИКС и FCOVER Sentinel-2 на
+  совпадающие даты; `r_squared_group` делит поля на высокое и низкое
+  совпадение;
 - `results/reports/sp_kornix_fcover_satellite_r2.json` — сводка групп полей,
-  среднего и медианного `R²` по каждому спутниковому ряду;
+  среднего и медианного `R²` FCOVER Sentinel-2.
 - `results/data/sp_kornix_sentinel1_moisture.csv` — точное объединение
   Sentinel-1 VV/VH с влагой КОРНИКС 0–10 см и суммами осадков/полива за 3 и 7 суток;
 - `results/reports/sp_kornix_sentinel1_moisture.json` — оценка связи Sentinel-1

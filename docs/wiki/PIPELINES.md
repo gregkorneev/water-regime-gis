@@ -188,10 +188,10 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 ```
 
 Для группировки полей именно по коэффициенту детерминации применяется
-`scripts/analysis/compare_kornix_fcover_satellite_r2.py`. Он сравнивает
-`satellite_fcover_expected` КОРНИКС с FCOVER, NDVI, NDMI, NDRE и SAVI
-Sentinel-2 только по одинаковым полю и дате. Группы `R²`: высокая (`>= 0.70`),
-умеренная (`0.40--0.70`), слабая (`0.10--0.40`) и очень слабая (`< 0.10`).
+`scripts/analysis/compare_kornix_fcover_satellite_r2.py`. Он сравнивает только
+`satellite_fcover_expected` КОРНИКС с FCOVER Sentinel-2 по одинаковым полю и
+дате. Поля делятся на высокое совпадение (`r > 0`, `R² >= 0.70`) и низкое
+совпадение (остальные); порог лежит между наблюдаемыми значениями 0.591 и 0.801.
 
 ```bash
 /Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_fcover_satellite_r2.py

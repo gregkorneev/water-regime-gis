@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Group SP fields by R² between KORNIX expected FCover and Sentinel-2 series."""
+"""Group SP fields by R² between KORNIX expected and Sentinel-2 FCover."""
 from __future__ import annotations
 
 import argparse
@@ -16,7 +16,7 @@ DEFAULT_INPUT = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_OUTPUT = ROOT / "results/tables/sp_kornix_fcover_satellite_r2_by_field.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_satellite_r2.json"
 TARGET = "satellite_fcover_expected"
-SATELLITE_SERIES = ("FCOVER", "NDVI", "NDMI", "NDRE", "SAVI")
+SATELLITE_SERIES = ("FCOVER",)
 
 
 def parse_args() -> argparse.Namespace:
@@ -40,16 +40,10 @@ def pearson_r(pairs: list[tuple[float, float]]) -> float | None:
     return numerator / denominator if denominator else None
 
 
-def r_squared_group(r_squared: float | None) -> str:
-    if r_squared is None:
-        return "Недостаточно данных"
-    if r_squared >= 0.70:
-        return "Высокая (R² >= 0.70)"
-    if r_squared >= 0.40:
-        return "Умеренная (0.40 <= R² < 0.70)"
-    if r_squared >= 0.10:
-        return "Слабая (0.10 <= R² < 0.40)"
-    return "Очень слабая (R² < 0.10)"
+def r_squared_group(pearson_r: float | None, r_squared: float | None) -> str:
+    if pearson_r is not None and pearson_r > 0 and r_squared is not None and r_squared >= 0.70:
+        return "Высокое совпадение (R² >= 0.70)"
+    return "Низкое совпадение (R² < 0.70 или обратная связь)"
 
 
 def summarize(field_id: str, series: str, pairs: list[tuple[float, float]]) -> dict:
@@ -69,7 +63,7 @@ def summarize(field_id: str, series: str, pairs: list[tuple[float, float]]) -> d
         "pair_count": len(pairs),
         "pearson_r": r,
         "r_squared": r_squared,
-        "r_squared_group": r_squared_group(r_squared),
+        "r_squared_group": r_squared_group(r, r_squared),
         "mean_kornix_expected_fcover": target_mean,
         "mean_satellite_value": satellite_mean,
         "slope_satellite_per_kornix_fcover": slope,
@@ -130,9 +124,9 @@ def self_test() -> None:
         {"sentinel_field_id": "SP:1.1", TARGET: "0.3", "FCOVER": "0.6", "NDVI": "0.2"},
     ])
     fcover = next(row for row in rows if row["satellite_series"] == "FCOVER")
-    ndvi = next(row for row in rows if row["satellite_series"] == "NDVI")
-    assert fcover["r_squared"] == 1.0 and ndvi["r_squared"] == 1.0
-    assert fcover["r_squared_group"] == "Высокая (R² >= 0.70)"
+    assert fcover["r_squared"] == 1.0
+    assert fcover["r_squared_group"] == "Высокое совпадение (R² >= 0.70)"
+    assert r_squared_group(-1.0, 1.0) == "Низкое совпадение (R² < 0.70 или обратная связь)"
 
 
 def main() -> int:

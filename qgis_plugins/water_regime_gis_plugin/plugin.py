@@ -339,6 +339,8 @@ class WaterRegimeDock(QDockWidget):
             satellite_rows,
             kornix_rows,
             radar_rows,
+            kornix_series=settings.AVERAGE_CHART_KORNIX_SERIES,
+            kornix_date_offsets=settings.AVERAGE_CHART_DATE_OFFSETS,
         )
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
@@ -369,7 +371,7 @@ class WaterRegimeDock(QDockWidget):
         import csv
 
         rows = []
-        columns = tuple(settings.KORNIX_CHART_SERIES.values()) + (
+        columns = tuple(settings.AVERAGE_CHART_KORNIX_SERIES.values()) + (
             "precipitation_raw_daily_mm", "irrigation_raw_daily_mm",
         )
         for field_id in field_ids:
@@ -763,8 +765,19 @@ class FieldChartMapTool(QgsMapToolIdentify):
 
 
 class FieldIndexChartDialog(QDialog):
-    def __init__(self, parent, field_id: str, rows: list[dict], kornix_rows: list[dict], radar_rows: list[dict]):
+    def __init__(
+        self,
+        parent,
+        field_id: str,
+        rows: list[dict],
+        kornix_rows: list[dict],
+        radar_rows: list[dict],
+        kornix_series=None,
+        kornix_date_offsets=None,
+    ):
         super().__init__(parent)
+        self.kornix_series = kornix_series or settings.KORNIX_CHART_SERIES
+        self.kornix_date_offsets = kornix_date_offsets or {}
         self.setWindowTitle(f"Sentinel-2, КОРНИКС и Sentinel-1: {field_id}")
         self.resize(980, 900)
 
@@ -845,14 +858,19 @@ class FieldIndexChartDialog(QDialog):
 
         rows = self.rows_in_period(rows, "day", satellite_period)
         plotted = False
-        for label, column in settings.KORNIX_CHART_SERIES.items():
+        for label, column in self.kornix_series.items():
             values = []
             for row in rows:
                 value = row.get(column)
                 if value in ("", None):
                     continue
-                values.append((dt.date.fromisoformat(row["day"]), float(value)))
+                values.append((
+                    dt.date.fromisoformat(row["day"]) + dt.timedelta(days=self.kornix_date_offsets.get(column, 0)),
+                    float(value),
+                ))
             if values:
+                if satellite_period and self.kornix_date_offsets.get(column) and values[0][0] > satellite_period[0]:
+                    values.insert(0, (satellite_period[0], values[0][1]))
                 dates, numbers = zip(*values)
                 color = settings.KORNIX_CHART_COLORS[column]
                 axis.plot(dates, numbers, color=color, linewidth=1.5, label=label)

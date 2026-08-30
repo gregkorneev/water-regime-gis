@@ -1013,8 +1013,9 @@ class CommandTask(QgsTask):
 
     def run(self):
         env = os.environ.copy()
-        env.setdefault("QGIS_PREFIX_PATH", str(settings.QGIS_PREFIX))
-        env.setdefault("PROJ_DATA", str(settings.QGIS_PREFIX / "Contents/Resources/qgis/proj"))
+        if sys.platform != "win32":
+            env.setdefault("QGIS_PREFIX_PATH", str(settings.QGIS_PREFIX))
+            env.setdefault("PROJ_DATA", str(settings.QGIS_PREFIX / "Contents/Resources/qgis/proj"))
         src = str(settings.PROJECT_ROOT / "src")
         env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else f"{src}{os.pathsep}{env['PYTHONPATH']}"
         try:

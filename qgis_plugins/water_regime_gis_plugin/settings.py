@@ -1,11 +1,22 @@
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path("/Users/korneev/Desktop/water-regime-gis")
-QGIS_PREFIX = Path("/Applications/QGIS.app")
-QGIS_PYTHON = QGIS_PREFIX / "Contents/MacOS/python"
-QGIS_PROFILE_PLUGINS = Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+QGIS_PREFIX = Path(os.environ.get("QGIS_PREFIX_PATH", "/Applications/QGIS.app"))
+QGIS_PYTHON = Path(
+    os.environ.get(
+        "QGIS_PYTHON",
+        QGIS_PREFIX / "bin/python-qgis.bat" if sys.platform == "win32" else QGIS_PREFIX / "Contents/MacOS/python",
+    )
+)
+QGIS_PROFILE_PLUGINS = (
+    Path(os.environ["APPDATA"]) / "QGIS/QGIS3/profiles/default/python/plugins"
+    if sys.platform == "win32"
+    else Path.home() / "Library/Application Support/QGIS/QGIS3/profiles/default/python/plugins"
+)
 
 CONFIG_PATH = PROJECT_ROOT / "configs/project.example.json"
 SELECT_FIELD_SCRIPT = PROJECT_ROOT / "scripts/qgis/select_field_point.py"

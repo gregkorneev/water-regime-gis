@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -24,8 +25,12 @@ def main() -> int:
             shutil.rmtree(TARGET)
         else:
             TARGET.unlink()
-    TARGET.symlink_to(SOURCE, target_is_directory=True)
-    print(f"QGIS plugin installed: {TARGET} -> {SOURCE}")
+    if sys.platform == "win32":
+        shutil.copytree(SOURCE, TARGET)
+        print(f"QGIS plugin copied: {SOURCE} -> {TARGET}")
+    else:
+        TARGET.symlink_to(SOURCE, target_is_directory=True)
+        print(f"QGIS plugin installed: {TARGET} -> {SOURCE}")
     print("Restart QGIS and enable 'Water Regime GIS' in Plugin Manager if needed.")
     return 0
 

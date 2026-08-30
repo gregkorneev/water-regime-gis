@@ -5,9 +5,9 @@ Sentinel-2 и сопоставления рядов Sentinel-1, Sentinel-2 и К
 
 ## Требования
 
-- macOS;
-- QGIS в `/Applications/QGIS.app`;
-- локальный клон репозитория с заданным в `settings.py` путём `PROJECT_ROOT`;
+- macOS или Windows 10/11;
+- QGIS 3 с поддержкой Python;
+- локальный клон репозитория;
 - профиль QGIS `default`;
 - интернет для НСПД, Planetary Computer STAC и спутниковых COG.
 
@@ -27,11 +27,7 @@ Observearth и Isoliner устанавливаются через стандар
    ```
 
    Если SSH не настроен, используйте URL `https://github.com/gregkorneev/water-regime-gis.git`.
-3. Укажите фактический путь к клону в
-   `qgis_plugins/water_regime_gis_plugin/settings.py`: замените значение
-   `PROJECT_ROOT` на путь из команды `pwd`. Это необходимо, если имя учётной
-   записи или расположение каталога отличается от исходного Mac.
-4. Установите локальный плагин и кадастровый модуль, затем выполните проверки:
+3. Установите локальный плагин и кадастровый модуль, затем выполните проверки:
 
    ```bash
    python3 scripts/install_qgis_plugin.py
@@ -41,14 +37,52 @@ Observearth и Isoliner устанавливаются через стандар
    /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/check_qgis_context.py
    ```
 
-5. Перезапустите QGIS и включите `Water Regime GIS` и
+4. Перезапустите QGIS и включите `Water Regime GIS` и
    `rosreestr-search-qgis-plugin` в менеджере модулей. Откройте панель плагина,
    нажмите `Проверить среду`, затем `Собрать проект/слои`.
 
 Все данные, результаты и снимки Sentinel хранятся в репозитории. Файл
 `outputs/maps/water_regime_gis.qgs` может содержать абсолютные пути исходного
 Mac, поэтому на новом компьютере его следует пересоздать кнопкой
-`Собрать проект/слои` после смены `PROJECT_ROOT`.
+`Собрать проект/слои`.
+
+## Развёртывание на новом компьютере Windows
+
+1. Установите 64-битный QGIS 3 из официального установщика, а также Git for
+   Windows и Python 3.9 или новее. В QGIS установите модули `Observearth` и
+   `Isoliner` через `Plugins → Manage and Install Plugins`.
+2. В PowerShell клонируйте проект:
+
+   ```powershell
+   git clone https://github.com/gregkorneev/water-regime-gis.git "$HOME\water-regime-gis"
+   Set-Location "$HOME\water-regime-gis"
+   ```
+
+3. Укажите путь к установленному QGIS. Замените версию в команде на фактическую
+   папку QGIS, например `C:\Program Files\QGIS 3.44.12`, затем закройте и снова
+   откройте PowerShell и QGIS:
+
+   ```powershell
+   setx QGIS_PREFIX_PATH "C:\Program Files\QGIS 3.44.12"
+   setx QGIS_PYTHON "C:\Program Files\QGIS 3.44.12\bin\python-qgis.bat"
+   ```
+
+4. В новом окне PowerShell установите плагины и проверьте структуру проекта:
+
+   ```powershell
+   Set-Location "$HOME\water-regime-gis"
+   py -3 scripts\install_qgis_plugin.py
+   py -3 scripts\install_nspd_plugin.py
+   py -3 scripts\check_project.py
+   & $env:QGIS_PYTHON scripts\qgis\check_qgis_context.py
+   ```
+
+   На Windows установщик копирует плагин в профиль QGIS. После изменения
+   исходников повторите `py -3 scripts\install_qgis_plugin.py`.
+5. Перезапустите QGIS, включите `Water Regime GIS` и
+   `rosreestr-search-qgis-plugin`, нажмите `Проверить среду`, затем
+   `Собрать проект/слои`. Это создаст новый QGIS-проект с корректными путями к
+   склонированным снимкам и результатам.
 
 ## Установка
 

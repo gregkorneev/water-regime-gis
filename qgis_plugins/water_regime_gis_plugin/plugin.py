@@ -43,7 +43,7 @@ from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
 from .aggregate_series import average_by_date
-from .radar_series import relative_moisture_proxy, rolling_median
+from .radar_series import relative_moisture_proxy, robust_spline, rolling_median
 from .seasonal_curve import fit_seasonal_curve
 
 
@@ -343,6 +343,7 @@ class WaterRegimeDock(QDockWidget):
             kornix_date_offsets=settings.AVERAGE_CHART_DATE_OFFSETS,
             radar_kornix_series=settings.AVERAGE_CHART_RADAR_KORNIX_SERIES,
             connect_satellite_points=True,
+            smooth_moisture=True,
         )
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         dialog.show()
@@ -779,12 +780,14 @@ class FieldIndexChartDialog(QDialog):
         kornix_date_offsets=None,
         radar_kornix_series=None,
         connect_satellite_points=False,
+        smooth_moisture=False,
     ):
         super().__init__(parent)
         self.kornix_series = kornix_series or settings.KORNIX_CHART_SERIES
         self.kornix_date_offsets = kornix_date_offsets or {}
         self.radar_kornix_series = radar_kornix_series or {}
         self.connect_satellite_points = connect_satellite_points
+        self.smooth_moisture = smooth_moisture
         self.setWindowTitle(f"Sentinel-2, КОРНИКС и Sentinel-1: {field_id}")
         self.resize(980, 900)
 
@@ -952,8 +955,9 @@ class FieldIndexChartDialog(QDialog):
                 maximum=settings.RADAR_MOISTURE_RANGE[1],
             )
             axis.scatter(dates, moisture, s=18, color="#1f77b4", alpha=0.7, zorder=3)
-            line = moisture if self.connect_satellite_points else rolling_median(moisture)
-            axis.plot(dates, line, color="#1f77b4", linewidth=1.6, label="Влажность VV")
+            line = robust_spline(list(zip(dates, moisture))) if self.smooth_moisture else list(zip(dates, moisture if self.connect_satellite_points else rolling_median(moisture)))
+            line_dates, line_values = zip(*line)
+            axis.plot(line_dates, line_values, color="#1f77b4", linewidth=1.6, label="Влажность VV" + (" (сплайн)" if self.smooth_moisture else ""))
         kornix_plotted = False
         for label, column in self.radar_kornix_series.items():
             values = [
@@ -963,7 +967,9 @@ class FieldIndexChartDialog(QDialog):
             ]
             if values:
                 dates, moisture = zip(*values)
-                axis.plot(dates, moisture, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.6, label=label)
+                line = robust_spline(list(zip(dates, moisture))) if self.smooth_moisture else list(zip(dates, moisture))
+                line_dates, line_values = zip(*line)
+                axis.plot(line_dates, line_values, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.6, label=label + (" (сплайн)" if self.smooth_moisture else ""))
                 kornix_plotted = True
         if not radar_plotted and not kornix_plotted:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 или КОРНИКС", ha="center", va="center", transform=axis.transAxes)

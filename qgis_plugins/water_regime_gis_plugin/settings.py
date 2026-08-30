@@ -39,6 +39,12 @@ KORNIX_CHART_SERIES = {
     "Влага 0–10 см": "soil_surface_0_10_theta",
     "ET/PET": "actual_to_potential_et_ratio",
 }
+AVERAGE_CHART_KORNIX_SERIES = {
+    label: column
+    for label, column in KORNIX_CHART_SERIES.items()
+    if column != "canopy_cover_fraction_derived"
+}
+AVERAGE_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}
 KORNIX_CHART_COLORS = {
     "canopy_cover_fraction_derived": "#1f77b4",
     "satellite_fcover_expected": FCOVER_COLOR,

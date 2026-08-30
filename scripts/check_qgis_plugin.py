@@ -37,6 +37,8 @@ def main() -> int:
     assert "QProgressBar" in plugin
     assert "set_toolbar_action_color" in plugin
     assert "QToolButton { color: #f2f2f2; }" in plugin
+    assert "Перезагрузить плагин" in plugin
+    assert "qgis.utils.unloadPlugin(plugin_id)" in plugin
     assert 'readEntry("water_regime_gis", "field_contours"' in plugin
     assert 'writeEntry("water_regime_gis", "field_contours"' in plugin
     assert "project.write()" in plugin

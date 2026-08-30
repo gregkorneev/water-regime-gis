@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from qgis.PyQt.QtCore import QMetaType, Qt
+from qgis.PyQt.QtCore import QMetaType, Qt, QTimer
 from qgis.PyQt.QtGui import QCursor, QPalette
 from qgis.PyQt.QtWidgets import (
     QAction,
@@ -108,12 +108,13 @@ class WaterRegimeDock(QDockWidget):
         self.timeseries_button = self.add_button(actions, 0, 1, "Загрузить ряды из сервиса", self.download_external_timeseries)
         self.refresh_button = self.add_button(actions, 1, 0, "Обновить Sentinel-1/2", self.refresh_field_timeseries)
         self.check_button = self.add_button(actions, 1, 1, "Проверить среду", self.check_environment)
-        self.observearth_button = self.add_button(actions, 2, 0, "Открыть Observearth", self.open_observearth)
-        self.isolines_button = self.add_button(actions, 2, 1, "Построить изолинии", self.open_isolines)
-        self.kriging_button = self.add_button(actions, 3, 0, "Кригинг измерений", self.open_kriging)
-        self.project_button = self.add_button(actions, 3, 1, "Собрать проект/слои", self.build_project)
-        self.chart_button = self.add_button(actions, 4, 0, "График по полю", self.enable_field_chart_tool)
-        self.average_chart_button = self.add_button(actions, 4, 1, "Средний график", self.open_average_chart)
+        self.reload_button = self.add_button(actions, 2, 0, "Перезагрузить плагин", self.reload_plugin)
+        self.observearth_button = self.add_button(actions, 2, 1, "Открыть Observearth", self.open_observearth)
+        self.isolines_button = self.add_button(actions, 3, 0, "Построить изолинии", self.open_isolines)
+        self.kriging_button = self.add_button(actions, 3, 1, "Кригинг измерений", self.open_kriging)
+        self.project_button = self.add_button(actions, 4, 0, "Собрать проект/слои", self.build_project)
+        self.chart_button = self.add_button(actions, 4, 1, "График по полю", self.enable_field_chart_tool)
+        self.average_chart_button = self.add_button(actions, 5, 0, "Средний график", self.open_average_chart)
 
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
@@ -224,6 +225,19 @@ class WaterRegimeDock(QDockWidget):
         QgsProject.instance().writeEntry("water_regime_gis", "field_contours", str(source))
         self.log(f"Контуры полей загружены: {source} ({layer.featureCount()} объектов).")
         self.notify("Контуры полей добавлены в проект.")
+
+    def reload_plugin(self):
+        self.notify("Перезагрузка Water Regime GIS…")
+        QTimer.singleShot(0, self.restart_plugin)
+
+    @staticmethod
+    def restart_plugin():
+        import qgis.utils
+
+        plugin_id = "water_regime_gis_plugin"
+        qgis.utils.unloadPlugin(plugin_id)
+        qgis.utils.loadPlugin(plugin_id)
+        qgis.utils.startPlugin(plugin_id)
 
     def download_external_timeseries(self):
         from qgis.PyQt.QtWidgets import QInputDialog
@@ -630,6 +644,7 @@ class WaterRegimeDock(QDockWidget):
             self.timeseries_button,
             self.refresh_button,
             self.check_button,
+            self.reload_button,
             self.observearth_button,
             self.isolines_button,
             self.kriging_button,

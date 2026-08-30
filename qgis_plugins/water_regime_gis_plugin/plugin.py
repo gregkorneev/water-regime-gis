@@ -39,6 +39,7 @@ from qgis.core import (
 from qgis.gui import QgsMapToolEmitPoint, QgsMapToolIdentify
 
 from . import settings
+from .aggregate_series import average_by_date
 from .radar_series import relative_moisture_proxy, rolling_median
 from .seasonal_curve import fit_seasonal_curve
 
@@ -97,6 +98,7 @@ class WaterRegimeDock(QDockWidget):
         self.kriging_button = self.add_button(actions, 3, 0, "Кригинг измерений", self.open_kriging)
         self.project_button = self.add_button(actions, 3, 1, "Собрать проект/слои", self.build_project)
         self.chart_button = self.add_button(actions, 4, 0, "График по полю", self.enable_field_chart_tool)
+        self.average_chart_button = self.add_button(actions, 4, 1, "Средний график", self.open_average_chart)
 
         self.output = QPlainTextEdit()
         self.output.setReadOnly(True)
@@ -234,6 +236,75 @@ class WaterRegimeDock(QDockWidget):
         self.iface.mapCanvas().setMapTool(self.chart_tool)
         self.log("Дважды щёлкните по полю SP, чтобы открыть график индексов.")
         self.notify("Дважды щёлкните по полю SP для графика индексов.")
+
+    def open_average_chart(self):
+        field_ids = self.kornix_field_ids()
+        satellite_rows = self.average_satellite_rows(field_ids)
+        kornix_rows = self.average_kornix_rows(field_ids)
+        radar_rows = self.average_radar_rows(field_ids)
+        if not satellite_rows and not kornix_rows and not radar_rows:
+            self.notify("Нет рядов для среднего графика.", Qgis.Warning)
+            return
+        dialog = FieldIndexChartDialog(
+            self.iface.mainWindow(),
+            f"Среднее по {len(field_ids)} полям КОРНИКС",
+            satellite_rows,
+            kornix_rows,
+            radar_rows,
+        )
+        dialog.setAttribute(Qt.WA_DeleteOnClose)
+        dialog.show()
+        self.chart_dialogs.append(dialog)
+        dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
+        self.log(f"Открыт средний график по {len(field_ids)} полям КОРНИКС; SP_7_3 исключено.")
+
+    def kornix_field_ids(self) -> set[str]:
+        return {
+            path.name.removesuffix("_daily.csv")
+            for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily.csv")
+            if path.name.removesuffix("_daily.csv") not in settings.ANALYSIS_EXCLUDED_FIELDS
+        }
+
+    def average_satellite_rows(self, field_ids: set[str]) -> list[dict]:
+        import csv
+
+        if not settings.SP_ZONAL_MEANS_CSV.exists():
+            return []
+        with settings.SP_ZONAL_MEANS_CSV.open(newline="", encoding="utf-8") as handle:
+            rows = [
+                row for row in csv.DictReader(handle)
+                if row.get("field_id") in field_ids and row.get("index") in settings.CHART_INDICES
+            ]
+        return average_by_date(rows, "scene_date", ("zonal_mean",), ("index",))
+
+    def average_kornix_rows(self, field_ids: set[str]) -> list[dict]:
+        import csv
+
+        rows = []
+        columns = tuple(settings.KORNIX_CHART_SERIES.values()) + (
+            "precipitation_raw_daily_mm", "irrigation_raw_daily_mm",
+        )
+        for field_id in field_ids:
+            path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily.csv"
+            with path.open(newline="", encoding="utf-8-sig") as handle:
+                rows.extend(
+                    {**row, "field_id": field_id}
+                    for row in csv.DictReader(handle)
+                    if row.get("method_code") == settings.KORNIX_METHOD
+                )
+        return average_by_date(rows, "day", columns)
+
+    def average_radar_rows(self, field_ids: set[str]) -> list[dict]:
+        import csv
+
+        if not settings.SENTINEL1_ZONAL_MEANS_CSV.exists():
+            return []
+        with settings.SENTINEL1_ZONAL_MEANS_CSV.open(newline="", encoding="utf-8") as handle:
+            rows = [
+                row for row in csv.DictReader(handle)
+                if row.get("field_id") in field_ids and row.get("polarization", "").upper() == "VV"
+            ]
+        return average_by_date(rows, "scene_date", ("zonal_mean_db",))
 
     def load_chart_field_layers(self):
         for path, name in (
@@ -482,6 +553,7 @@ class WaterRegimeDock(QDockWidget):
             self.kriging_button,
             self.project_button,
             self.chart_button,
+            self.average_chart_button,
         ):
             button.setEnabled(enabled)
 
@@ -714,7 +786,7 @@ class FieldIndexChartDialog(QDialog):
         vv_values = []
         for row in rows:
             value = row.get("zonal_mean_db")
-            polarization = row.get("polarization", "").upper()
+            polarization = row.get("polarization", "VV").upper()
             if value in ("", None) or polarization != "VV":
                 continue
             vv_values.append((dt.date.fromisoformat(row["scene_date"]), float(value)))

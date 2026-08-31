@@ -19,7 +19,7 @@ FULL_PROTOCOL = ROOT / "results/reports/sp_full_experiment_protocol.json"
 
 
 def write_summary() -> None:
-    """Collect the four QGIS-visible reports into one stable JSON result."""
+    """Collect the recalculated field-holdout and observability reports for QGIS."""
     variants = (
         ("vv_65", "VV, междурядье 65 см", "sp_s1_s2_surface_validation_65.json"),
         ("vh_65", "VH, междурядье 65 см", "sp_s1_s2_surface_validation_65_vh.json"),
@@ -43,6 +43,8 @@ def write_summary() -> None:
                 for name in ("M1", "M2", "M3")
             },
             "bootstrap_huber": report["bootstrap_huber"],
+            "cross_validated_predictive_gain": report["cross_validated_predictive_gain"],
+            "observability_analysis": report["observability_analysis"],
             "sensitivity": {
                 "rule": report["same_day_water_rule"],
                 "m3_without_same_day_water": report["robust_huber"]["M3"]["without_same_day_water"],
@@ -50,7 +52,8 @@ def write_summary() -> None:
         })
     SUMMARY.write_text(json.dumps({
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "purpose": "Итог кнопки QGIS «Диаграммы эксперимента»; все метрики — только для отложенных полей.",
+        "schema_version": 2,
+        "purpose": "Итог кнопки QGIS «Диаграммы эксперимента»: межполевая переносимость M1–M3 и отдельная диагностика наблюдаемости расчётной влажности по Sentinel-1.",
         "excluded_fields": ["SP_7_3"],
         "variants": reports,
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -64,7 +67,7 @@ def write_full_protocol() -> None:
         ("sentinel1_validation", "Валидация Sentinel-1", SUMMARY),
     )
     FULL_PROTOCOL.write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "purpose": "Единый протокол трёх этапов эксперимента для последующего анализа LLM.",
         "stage_order": [identifier for identifier, _, _ in stages],
@@ -72,6 +75,7 @@ def write_full_protocol() -> None:
             "Sentinel-2 FCOVER — независимый спутниковый прокси, а не наземное измерение покрытия.",
             "Лаг описывает согласование сезонных кривых и не должен применяться к исходным датам или строкам регрессии Sentinel-1.",
             "Метрики Sentinel-1 относятся к прогнозам на отложенных полях; они не являются калибровкой абсолютной влажности почвы.",
+            "Дополнительные pooled, внутриполевые, аномальные и динамические связи Sentinel-1 с влагой являются диагностикой и не заменяют межполевую cross-validation.",
         ],
         "stages": [
             {"id": identifier, "title": title, "source_report": str(path.relative_to(ROOT)), "result": json.loads(path.read_text(encoding="utf-8"))}

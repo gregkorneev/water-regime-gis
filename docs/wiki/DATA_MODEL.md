@@ -81,11 +81,14 @@
 - `results/data/sp_s1_s2_surface_validation_predictions_65.csv` — все
   out-of-field предсказания M1–M3 для OLS и робастной Huber-регрессии;
 - `results/reports/sp_s1_s2_surface_validation_65.json` — шесть field folds,
-  метрики M1–M3, sensitivity-анализ и bootstrap различий `R²_out`. Во всех
-  этих артефактах `SP 7.3` отсутствует.
+  метрики M1–M3, sensitivity-анализ, bootstrap различий `R²_out`/RMSE и
+  раздел `observability_analysis` (pooled/within-field связи, аномалии,
+  динамические изменения, sign-test и dry–wet AUC). Во всех этих артефактах
+  `SP 7.3` отсутствует.
 - `results/reports/sp_s1_s2_surface_validation_summary.json` — единый итог
   четырёх вариантов, который обновляет кнопка QGIS `Диаграммы эксперимента`:
-  дизайн, метрики M1–M3 Huber, бутстрепные интервалы и sensitivity-анализ.
+  дизайн, метрики M1–M3 Huber, бутстрепные интервалы, sensitivity-анализ и
+  полный раздел диагностики наблюдаемости Sentinel-1.
 - `results/reports/sp_full_experiment_protocol.json` — единый экспорт для LLM
   с тремя последовательными этапами: Sentinel-2/FCOVER без лага, лаг
   КОРНИКС—FCOVER и валидация Sentinel-1. Каждый этап содержит свой полный
@@ -96,7 +99,8 @@
   обозначают соответственно проверку VH, варианта междурядья 90 см и
   Sentinel-2-допустимой подвыборки полей с положительным `FCOVER R² >= 0.70`.
   `results/tables/sp_s1_s2_surface_validation_by_field_*.csv` содержит
-  out-of-field качество M3 Huber по каждому полю.
+  out-of-field качество M3 Huber и внутриполевые диагностические показатели
+  по каждому полю.
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;
 - `results/reports/satellite_quality_report.md` — отчет о дублях, пропусках, датах и диапазонах индексов;
 - `outputs/maps/water_regime_gis.qgs`.

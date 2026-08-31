@@ -1,5 +1,6 @@
 {
-  "purpose": "Independent Sentinel-1 validation after fixed Sentinel-2-constrained fCover",
+  "schema_version": 2,
+  "purpose": "Проверка добавочной наблюдаемости расчётной влажности 0–10 см через Sentinel-1 после независимой фиксации FCOVER Sentinel-2.",
   "method": "ivanov_n4l_meteo_soil",
   "row_spacing_variant": "65",
   "s1_index": "VV dB",
@@ -236,34 +237,164 @@
       }
     }
   },
+  "cross_validated_predictive_gain": {
+    "comparison": "M3 против M1 и M2 только на отложенных полях",
+    "bootstrap_huber": [
+      {
+        "models": [
+          "M3",
+          "M1"
+        ],
+        "bootstrap_fields": 2000,
+        "delta_r_squared_out": {
+          "median": 0.07848509983424179,
+          "ci95": [
+            0.034719763608303866,
+            0.1278442589557844
+          ]
+        },
+        "delta_rmse_out": {
+          "median": 0.11348224524551309,
+          "ci95": [
+            0.0541004362441699,
+            0.17279347538834255
+          ]
+        }
+      },
+      {
+        "models": [
+          "M3",
+          "M2"
+        ],
+        "bootstrap_fields": 2000,
+        "delta_r_squared_out": {
+          "median": 0.024325062754505467,
+          "ci95": [
+            0.009155396058330661,
+            0.042352421672434026
+          ]
+        },
+        "delta_rmse_out": {
+          "median": 0.03601614956537902,
+          "ci95": [
+            0.013953343012975294,
+            0.06002551867466248
+          ]
+        }
+      }
+    ]
+  },
   "bootstrap_huber": [
     {
-      "metric": "R²_out difference",
       "models": [
         "M3",
         "M1"
       ],
       "bootstrap_fields": 2000,
-      "median": 0.07848509983424179,
-      "ci95": [
-        0.034719763608303866,
-        0.1278442589557844
-      ]
+      "delta_r_squared_out": {
+        "median": 0.07848509983424179,
+        "ci95": [
+          0.034719763608303866,
+          0.1278442589557844
+        ]
+      },
+      "delta_rmse_out": {
+        "median": 0.11348224524551309,
+        "ci95": [
+          0.0541004362441699,
+          0.17279347538834255
+        ]
+      }
     },
     {
-      "metric": "R²_out difference",
       "models": [
         "M3",
         "M2"
       ],
       "bootstrap_fields": 2000,
-      "median": 0.024325062754505467,
-      "ci95": [
-        0.009155396058330661,
-        0.042352421672434026
-      ]
+      "delta_r_squared_out": {
+        "median": 0.024325062754505467,
+        "ci95": [
+          0.009155396058330661,
+          0.042352421672434026
+        ]
+      },
+      "delta_rmse_out": {
+        "median": 0.03601614956537902,
+        "ci95": [
+          0.013953343012975294,
+          0.06002551867466248
+        ]
+      }
     }
   ],
+  "observability_analysis": {
+    "purpose": "Диагностика добавочной наблюдаемости расчётной влажности 0–10 см через Sentinel-1; не является калибровкой абсолютной влажности.",
+    "pooled_raw": {
+      "pearson_r": 0.34352288700855943,
+      "spearman_rho": 0.4410342197166714,
+      "n": 2118
+    },
+    "within_field_spearman": {
+      "fields": 36,
+      "median": 0.5038924196499144,
+      "iqr": [
+        0.4079087536366398,
+        0.5686877060646884
+      ],
+      "min": 0.15189662505943777,
+      "max": 0.6296199230000229,
+      "share_positive": 1.0,
+      "share_gt_0_4": 0.7777777777777778,
+      "share_gt_0_6": 0.08333333333333333,
+      "bootstrap_median": {
+        "bootstrap_fields": 2000,
+        "median": 0.5038924196499144,
+        "ci95": [
+          0.4347971262985155,
+          0.5598999898072083
+        ]
+      }
+    },
+    "robust_standardized_anomalies": {
+      "pearson_r": 0.3722501325921377,
+      "spearman_rho": 0.4771957580767381,
+      "n": 2118
+    },
+    "changes_between_sentinel1_dates": {
+      "theta_change_minimum": 0.001,
+      "correlation": {
+        "pearson_r": 0.16232290719518272,
+        "spearman_rho": 0.1953188804225943,
+        "n": 1927
+      },
+      "sign_accuracy": 0.5755059678256357,
+      "n": 1927,
+      "bootstrap_sign_accuracy": {
+        "bootstrap_fields": 2000,
+        "median": 0.57564757257423,
+        "ci95": [
+          0.5638169555402153,
+          0.5871723659963792
+        ]
+      }
+    },
+    "dry_wet_terciles": {
+      "field_auc_wet_over_dry_median": 0.82375,
+      "fields": 36,
+      "interpretation": "Вероятность P(S1_wet > S1_dry); 0.5 соответствует случайному различению."
+    },
+    "field_intercept_diagnostic": {
+      "kind": "OLS с отдельным перехватом каждого поля",
+      "in_sample_r_squared": 0.28700039250059206,
+      "fields": 36,
+      "warning": "Это внутривыборочная диагностика, не метрика переносимости на новое поле."
+    },
+    "mixed_effects": {
+      "status": "not_fitted",
+      "reason": "В рабочей среде QGIS нет statsmodels; использована диагностическая OLS с отдельными перехватами полей, но основным доказательством остаётся grouped cross-validation."
+    }
+  },
   "residual_diagnostics_m3_huber": {
     "residual_pearson": {
       "fcover_model": 0.0005130739618067424,
@@ -271,5 +402,10 @@
       "same_day_water": 0.05881513838826232
     }
   },
-  "same_day_water_rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors."
+  "same_day_water_rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors.",
+  "interpretation_rules": [
+    "Невысокий pooled R² не отменяет внутриполевую и динамическую связь, поэтому они выводятся отдельно.",
+    "Главное подтверждение переносимости — прирост качества M3 относительно M1 на отложенных полях.",
+    "Sentinel-1 является шумным независимым наблюдением приповерхностного состояния, а не калибровкой абсолютной влажности."
+  ]
 }

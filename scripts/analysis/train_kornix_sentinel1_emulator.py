@@ -22,6 +22,7 @@ WATER_INPUTS = (
     "precipitation_7d_mm",
     "irrigation_7d_mm",
 )
+EXCLUDED_FIELDS = {"SP_7_3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,7 +39,11 @@ def parse_args() -> argparse.Namespace:
 
 def read_rows(path: Path) -> list[dict]:
     with path.open(encoding="utf-8", newline="") as handle:
-        return [{key: float(value) if key not in {"field_id", "day"} else value for key, value in row.items()} for row in csv.DictReader(handle)]
+        return [
+            {key: float(value) if key not in {"field_id", "day"} else value for key, value in row.items()}
+            for row in csv.DictReader(handle)
+            if row["field_id"] not in EXCLUDED_FIELDS
+        ]
 
 
 def split_fields(rows: list[dict], train_count: int, seed: int) -> tuple[list[str], list[str]]:
@@ -84,7 +89,7 @@ def metrics(actual: np.ndarray, predicted: np.ndarray) -> dict:
 def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

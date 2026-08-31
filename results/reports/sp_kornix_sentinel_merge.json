@@ -1,8 +1,9 @@
 {
   "method_code": "ivanov_n4l_meteo_soil",
+  "row_spacing_variant": "65",
   "kornix_rows_for_method": 5513,
   "satellite_field_date_rows": 1187,
-  "matched_rows": 433,
+  "matched_rows": 419,
   "kornix_fields_without_satellite": [],
   "satellite_fields_without_kornix": [
     "SP:1.10",
@@ -64,6 +65,7 @@
     "SP:7.16",
     "SP:7.19",
     "SP:7.2",
+    "SP:7.3",
     "SP:7.4",
     "SP:7.6",
     "SP:7.7",

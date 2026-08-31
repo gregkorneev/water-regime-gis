@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_INPUT = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_OUTPUT = ROOT / "results/tables/sp_kornix_expected_fcover_by_field.csv"
+EXCLUDED_FIELDS = {"SP:7.3", "SP_7_3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,6 +65,8 @@ def compare(rows: list[dict]) -> list[dict]:
     for row in rows:
         try:
             field_id = row.get("sentinel_field_id") or row["field_id"]
+            if field_id in EXCLUDED_FIELDS:
+                continue
             pairs_by_field[field_id].append((float(row["satellite_fcover_expected"]), float(row["FCOVER"])))
         except (KeyError, TypeError, ValueError):
             continue
@@ -73,7 +76,7 @@ def compare(rows: list[dict]) -> list[dict]:
 def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]) if rows else ["field_id"])
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]) if rows else ["field_id"], lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

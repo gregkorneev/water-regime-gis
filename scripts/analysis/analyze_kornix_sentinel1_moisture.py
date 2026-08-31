@@ -22,6 +22,7 @@ DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel1_moisture.json"
 METHOD = "ivanov_n4l_meteo_soil"
 MOISTURE = "soil_layer_0_10_theta_m3_m3"
 WATER_COLUMNS = ("precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
+EXCLUDED_FIELDS = {"SP_7_3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,6 +64,8 @@ def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, v
         if row.get("method_code") != method:
             continue
         field_id, day = normalize_field_id(row.get("field_short_name", "")), date.fromisoformat(row["day"])
+        if field_id in EXCLUDED_FIELDS:
+            continue
         daily[field_id, "precipitation"][day] = number(row.get(f"{WATER_COLUMNS[0]}_{variant}"))
         daily[field_id, "irrigation"][day] = number(row.get(f"{WATER_COLUMNS[1]}_{variant}"))
         moisture[field_id, day] = (number(row.get(f"{MOISTURE}_{variant}")), number(row.get(f"days_after_sowing_{variant}")))
@@ -78,6 +81,8 @@ def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, v
     rows = []
     for (field_id, day), values in sorted(radar.items()):
         if (field_id, day) not in moisture or {"VV", "VH"} - values.keys():
+            continue
+        if field_id in EXCLUDED_FIELDS:
             continue
         precipitation = daily[field_id, "precipitation"]
         irrigation = daily[field_id, "irrigation"]
@@ -171,7 +176,7 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = list(rows[0]) if rows else []
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

@@ -17,6 +17,7 @@ DEFAULT_OUTPUT = ROOT / "results/tables/sp_kornix_fcover_satellite_r2_by_field.c
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_satellite_r2.json"
 TARGET = "satellite_fcover_expected"
 SATELLITE_SERIES = ("FCOVER",)
+EXCLUDED_FIELDS = {"SP:7.3", "SP_7_3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -75,6 +76,8 @@ def compare(rows: list[dict]) -> list[dict]:
     pairs: dict[tuple[str, str], list[tuple[float, float]]] = defaultdict(list)
     for row in rows:
         field_id = row.get("sentinel_field_id") or row.get("field_id")
+        if field_id in EXCLUDED_FIELDS:
+            continue
         try:
             target = float(row[TARGET])
         except (KeyError, TypeError, ValueError):
@@ -112,7 +115,7 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fields = list(rows[0]) if rows else ["field_id", "satellite_series", "r_squared"]
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

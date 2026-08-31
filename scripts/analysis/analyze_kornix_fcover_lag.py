@@ -21,6 +21,7 @@ DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_lag.json"
 DEFAULT_FIELD_REPORT = ROOT / "results/tables/sp_kornix_fcover_field_lags.csv"
 DEFAULT_WARP_REPORT = ROOT / "results/tables/sp_kornix_fcover_piecewise_warp.csv"
 METHOD = "ivanov_n4l_meteo_soil"
+EXCLUDED_FIELDS = {"SP_7_3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,7 +69,9 @@ def observations(merged_rows: list[dict]) -> list[dict]:
             day = dt.date.fromisoformat(row["day"])
         except (KeyError, TypeError, ValueError):
             continue
-        result.append({"field_id": normalize_field_id(row["field_short_name"]), "day": day, "fcover": value})
+        field_id = normalize_field_id(row["field_short_name"])
+        if field_id not in EXCLUDED_FIELDS:
+            result.append({"field_id": field_id, "day": day, "fcover": value})
     return result
 
 
@@ -78,7 +81,10 @@ def daily_cover(rows: list[dict], method: str, variant: str) -> dict[str, dict[d
         if row.get("method_code") != method:
             continue
         try:
-            result[normalize_field_id(row["field_short_name"])][dt.date.fromisoformat(row["day"])] = (
+            field_id = normalize_field_id(row["field_short_name"])
+            if field_id in EXCLUDED_FIELDS:
+                continue
+            result[field_id][dt.date.fromisoformat(row["day"])] = (
                 float(row[f"ground_cover_fraction_row_geometry_{variant}"]), float(row[f"days_after_sowing_{variant}"])
             )
         except (KeyError, TypeError, ValueError):
@@ -299,7 +305,7 @@ def piecewise_time_warp(obs, cover, bootstrap: int, seed: int) -> tuple[list[dic
 def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]) if rows else [])
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]) if rows else [], lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

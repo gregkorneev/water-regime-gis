@@ -208,6 +208,23 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 /Applications/QGIS.app/Contents/MacOS/python scripts/analysis/compare_kornix_fcover_satellite_r2.py
 ```
 
+Основной подтверждающий эксперимент после фиксации растительного блока
+запускается отдельным скриптом:
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/analysis/run_s1_s2_surface_validation.py
+```
+
+Он исключает `SP 7.3` из анализа, соединяет ежедневные КОРНИКС и Sentinel-1
+строго по `field_id + date`, фиксирует `VV` в dB как `S1_index` и строит шесть
+непересекающихся тестовых групп по шесть полей. В каждом fold оцениваются
+`M1: S1 ~ fCover`, `M2: S1 ~ theta_0_10` и
+`M3: S1 ~ theta_0_10 + fCover + theta_0_10*fCover`; все метрики относятся
+только к out-of-field predictions. Скрипт сохраняет исходную таблицу,
+предсказания OLS и Huber, метрики с равным весом полей, sensitivity-анализ без
+дат `P0 + I0 > 0` и bootstrap разности `R²_out` по полям. Осадки и поливы не
+попадают в регрессионный оператор.
+
 На 2026-08-29 локальный запуск по сценам до 2026-08-20 дал 4 776 SP-строк
 зональных средних, из них 4 748 с валидным значением, и 433 точных совпадения
 с КОРНИКС для метода `ivanov_n4l_meteo_soil`. За 2026-08-15 пригодны 86 полей,

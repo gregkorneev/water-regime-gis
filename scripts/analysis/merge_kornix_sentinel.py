@@ -16,6 +16,7 @@ DEFAULT_SENTINEL = ROOT / "outputs/reports/sp_zonal_means.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel_merge.json"
 INDICES = ("NDVI", "NDMI", "NDRE", "SAVI", "FCOVER")
+EXCLUDED_FIELDS = {"SP:7.3"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,7 +45,7 @@ def read_csv(path: Path) -> list[dict]:
 def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -64,6 +65,8 @@ def merge(kornix_rows: list[dict], sentinel_rows: list[dict], method: str, varia
         if row.get("method_code") != method:
             continue
         field_id, day = normalize_field_id(row.get("field_short_name") or ""), (row.get("day") or "").strip()
+        if field_id in EXCLUDED_FIELDS:
+            continue
         kornix_fields.add(field_id)
         indices = satellite.get((field_id, day))
         if indices:

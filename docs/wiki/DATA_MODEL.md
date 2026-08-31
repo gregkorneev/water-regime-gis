@@ -74,6 +74,17 @@
   участвовавших в обучении;
 - `results/reports/sp_kornix_sentinel1_field_holdout.json` — состав split 23/14
   и метрики воспроизведения КОРНИКС по Sentinel-1 и поступлению воды;
+- `results/data/sp_s1_s2_surface_validation_65.csv` — подтверждающая таблица
+  «поле–дата Sentinel-1» для 36 полей: `S1_index` (VV dB), модельные
+  `theta_0_10` и `fcover_model`, а также `P0`/`I0` только для флага
+  sensitivity-анализа;
+- `results/data/sp_s1_s2_surface_validation_predictions_65.csv` — все
+  out-of-field предсказания M1–M3 для OLS и робастной Huber-регрессии;
+- `results/reports/sp_s1_s2_surface_validation_65.json` — шесть field folds,
+  метрики M1–M3, sensitivity-анализ и bootstrap различий `R²_out`. Во всех
+  этих артефактах `SP 7.3` отсутствует.
+- `results/figures/sp_s1_s2_surface_validation_65.png` — observed-vs-predicted
+  диаграмма M3 и сравнение `R²_out` моделей M1–M3 на Huber grouped CV.
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;
 - `results/reports/satellite_quality_report.md` — отчет о дублях, пропусках, датах и диапазонах индексов;
 - `outputs/maps/water_regime_gis.qgs`.

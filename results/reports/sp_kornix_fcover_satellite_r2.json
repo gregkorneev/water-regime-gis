@@ -3,12 +3,12 @@
   "comparison": "same field and same Sentinel-2 date",
   "by_series": {
     "FCOVER": {
-      "field_count": 37,
-      "median_r_squared": 0.8607297731117897,
-      "mean_r_squared": 0.6591532666331813,
+      "field_count": 36,
+      "median_r_squared": 0.8903449943314652,
+      "mean_r_squared": 0.6776415646319253,
       "group_counts": {
         "Высокое совпадение (R² >= 0.70)": 21,
-        "Низкое совпадение (R² < 0.70 или обратная связь)": 16
+        "Низкое совпадение (R² < 0.70 или обратная связь)": 15
       },
       "fields_by_group": {
         "Высокое совпадение (R² >= 0.70)": [
@@ -48,7 +48,6 @@
           "SP:7.14",
           "SP:7.17",
           "SP:7.18",
-          "SP:7.3",
           "SP:7.5",
           "SP:7.8"
         ]

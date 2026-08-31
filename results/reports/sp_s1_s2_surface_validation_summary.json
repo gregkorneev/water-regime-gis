@@ -1,0 +1,337 @@
+{
+  "generated_at_utc": "2026-08-31T08:49:14.826069+00:00",
+  "purpose": "Итог кнопки QGIS «Диаграммы эксперимента»; все метрики — только для отложенных полей.",
+  "excluded_fields": [
+    "SP_7_3"
+  ],
+  "variants": [
+    {
+      "id": "vv_65",
+      "label": "VV, междурядье 65 см",
+      "source_report": "results/reports/sp_s1_s2_surface_validation_65.json",
+      "fields": 36,
+      "s1_index": "VV dB",
+      "row_spacing_variant": "65",
+      "models": {
+        "M1": "S1 ~ fCover",
+        "M2": "S1 ~ theta_0_10",
+        "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"
+      },
+      "robust_huber": {
+        "M1": {
+          "r_squared_out": 0.059867584327795376,
+          "rmse_out": 2.684280901207131,
+          "mae_out": 1.931756467557893,
+          "pearson_r": 0.24509871007179748,
+          "spearman_rho": 0.20767224597494713,
+          "n": 2118,
+          "fields": 36
+        },
+        "M2": {
+          "r_squared_out": 0.11275834039911947,
+          "rmse_out": 2.6076806863996738,
+          "mae_out": 1.8178739583394237,
+          "pearson_r": 0.34083391308917166,
+          "spearman_rho": 0.4361975254453426,
+          "n": 2118,
+          "fields": 36
+        },
+        "M3": {
+          "r_squared_out": 0.13719552114422362,
+          "rmse_out": 2.571518441127031,
+          "mae_out": 1.7767413110559007,
+          "pearson_r": 0.3746878564058737,
+          "spearman_rho": 0.45949633192667216,
+          "n": 2118,
+          "fields": 36
+        }
+      },
+      "bootstrap_huber": [
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M1"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.07848509983424179,
+          "ci95": [
+            0.034719763608303866,
+            0.1278442589557844
+          ]
+        },
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M2"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.024325062754505467,
+          "ci95": [
+            0.009155396058330661,
+            0.042352421672434026
+          ]
+        }
+      ],
+      "sensitivity": {
+        "rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors.",
+        "m3_without_same_day_water": {
+          "r_squared_out": 0.027919050352970043,
+          "rmse_out": 2.513329810673543,
+          "mae_out": 1.7872981155891312,
+          "pearson_r": 0.2794969843684783,
+          "spearman_rho": 0.3665517455698435,
+          "n": 706,
+          "fields": 36
+        }
+      }
+    },
+    {
+      "id": "vh_65",
+      "label": "VH, междурядье 65 см",
+      "source_report": "results/reports/sp_s1_s2_surface_validation_65_vh.json",
+      "fields": 36,
+      "s1_index": "VH dB",
+      "row_spacing_variant": "65",
+      "models": {
+        "M1": "S1 ~ fCover",
+        "M2": "S1 ~ theta_0_10",
+        "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"
+      },
+      "robust_huber": {
+        "M1": {
+          "r_squared_out": 0.153455970447539,
+          "rmse_out": 2.865404263429344,
+          "mae_out": 2.238743761044128,
+          "pearson_r": 0.4029233655071275,
+          "spearman_rho": 0.3352673236831847,
+          "n": 2118,
+          "fields": 36
+        },
+        "M2": {
+          "r_squared_out": 0.20650938345716452,
+          "rmse_out": 2.774163317945061,
+          "mae_out": 2.202565155359814,
+          "pearson_r": 0.4577830542422827,
+          "spearman_rho": 0.46790123851107973,
+          "n": 2118,
+          "fields": 36
+        },
+        "M3": {
+          "r_squared_out": 0.2670297202313735,
+          "rmse_out": 2.6662711278809477,
+          "mae_out": 1.9798489097234053,
+          "pearson_r": 0.5290735797626376,
+          "spearman_rho": 0.5412968937934607,
+          "n": 2118,
+          "fields": 36
+        }
+      },
+      "bootstrap_huber": [
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M1"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.11378742998930225,
+          "ci95": [
+            0.08285816952719709,
+            0.14056703230732498
+          ]
+        },
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M2"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.06040314795443491,
+          "ci95": [
+            -0.0003608885554032933,
+            0.11033797964128471
+          ]
+        }
+      ],
+      "sensitivity": {
+        "rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors.",
+        "m3_without_same_day_water": {
+          "r_squared_out": 0.16667058673028956,
+          "rmse_out": 3.059821664611599,
+          "mae_out": 2.322514530096585,
+          "pearson_r": 0.45731347066036643,
+          "spearman_rho": 0.4802655626488477,
+          "n": 706,
+          "fields": 36
+        }
+      }
+    },
+    {
+      "id": "vv_90",
+      "label": "VV, междурядье 90 см",
+      "source_report": "results/reports/sp_s1_s2_surface_validation_90.json",
+      "fields": 36,
+      "s1_index": "VV dB",
+      "row_spacing_variant": "90",
+      "models": {
+        "M1": "S1 ~ fCover",
+        "M2": "S1 ~ theta_0_10",
+        "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"
+      },
+      "robust_huber": {
+        "M1": {
+          "r_squared_out": 0.059867584327795376,
+          "rmse_out": 2.684280901207131,
+          "mae_out": 1.931756467557893,
+          "pearson_r": 0.24509871007179748,
+          "spearman_rho": 0.20767224597494713,
+          "n": 2118,
+          "fields": 36
+        },
+        "M2": {
+          "r_squared_out": 0.11275834039911947,
+          "rmse_out": 2.6076806863996738,
+          "mae_out": 1.8178739583394237,
+          "pearson_r": 0.34083391308917166,
+          "spearman_rho": 0.4361975254453426,
+          "n": 2118,
+          "fields": 36
+        },
+        "M3": {
+          "r_squared_out": 0.13719552114422362,
+          "rmse_out": 2.571518441127031,
+          "mae_out": 1.7767413110559007,
+          "pearson_r": 0.3746878564058737,
+          "spearman_rho": 0.45949633192667216,
+          "n": 2118,
+          "fields": 36
+        }
+      },
+      "bootstrap_huber": [
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M1"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.07848509983424179,
+          "ci95": [
+            0.034719763608303866,
+            0.1278442589557844
+          ]
+        },
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M2"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.024325062754505467,
+          "ci95": [
+            0.009155396058330661,
+            0.042352421672434026
+          ]
+        }
+      ],
+      "sensitivity": {
+        "rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors.",
+        "m3_without_same_day_water": {
+          "r_squared_out": 0.027919050352970043,
+          "rmse_out": 2.513329810673543,
+          "mae_out": 1.7872981155891312,
+          "pearson_r": 0.2794969843684783,
+          "spearman_rho": 0.3665517455698435,
+          "n": 706,
+          "fields": 36
+        }
+      }
+    },
+    {
+      "id": "vv_65_fcover_r2_070",
+      "label": "VV, 65 см, FCOVER R² ≥ 0,70",
+      "source_report": "results/reports/sp_s1_s2_surface_validation_65_fcover_r2_070.json",
+      "fields": 21,
+      "s1_index": "VV dB",
+      "row_spacing_variant": "65",
+      "models": {
+        "M1": "S1 ~ fCover",
+        "M2": "S1 ~ theta_0_10",
+        "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"
+      },
+      "robust_huber": {
+        "M1": {
+          "r_squared_out": 0.07830246171458233,
+          "rmse_out": 2.621901501471238,
+          "mae_out": 1.8522661095138948,
+          "pearson_r": 0.283795257985426,
+          "spearman_rho": 0.22736648357666459,
+          "n": 1239,
+          "fields": 21
+        },
+        "M2": {
+          "r_squared_out": 0.1140032519918096,
+          "rmse_out": 2.57062201412711,
+          "mae_out": 1.702363133642612,
+          "pearson_r": 0.3451350639723243,
+          "spearman_rho": 0.45721972815144996,
+          "n": 1239,
+          "fields": 21
+        },
+        "M3": {
+          "r_squared_out": 0.1458028618764553,
+          "rmse_out": 2.524068950865267,
+          "mae_out": 1.6700259771564556,
+          "pearson_r": 0.3930235055667609,
+          "spearman_rho": 0.4814622559015232,
+          "n": 1239,
+          "fields": 21
+        }
+      },
+      "bootstrap_huber": [
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M1"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.07127411695011532,
+          "ci95": [
+            0.004503266421810437,
+            0.1630277216712774
+          ]
+        },
+        {
+          "metric": "R²_out difference",
+          "models": [
+            "M3",
+            "M2"
+          ],
+          "bootstrap_fields": 2000,
+          "median": 0.033146911217539654,
+          "ci95": [
+            0.011568200580899695,
+            0.06358649929705146
+          ]
+        }
+      ],
+      "sensitivity": {
+        "rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors.",
+        "m3_without_same_day_water": {
+          "r_squared_out": 0.03588076030321885,
+          "rmse_out": 2.5277670965298378,
+          "mae_out": 1.7855280407184138,
+          "pearson_r": 0.29833684749806444,
+          "spearman_rho": 0.3650406773493357,
+          "n": 408,
+          "fields": 21
+        }
+      }
+    }
+  ]
+}

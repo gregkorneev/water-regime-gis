@@ -30,6 +30,7 @@ FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
 SP_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sp_zonal_means.csv"
 SENTINEL1_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 EXPERIMENT_FIGURES_DIR = PROJECT_ROOT / "results/figures"
+EXPERIMENT_SUMMARY_JSON = PROJECT_ROOT / "results/reports/sp_s1_s2_surface_validation_summary.json"
 KORNIX_BY_FIELD_DIR = PROJECT_ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field"
 KORNIX_METHOD = "ivanov_n4l_meteo_soil"
 KORNIX_ROW_SPACING_VARIANTS = ("65", "90")

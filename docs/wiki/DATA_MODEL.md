@@ -83,6 +83,9 @@
 - `results/reports/sp_s1_s2_surface_validation_65.json` — шесть field folds,
   метрики M1–M3, sensitivity-анализ и bootstrap различий `R²_out`. Во всех
   этих артефактах `SP 7.3` отсутствует.
+- `results/reports/sp_s1_s2_surface_validation_summary.json` — единый итог
+  четырёх вариантов, который обновляет кнопка QGIS `Диаграммы эксперимента`:
+  дизайн, метрики M1–M3 Huber, бутстрепные интервалы и sensitivity-анализ.
 - `results/figures/sp_s1_s2_surface_validation_65.png` — observed-vs-predicted
   диаграмма M3 и сравнение `R²_out` моделей M1–M3 на Huber grouped CV.
 - Суффиксы `_65_vh`, `_90` и `_65_fcover_r2_070` у одноимённых артефактов

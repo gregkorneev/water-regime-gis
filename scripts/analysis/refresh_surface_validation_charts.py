@@ -4,11 +4,52 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 VALIDATION = ROOT / "scripts/analysis/run_s1_s2_surface_validation.py"
+SUMMARY = ROOT / "results/reports/sp_s1_s2_surface_validation_summary.json"
+
+
+def write_summary() -> None:
+    """Collect the four QGIS-visible reports into one stable JSON result."""
+    variants = (
+        ("vv_65", "VV, междурядье 65 см", "sp_s1_s2_surface_validation_65.json"),
+        ("vh_65", "VH, междурядье 65 см", "sp_s1_s2_surface_validation_65_vh.json"),
+        ("vv_90", "VV, междурядье 90 см", "sp_s1_s2_surface_validation_90.json"),
+        ("vv_65_fcover_r2_070", "VV, 65 см, FCOVER R² ≥ 0,70", "sp_s1_s2_surface_validation_65_fcover_r2_070.json"),
+    )
+    reports = []
+    for identifier, label, filename in variants:
+        path = SUMMARY.parent / filename
+        report = json.loads(path.read_text(encoding="utf-8"))
+        reports.append({
+            "id": identifier,
+            "label": label,
+            "source_report": str(path.relative_to(ROOT)),
+            "fields": report["fields"],
+            "s1_index": report["s1_index"],
+            "row_spacing_variant": report["row_spacing_variant"],
+            "models": report["models"],
+            "robust_huber": {
+                name: report["robust_huber"][name]["all_points"]
+                for name in ("M1", "M2", "M3")
+            },
+            "bootstrap_huber": report["bootstrap_huber"],
+            "sensitivity": {
+                "rule": report["same_day_water_rule"],
+                "m3_without_same_day_water": report["robust_huber"]["M3"]["without_same_day_water"],
+            },
+        })
+    SUMMARY.write_text(json.dumps({
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "purpose": "Итог кнопки QGIS «Диаграммы эксперимента»; все метрики — только для отложенных полей.",
+        "excluded_fields": ["SP_7_3"],
+        "variants": reports,
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def commands() -> list[list[str]]:
@@ -25,11 +66,14 @@ def main() -> int:
     if "--self-test" in sys.argv:
         assert len(commands()) == 4
         assert all(command[1] == str(VALIDATION) for command in commands())
+        assert SUMMARY.name == "sp_s1_s2_surface_validation_summary.json"
         print("Self-test OK")
         return 0
     for index, command in enumerate(commands(), start=1):
         print(f"PROGRESS {(index - 1) * 25}")
         subprocess.run(command, cwd=ROOT, check=True)
+    write_summary()
+    print(f"SUMMARY_JSON {SUMMARY}")
     print("PROGRESS 100")
     return 0
 

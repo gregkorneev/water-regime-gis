@@ -375,6 +375,8 @@ class WaterRegimeDock(QDockWidget):
         self.chart_dialogs.append(dialog)
         dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
         self.log(f"Открыты диаграммы эксперимента: {len(paths)}.")
+        if settings.EXPERIMENT_SUMMARY_JSON.exists():
+            self.log(f"Итог эксперимента JSON: {settings.EXPERIMENT_SUMMARY_JSON}")
 
     def kornix_field_ids(self) -> set[str]:
         return {

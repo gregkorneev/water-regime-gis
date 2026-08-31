@@ -34,6 +34,8 @@ def main() -> int:
     assert "Загрузить контуры полей" in plugin
     assert "Загрузить ряды из сервиса" in plugin
     assert "Обновить Sentinel-1/2" in plugin
+    assert "Диаграммы эксперимента" in plugin
+    assert "ExperimentChartsDialog" in plugin
     assert "QProgressBar" in plugin
     assert "set_toolbar_action_color" in plugin
     assert "QToolButton { color: #f2f2f2; }" in plugin

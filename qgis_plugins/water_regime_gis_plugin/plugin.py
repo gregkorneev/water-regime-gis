@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QMetaType, Qt, QTimer
-from qgis.PyQt.QtGui import QCursor, QPalette
+from qgis.PyQt.QtGui import QCursor, QPalette, QPixmap
 from qgis.PyQt.QtWidgets import (
     QAction,
     QDialog,
@@ -18,6 +18,8 @@ from qgis.PyQt.QtWidgets import (
     QPushButton,
     QPlainTextEdit,
     QProgressBar,
+    QScrollArea,
+    QTabWidget,
     QToolTip,
     QToolButton,
     QVBoxLayout,
@@ -115,6 +117,7 @@ class WaterRegimeDock(QDockWidget):
         self.project_button = self.add_button(actions, 4, 0, "Собрать проект/слои", self.build_project)
         self.chart_button = self.add_button(actions, 4, 1, "График по полю", self.enable_field_chart_tool)
         self.average_chart_button = self.add_button(actions, 5, 0, "Средний график", self.open_average_chart)
+        self.experiment_charts_button = self.add_button(actions, 5, 1, "Диаграммы эксперимента", self.open_experiment_charts)
 
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
@@ -350,6 +353,18 @@ class WaterRegimeDock(QDockWidget):
         self.chart_dialogs.append(dialog)
         dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
         self.log(f"Открыт средний график по {len(field_ids)} полям КОРНИКС; исключены поля с нестабильным лагом.")
+
+    def open_experiment_charts(self):
+        paths = sorted(settings.EXPERIMENT_FIGURES_DIR.glob("sp_s1_s2_surface_validation*.png"))
+        if not paths:
+            self.notify("Диаграммы эксперимента не найдены. Сначала запустите анализ Sentinel-1/Sentinel-2.", Qgis.Warning)
+            return
+        dialog = ExperimentChartsDialog(self.iface.mainWindow(), paths)
+        dialog.setAttribute(Qt.WA_DeleteOnClose)
+        dialog.show()
+        self.chart_dialogs.append(dialog)
+        dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
+        self.log(f"Открыты диаграммы эксперимента: {len(paths)}.")
 
     def kornix_field_ids(self) -> set[str]:
         return {
@@ -678,6 +693,7 @@ class WaterRegimeDock(QDockWidget):
             self.project_button,
             self.chart_button,
             self.average_chart_button,
+            self.experiment_charts_button,
         ):
             button.setEnabled(enabled)
 
@@ -787,6 +803,25 @@ class FieldChartMapTool(QgsMapToolIdentify):
             if isinstance(layer, QgsVectorLayer) and layer.geometryType() == Qgis.GeometryType.Polygon:
                 return result.mFeature
         return None
+
+
+class ExperimentChartsDialog(QDialog):
+    """Display every saved surface-validation figure inside QGIS."""
+
+    def __init__(self, parent, paths: list[Path]):
+        super().__init__(parent)
+        self.setWindowTitle("Диаграммы эксперимента Sentinel-1/Sentinel-2")
+        self.resize(1120, 760)
+        tabs = QTabWidget(self)
+        for path in paths:
+            image = QLabel()
+            image.setPixmap(QPixmap(str(path)))
+            image.setAlignment(Qt.AlignCenter)
+            scroll = QScrollArea()
+            scroll.setWidget(image)
+            tabs.addTab(scroll, path.stem.removeprefix("sp_s1_s2_surface_validation_"))
+        layout = QVBoxLayout(self)
+        layout.addWidget(tabs)
 
 
 class FieldIndexChartDialog(QDialog):

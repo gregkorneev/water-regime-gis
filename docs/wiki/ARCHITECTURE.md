@@ -6,6 +6,10 @@
 web-сервиса, desktop-оболочки, Docker-сборки, HTTP API и многопользовательского
 режима нет.
 
+Диаграммы подтверждающего эксперимента Sentinel-1/Sentinel-2 остаются
+воспроизводимыми PNG-файлами в `results/figures/`, но открываются из того же
+QGIS-плагина, а не во внешнем просмотрщике.
+
 ## Состав
 
 1. `qgis_plugins/water_regime_gis_plugin/` — меню, toolbar action и dock-панель QGIS.

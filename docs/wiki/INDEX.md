@@ -12,6 +12,9 @@
 и оператора верхнего слоя КОРНИКС по Sentinel-1 расположен в
 `docs/reports/kornix_sentinel1_reconstruction.md`.
 
+Полная расшифровка экспортируемого итога эксперимента расположена в
+`docs/reports/sp_s1_s2_surface_validation_summary_analysis.md`.
+
 Выводы интерактивного сопоставления графиков влажности КОРНИКС и Sentinel-1,
 включая общую нормировку, корреляции и тренды, зафиксированы в
 `docs/reports/kornix_sentinel1_chart_comparison_20260830.md`.

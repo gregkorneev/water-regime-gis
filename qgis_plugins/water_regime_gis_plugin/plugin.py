@@ -863,7 +863,11 @@ class FieldIndexChartDialog(QDialog):
     ):
         super().__init__(parent)
         self.kornix_series = kornix_series or settings.KORNIX_CHART_SERIES
-        self.kornix_date_offsets = kornix_date_offsets or {}
+        self.kornix_date_offsets = (
+            settings.KORNIX_CHART_DATE_OFFSETS
+            if kornix_date_offsets is None
+            else kornix_date_offsets
+        )
         self.radar_kornix_series = radar_kornix_series or {}
         self.connect_satellite_points = connect_satellite_points
         self.smooth_moisture = smooth_moisture
@@ -965,7 +969,8 @@ class FieldIndexChartDialog(QDialog):
                     if satellite_period and self.kornix_date_offsets.get(column) and values[0][0] > satellite_period[0]:
                         values.insert(0, (satellite_period[0], values[0][1]))
                     dates, numbers = zip(*values)
-                    axis.plot(dates, numbers, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.5, linestyle="-" if variant == "65" else "--", label=f"{label} ({variant} см)")
+                    offset_label = "; сдвиг +12 сут." if self.kornix_date_offsets.get(column) == 12 else ""
+                    axis.plot(dates, numbers, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.5, linestyle="-" if variant == "65" else "--", label=f"{label} ({variant} см{offset_label})")
                     plotted = True
 
         water_by_date = {}

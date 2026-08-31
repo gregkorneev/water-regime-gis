@@ -59,7 +59,10 @@ AVERAGE_CHART_KORNIX_SERIES = {
     if column not in {"ground_cover_fraction_row_geometry", "soil_surface_0_10_theta"}
 }
 AVERAGE_CHART_RADAR_KORNIX_SERIES = {"Влага КОРНИКС 0–10 см": "soil_surface_0_10_theta"}
-AVERAGE_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}
+# FCover Sentinel-2 is aligned with the expected KORNIX FCover after this visual shift.
+# It applies to the charts only; source KORNIX dates are never rewritten.
+KORNIX_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}
+AVERAGE_CHART_DATE_OFFSETS = KORNIX_CHART_DATE_OFFSETS
 KORNIX_CHART_COLORS = {
     "ground_cover_fraction_row_geometry": "#1f77b4",
     "satellite_fcover_expected": FCOVER_COLOR,

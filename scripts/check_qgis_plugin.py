@@ -37,6 +37,7 @@ def main() -> int:
     assert "Диаграммы эксперимента" in plugin
     assert "ExperimentChartsDialog" in plugin
     assert "FitImageLabel" in plugin
+    assert "KORNIX_CHART_DATE_OFFSETS" in plugin
     assert "REFRESH_EXPERIMENT_CHARTS_SCRIPT" in plugin
     assert "QProgressBar" in plugin
     assert "set_toolbar_action_color" in plugin

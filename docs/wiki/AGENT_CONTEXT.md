@@ -48,6 +48,7 @@
 - `scripts/qgis/download_field_analysis.py` возобновляемо докачивает B02/B03/B04/B05/B08/B11/B12/SCL для сохраненных сцен KAA/SP, создает `sentinel_analysis.tif`, `cloud_mask.tif` и AOI-облачность.
 - `scripts/qgis/calculate_sentinel2_fcover.py` рассчитывает SNAP-совместимый FCover для сохранённых Sentinel-2 сцен: докачивает B06/B07/B8A, получает геометрию сцены и сохраняет `sentinel_fcover.tif`. Для SP подготовлены 1 535 растров FCover (2026-04-22—2026-08-20).
 - `scripts/analysis/analyze_kornix_fcover_lag.py` проверяет временной сдвиг FCover и покрытия КОРНИКС. На 433 совпадениях 37 полей максимум pooled correlation — `-12` суток (Kornix сдвигается на графике вправо); bootstrap по полям: медиана/мода `-12`, 95% интервал `-16…-10` суток. Leave-one-field-out во всех 37 случаях также выбирает `-12`, но отдельные полевые оптимумы нестабильны из-за малого числа спутниковых дат и гладкой сезонной формы.
+- В графиках QGIS ожидаемый FCover КОРНИКС сдвигается на +12 суток вправо как на среднем графике, так и на графике отдельного поля. Сдвиг является только визуальным и не изменяет значения и даты в исходных CSV.
 - `scripts/analysis/compare_kornix_expected_fcover.py` отдельно сравнивает
   `satellite_fcover_expected` КОРНИКС с FCOVER Sentinel-2 в совпадающие даты
   и пишет по одному набору Pearson r, bias, MAE и RMSE для каждого поля;

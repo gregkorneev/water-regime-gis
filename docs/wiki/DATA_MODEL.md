@@ -85,6 +85,11 @@
   этих артефактах `SP 7.3` отсутствует.
 - `results/figures/sp_s1_s2_surface_validation_65.png` — observed-vs-predicted
   диаграмма M3 и сравнение `R²_out` моделей M1–M3 на Huber grouped CV.
+- Суффиксы `_65_vh`, `_90` и `_65_fcover_r2_070` у одноимённых артефактов
+  обозначают соответственно проверку VH, варианта междурядья 90 см и
+  Sentinel-2-допустимой подвыборки полей с положительным `FCOVER R² >= 0.70`.
+  `results/tables/sp_s1_s2_surface_validation_by_field_*.csv` содержит
+  out-of-field качество M3 Huber по каждому полю.
 - `results/tables/seasonal_summary.csv` — обзорная сезонная динамика по всем KAA-полям;
 - `results/reports/satellite_quality_report.md` — отчет о дублях, пропусках, датах и диапазонах индексов;
 - `outputs/maps/water_regime_gis.qgs`.

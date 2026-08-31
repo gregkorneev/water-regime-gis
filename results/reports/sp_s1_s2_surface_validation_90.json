@@ -1,7 +1,7 @@
 {
   "purpose": "Independent Sentinel-1 validation after fixed Sentinel-2-constrained fCover",
   "method": "ivanov_n4l_meteo_soil",
-  "row_spacing_variant": "65",
+  "row_spacing_variant": "90",
   "s1_index": "VV dB",
   "excluded_fields": [
     "SP_7_3"

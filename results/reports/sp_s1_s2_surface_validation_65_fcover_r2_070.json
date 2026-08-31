@@ -1,0 +1,260 @@
+{
+  "purpose": "Independent Sentinel-1 validation after fixed Sentinel-2-constrained fCover",
+  "method": "ivanov_n4l_meteo_soil",
+  "row_spacing_variant": "65",
+  "s1_index": "VV dB",
+  "excluded_fields": [
+    "SP_7_3"
+  ],
+  "min_fcover_r2": 0.7,
+  "input_rows": 1239,
+  "fields": 21,
+  "folds": [
+    [
+      "SP_1_1",
+      "SP_2_5",
+      "SP_4_1",
+      "SP_6_5"
+    ],
+    [
+      "SP_1_11",
+      "SP_2_6",
+      "SP_4_11",
+      "SP_7_12"
+    ],
+    [
+      "SP_1_3",
+      "SP_2_7",
+      "SP_4_15",
+      "SP_7_9"
+    ],
+    [
+      "SP_1_5",
+      "SP_3_1",
+      "SP_4_16"
+    ],
+    [
+      "SP_1_6",
+      "SP_3_4",
+      "SP_4_8"
+    ],
+    [
+      "SP_2_1",
+      "SP_3_5",
+      "SP_6_4"
+    ]
+  ],
+  "models": {
+    "M1": "S1 ~ fCover",
+    "M2": "S1 ~ theta_0_10",
+    "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"
+  },
+  "ordinary_least_squares": {
+    "M1": {
+      "all_points": {
+        "r_squared_out": 0.07871676259980565,
+        "rmse_out": 2.6213121659448104,
+        "mae_out": 1.8714205857789865,
+        "pearson_r": 0.2806159344216181,
+        "spearman_rho": 0.232272999367769,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.07490630289640661,
+        "rmse_out": 2.427357447768769,
+        "mae_out": 1.8649769063457997,
+        "pearson_r": 0.33318495517465074,
+        "spearman_rho": 0.2504270896278167,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.028966184724018462,
+        "rmse_out": 2.5368153601441175,
+        "mae_out": 1.8508847681392415,
+        "pearson_r": 0.3496823684014859,
+        "spearman_rho": 0.36011561401382824,
+        "n": 408,
+        "fields": 21
+      }
+    },
+    "M2": {
+      "all_points": {
+        "r_squared_out": 0.11610730967686933,
+        "rmse_out": 2.5675678539449005,
+        "mae_out": 1.6978992658358953,
+        "pearson_r": 0.3408034841465325,
+        "spearman_rho": 0.45657742056688844,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.14857127289365335,
+        "rmse_out": 2.3427709168599486,
+        "mae_out": 1.6924863539034876,
+        "pearson_r": 0.4204766518711981,
+        "spearman_rho": 0.4653846325473846,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.02141762113574952,
+        "rmse_out": 2.546656541918848,
+        "mae_out": 1.797342419021409,
+        "pearson_r": 0.21288009545877537,
+        "spearman_rho": 0.27009370167964514,
+        "n": 408,
+        "fields": 21
+      }
+    },
+    "M3": {
+      "all_points": {
+        "r_squared_out": 0.1535384879040972,
+        "rmse_out": 2.5126139487527235,
+        "mae_out": 1.705257260808744,
+        "pearson_r": 0.39189076396945155,
+        "spearman_rho": 0.46629029191509624,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.20210563314342522,
+        "rmse_out": 2.273104769934925,
+        "mae_out": 1.6995702267310615,
+        "pearson_r": 0.4786977003921427,
+        "spearman_rho": 0.4744752143604951,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.04842894957680732,
+        "rmse_out": 2.511263544568794,
+        "mae_out": 1.8300754309755467,
+        "pearson_r": 0.30667043682703315,
+        "spearman_rho": 0.3703280322823582,
+        "n": 408,
+        "fields": 21
+      }
+    }
+  },
+  "robust_huber": {
+    "M1": {
+      "all_points": {
+        "r_squared_out": 0.07830246171458233,
+        "rmse_out": 2.621901501471238,
+        "mae_out": 1.8522661095138948,
+        "pearson_r": 0.283795257985426,
+        "spearman_rho": 0.22736648357666459,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.07784411258192771,
+        "rmse_out": 2.42549149373962,
+        "mae_out": 1.8455659039438528,
+        "pearson_r": 0.33318495517465074,
+        "spearman_rho": 0.2504270896278167,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.04913455112228515,
+        "rmse_out": 2.510332305624467,
+        "mae_out": 1.7996775744248812,
+        "pearson_r": 0.35265778677541293,
+        "spearman_rho": 0.3577020830675614,
+        "n": 408,
+        "fields": 21
+      }
+    },
+    "M2": {
+      "all_points": {
+        "r_squared_out": 0.1140032519918096,
+        "rmse_out": 2.57062201412711,
+        "mae_out": 1.702363133642612,
+        "pearson_r": 0.3451350639723243,
+        "spearman_rho": 0.45721972815144996,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.15398717068440929,
+        "rmse_out": 2.336468772997791,
+        "mae_out": 1.6962442099999644,
+        "pearson_r": 0.42047665187119804,
+        "spearman_rho": 0.4653846325473846,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.02501427775133136,
+        "rmse_out": 2.5419722757292744,
+        "mae_out": 1.7980995620590907,
+        "pearson_r": 0.2187377812643716,
+        "spearman_rho": 0.2723056905475581,
+        "n": 408,
+        "fields": 21
+      }
+    },
+    "M3": {
+      "all_points": {
+        "r_squared_out": 0.1458028618764553,
+        "rmse_out": 2.524068950865267,
+        "mae_out": 1.6700259771564556,
+        "pearson_r": 0.3930235055667609,
+        "spearman_rho": 0.4814622559015232,
+        "n": 1239,
+        "fields": 21
+      },
+      "equal_field_weight": {
+        "r_squared_out": 0.20502767847964765,
+        "rmse_out": 2.2698286526827354,
+        "mae_out": 1.6637200153788543,
+        "pearson_r": 0.4774544904428114,
+        "spearman_rho": 0.4900280165849124,
+        "fields": 21
+      },
+      "without_same_day_water": {
+        "r_squared_out": 0.03588076030321885,
+        "rmse_out": 2.5277670965298378,
+        "mae_out": 1.7855280407184138,
+        "pearson_r": 0.29833684749806444,
+        "spearman_rho": 0.3650406773493357,
+        "n": 408,
+        "fields": 21
+      }
+    }
+  },
+  "bootstrap_huber": [
+    {
+      "metric": "R²_out difference",
+      "models": [
+        "M3",
+        "M1"
+      ],
+      "bootstrap_fields": 2000,
+      "median": 0.07127411695011532,
+      "ci95": [
+        0.004503266421810437,
+        0.1630277216712774
+      ]
+    },
+    {
+      "metric": "R²_out difference",
+      "models": [
+        "M3",
+        "M2"
+      ],
+      "bootstrap_fields": 2000,
+      "median": 0.033146911217539654,
+      "ci95": [
+        0.011568200580899695,
+        0.06358649929705146
+      ]
+    }
+  ],
+  "residual_diagnostics_m3_huber": {
+    "residual_pearson": {
+      "fcover_model": 0.007774857301272338,
+      "theta_0_10": -0.05967855513878582,
+      "same_day_water": 0.10218859700474683
+    }
+  },
+  "same_day_water_rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors."
+}

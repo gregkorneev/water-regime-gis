@@ -20,6 +20,7 @@ DEFAULT_RADAR = ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 DEFAULT_DATA = ROOT / "results/data/sp_s1_s2_surface_validation_65.csv"
 DEFAULT_PREDICTIONS = ROOT / "results/data/sp_s1_s2_surface_validation_predictions_65.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_s1_s2_surface_validation_65.json"
+DEFAULT_FCOVER_R2 = ROOT / "results/tables/sp_kornix_fcover_satellite_r2_by_field.csv"
 METHOD = "ivanov_n4l_meteo_soil"
 EXCLUDED_FIELDS = {"SP_7_3"}
 
@@ -34,9 +35,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--folds", type=int, default=6)
     parser.add_argument("--bootstrap", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=20260831)
+    parser.add_argument("--fcover-r2-csv", type=Path, default=DEFAULT_FCOVER_R2)
+    parser.add_argument("--min-fcover-r2", type=float, help="Sensitivity-анализ только по полям с FCOVER R² не ниже порога.")
     parser.add_argument("--data-output", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--predictions-output", type=Path, default=DEFAULT_PREDICTIONS)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
+    parser.add_argument("--field-output", type=Path, default=ROOT / "results/tables/sp_s1_s2_surface_validation_by_field_65.csv")
     parser.add_argument("--figure", type=Path, default=ROOT / "results/figures/sp_s1_s2_surface_validation_65.png")
     parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
@@ -56,14 +60,24 @@ def read_csv(path: Path) -> list[dict]:
         return list(csv.DictReader(handle))
 
 
-def build_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, variant: str, s1_index: str) -> list[dict]:
+def fcover_fields(path: Path, threshold: float | None) -> set[str] | None:
+    if threshold is None:
+        return None
+    return {
+        normalize_field_id(row["field_id"])
+        for row in read_csv(path)
+        if float(row["pearson_r"]) > 0 and float(row["r_squared"]) >= threshold
+    }
+
+
+def build_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, variant: str, s1_index: str, allowed_fields: set[str] | None = None) -> list[dict]:
     suffix = f"_{variant}"
     model = {}
     for row in kornix_rows:
         if row.get("method_code") != method:
             continue
         field_id = normalize_field_id(row.get("field_short_name", ""))
-        if field_id in EXCLUDED_FIELDS:
+        if field_id in EXCLUDED_FIELDS or allowed_fields is not None and field_id not in allowed_fields:
             continue
         try:
             day = date.fromisoformat(row["day"])
@@ -81,7 +95,7 @@ def build_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, var
         if row.get("dataset") != "sp":
             continue
         field_id = normalize_field_id(row.get("field_id", ""))
-        if field_id in EXCLUDED_FIELDS:
+        if field_id in EXCLUDED_FIELDS or allowed_fields is not None and field_id not in allowed_fields:
             continue
         try:
             day = date.fromisoformat(row["scene_date"])
@@ -106,10 +120,14 @@ def build_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, var
 
 def field_folds(rows: list[dict], folds: int) -> list[list[str]]:
     fields = sorted({row["field_id"] for row in rows})
-    if len(fields) != 36:
-        raise ValueError(f"Expected 36 fields after exclusion, got {len(fields)}")
-    if folds != 6:
+    if len(fields) == 36 and folds != 6:
         raise ValueError("The confirmatory experiment uses exactly six field folds.")
+    if len(fields) == 36:
+        return [fields[index::folds] for index in range(folds)]
+    if len(fields) < folds:
+        raise ValueError(f"Need at least {folds} fields, got {len(fields)}")
+    if len(fields) > 36:
+        raise ValueError(f"Expected 36 fields after exclusion, got {len(fields)}")
     return [fields[index::folds] for index in range(folds)]
 
 
@@ -186,7 +204,7 @@ def evaluate(rows: list[dict], folds: list[list[str]], robust: bool) -> tuple[li
             coefficients = fitter(design(train, model), np.array([row["S1_index"] for row in train]))
             values = design(test, model) @ coefficients
             for row, value in zip(test, values):
-                model_predictions.append({"model": model, "fit": "Huber" if robust else "OLS", "fold": fold, "field_id": row["field_id"], "date": row["date"], "S1_index": row["S1_index"], "prediction": float(value), "P0": row["P0"], "I0": row["I0"]})
+                model_predictions.append({"model": model, "fit": "Huber" if robust else "OLS", "fold": fold, "field_id": row["field_id"], "date": row["date"], "S1_index": row["S1_index"], "prediction": float(value), "residual": float(row["S1_index"] - value), "theta_0_10": row["theta_0_10"], "fcover_model": row["fcover_model"], "P0": row["P0"], "I0": row["I0"]})
         predictions.extend(model_predictions)
     report = {}
     for model in ("M1", "M2", "M3"):
@@ -210,6 +228,22 @@ def bootstrap_difference(predictions: list[dict], model_a: str, model_b: str, co
     return {"metric": "R²_out difference", "models": [model_a, model_b], "bootstrap_fields": count, "median": float(np.median(differences)), "ci95": [float(np.quantile(differences, .025)), float(np.quantile(differences, .975))]}
 
 
+def diagnostics(predictions: list[dict]) -> tuple[list[dict], dict]:
+    selected = [row for row in predictions if row["model"] == "M3" and row["fit"] == "Huber"]
+    by_field = defaultdict(list)
+    for row in selected:
+        by_field[row["field_id"]].append(row)
+    fields = [{"field_id": field, **metrics(rows)} for field, rows in sorted(by_field.items())]
+    residual = np.array([row["residual"] for row in selected])
+    return fields, {
+        "residual_pearson": {
+            "fcover_model": correlation(residual, np.array([row["fcover_model"] for row in selected])),
+            "theta_0_10": correlation(residual, np.array([row["theta_0_10"] for row in selected])),
+            "same_day_water": correlation(residual, np.array([row["P0"] + row["I0"] for row in selected])),
+        }
+    }
+
+
 def write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -229,7 +263,7 @@ def save_figure(path: Path, predictions: list[dict], report: dict) -> None:
     left.scatter(actual, predicted, s=10, alpha=.45, color="#267a9e", edgecolors="none")
     limits = [min(actual.min(), predicted.min()), max(actual.max(), predicted.max())]
     left.plot(limits, limits, color="#555555", linewidth=1)
-    left.set(xlabel="Observed Sentinel-1 VV, dB", ylabel="Out-of-field prediction, dB", title="M3: observed vs predicted")
+    left.set(xlabel=f"Observed Sentinel-1 {report['s1_index']}", ylabel="Out-of-field prediction, dB", title="M3: observed vs predicted")
     right.bar(("M1\nfCover", "M2\ntheta", "M3\ntheta + fCover"), values, color=("#d95f02", "#7570b3", "#1b9e77"))
     right.axhline(0, color="#555555", linewidth=1)
     right.set(ylabel="R²_out", title="Huber grouped CV (36 fields)")
@@ -251,14 +285,17 @@ def main() -> int:
         self_test()
         print("Self-test OK")
         return 0
-    rows = build_rows(read_csv(args.kornix_csv), read_csv(args.radar_csv), args.method, args.variant, args.s1_index)
+    allowed_fields = fcover_fields(args.fcover_r2_csv, args.min_fcover_r2)
+    rows = build_rows(read_csv(args.kornix_csv), read_csv(args.radar_csv), args.method, args.variant, args.s1_index, allowed_fields)
     folds = field_folds(rows, args.folds)
     write_csv(args.data_output, rows)
     ordinary, ordinary_report = evaluate(rows, folds, robust=False)
     robust, robust_report = evaluate(rows, folds, robust=True)
     predictions = ordinary + robust
     write_csv(args.predictions_output, predictions)
-    report = {"purpose": "Independent Sentinel-1 validation after fixed Sentinel-2-constrained fCover", "method": args.method, "row_spacing_variant": args.variant, "s1_index": f"{args.s1_index.upper()} dB", "excluded_fields": sorted(EXCLUDED_FIELDS), "input_rows": len(rows), "fields": len({row['field_id'] for row in rows}), "folds": folds, "models": {"M1": "S1 ~ fCover", "M2": "S1 ~ theta_0_10", "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"}, "ordinary_least_squares": ordinary_report, "robust_huber": robust_report, "bootstrap_huber": [bootstrap_difference(robust, "M3", baseline, args.bootstrap, args.seed) for baseline in ("M1", "M2")], "same_day_water_rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors."}
+    field_rows, residual_report = diagnostics(predictions)
+    write_csv(args.field_output, field_rows)
+    report = {"purpose": "Independent Sentinel-1 validation after fixed Sentinel-2-constrained fCover", "method": args.method, "row_spacing_variant": args.variant, "s1_index": f"{args.s1_index.upper()} dB", "excluded_fields": sorted(EXCLUDED_FIELDS), "min_fcover_r2": args.min_fcover_r2, "input_rows": len(rows), "fields": len({row['field_id'] for row in rows}), "folds": folds, "models": {"M1": "S1 ~ fCover", "M2": "S1 ~ theta_0_10", "M3": "S1 ~ theta_0_10 + fCover + theta_0_10*fCover"}, "ordinary_least_squares": ordinary_report, "robust_huber": robust_report, "bootstrap_huber": [bootstrap_difference(robust, "M3", baseline, args.bootstrap, args.seed) for baseline in ("M1", "M2")], "residual_diagnostics_m3_huber": residual_report, "same_day_water_rule": "Sensitivity analysis excludes P0 + I0 > 0; water inputs are not regression predictors."}
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     save_figure(args.figure, predictions, report)

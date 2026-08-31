@@ -24,6 +24,7 @@ RESOLVE_BOUNDARY_SCRIPT = PROJECT_ROOT / "scripts/qgis/resolve_field_boundary.py
 SATELLITE_INDICES_SCRIPT = PROJECT_ROOT / "scripts/qgis/process_satellite_indices.py"
 EXTERNAL_TIMESERIES_SCRIPT = PROJECT_ROOT / "scripts/qgis/download_external_timeseries.py"
 REFRESH_TIMESERIES_SCRIPT = PROJECT_ROOT / "scripts/qgis/refresh_field_timeseries.py"
+REFRESH_EXPERIMENT_CHARTS_SCRIPT = PROJECT_ROOT / "scripts/analysis/refresh_surface_validation_charts.py"
 CHECK_CONTEXT_SCRIPT = PROJECT_ROOT / "scripts/qgis/check_qgis_context.py"
 FIELD_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/field_zonal_means.csv"
 SP_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sp_zonal_means.csv"

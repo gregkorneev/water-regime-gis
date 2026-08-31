@@ -355,9 +355,19 @@ class WaterRegimeDock(QDockWidget):
         self.log(f"Открыт средний график по {len(field_ids)} полям КОРНИКС; исключены поля с нестабильным лагом.")
 
     def open_experiment_charts(self):
+        self.progress.setValue(0)
+        self.progress.setFormat("Пересчёт диаграмм эксперимента")
+        self.run_task(
+            "Пересчёт диаграмм Sentinel-1/Sentinel-2",
+            [settings.QGIS_PYTHON, settings.REFRESH_EXPERIMENT_CHARTS_SCRIPT],
+            after_success=self.show_experiment_charts,
+            timeout=900,
+        )
+
+    def show_experiment_charts(self):
         paths = sorted(settings.EXPERIMENT_FIGURES_DIR.glob("sp_s1_s2_surface_validation*.png"))
         if not paths:
-            self.notify("Диаграммы эксперимента не найдены. Сначала запустите анализ Sentinel-1/Sentinel-2.", Qgis.Warning)
+            self.notify("Диаграммы эксперимента не были созданы.", Qgis.Warning)
             return
         dialog = ExperimentChartsDialog(self.iface.mainWindow(), paths)
         dialog.setAttribute(Qt.WA_DeleteOnClose)

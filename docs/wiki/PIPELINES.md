@@ -131,9 +131,11 @@ Sentinel-2 верхней панели для выбранного поля. В�
 ## 4.7. Сопоставление рядов КОРНИКС и Sentinel-2 SP
 
 Эталонный вход —
-`data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily.csv`.
+`data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily_65_90.csv`.
 Перед объединением проверяются `manifest.json` и уникальность ключа
-`field_short_name + method_code + day`. В КОРНИКС `field_short_name` имеет вид
+`field_short_name + method_code + day`; междурядье выбирается параметром
+`--variant 65` или `--variant 90`, а результаты имеют соответствующий суффикс.
+В КОРНИКС `field_short_name` имеет вид
 `1.1`, а `field_long_name` — `SP:1.1`; идентификатор спутникового ряда
 приводится к виду `SP:1.1`. Спутниковые точки
 `field_id + scene_date` присоединяются к модели по полю и дате (точное совпадение

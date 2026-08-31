@@ -353,9 +353,9 @@ class WaterRegimeDock(QDockWidget):
 
     def kornix_field_ids(self) -> set[str]:
         return {
-            path.name.removesuffix("_daily.csv")
-            for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily.csv")
-            if path.name.removesuffix("_daily.csv") not in settings.AVERAGE_CHART_EXCLUDED_FIELDS
+            path.name.removesuffix("_daily_65_90.csv")
+            for path in settings.KORNIX_BY_FIELD_DIR.glob("SP_*_daily_65_90.csv")
+            if path.name.removesuffix("_daily_65_90.csv") not in settings.AVERAGE_CHART_EXCLUDED_FIELDS
         }
 
     def average_satellite_rows(self, field_ids: set[str]) -> list[dict]:
@@ -379,14 +379,15 @@ class WaterRegimeDock(QDockWidget):
              "precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
         ))
         for field_id in field_ids:
-            path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily.csv"
+            path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily_65_90.csv"
             with path.open(newline="", encoding="utf-8-sig") as handle:
                 rows.extend(
-                    {**row, "field_id": field_id}
+                    normalized
                     for row in csv.DictReader(handle)
                     if row.get("method_code") == settings.KORNIX_METHOD
+                    for normalized in self.kornix_rows_for_variants(row, field_id)
                 )
-        return average_by_date(rows, "day", columns)
+        return average_by_date(rows, "day", columns, ("row_spacing_variant",))
 
     def average_radar_rows(self, field_ids: set[str]) -> list[dict]:
         import csv
@@ -462,11 +463,31 @@ class WaterRegimeDock(QDockWidget):
     def kornix_rows_for_field(self, field_id: str) -> list[dict]:
         import csv
 
-        path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily.csv"
+        path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily_65_90.csv"
         if not path.exists():
             return []
         with path.open(newline="", encoding="utf-8-sig") as handle:
-            return [row for row in csv.DictReader(handle) if row.get("method_code") == settings.KORNIX_METHOD]
+            return [
+                normalized
+                for row in csv.DictReader(handle)
+                if row.get("method_code") == settings.KORNIX_METHOD
+                for normalized in self.kornix_rows_for_variants(row, field_id)
+            ]
+
+    @staticmethod
+    def kornix_rows_for_variants(row: dict, field_id: str) -> list[dict]:
+        """Expose each row-spacing variant through the former canonical column names."""
+        result = []
+        for variant in settings.KORNIX_ROW_SPACING_VARIANTS:
+            suffix = f"_{variant}"
+            normalized = {
+                **{key: value for key, value in row.items() if not key.endswith(("_65", "_90"))},
+                **{key.removesuffix(suffix): value for key, value in row.items() if key.endswith(suffix)},
+                "field_id": field_id,
+                "row_spacing_variant": variant,
+            }
+            result.append(normalized)
+        return result
 
     def sentinel1_rows_for_field(self, field_id: str) -> list[dict]:
         import csv
@@ -872,25 +893,27 @@ class FieldIndexChartDialog(QDialog):
         rows = self.rows_in_period(rows, "day", satellite_period)
         plotted = False
         for label, column in self.kornix_series.items():
-            values = []
-            for row in rows:
-                value = row.get(column)
-                if value in ("", None):
-                    continue
-                values.append((
-                    dt.date.fromisoformat(row["day"]) + dt.timedelta(days=self.kornix_date_offsets.get(column, 0)),
-                    float(value),
-                ))
-            if values:
-                if satellite_period and self.kornix_date_offsets.get(column) and values[0][0] > satellite_period[0]:
-                    values.insert(0, (satellite_period[0], values[0][1]))
-                dates, numbers = zip(*values)
-                color = settings.KORNIX_CHART_COLORS[column]
-                axis.plot(dates, numbers, color=color, linewidth=1.5, label=label)
-                plotted = True
+            for variant in settings.KORNIX_ROW_SPACING_VARIANTS:
+                values = []
+                for row in rows:
+                    value = row.get(column)
+                    if row.get("row_spacing_variant") != variant or value in ("", None):
+                        continue
+                    values.append((
+                        dt.date.fromisoformat(row["day"]) + dt.timedelta(days=self.kornix_date_offsets.get(column, 0)),
+                        float(value),
+                    ))
+                if values:
+                    if satellite_period and self.kornix_date_offsets.get(column) and values[0][0] > satellite_period[0]:
+                        values.insert(0, (satellite_period[0], values[0][1]))
+                    dates, numbers = zip(*values)
+                    axis.plot(dates, numbers, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.5, linestyle="-" if variant == "65" else "--", label=f"{label} ({variant} см)")
+                    plotted = True
 
         water_by_date = {}
         for row in rows:
+            if row.get("row_spacing_variant") != "65":
+                continue
             date = dt.date.fromisoformat(row["day"])
             precipitation = self.positive_kornix_value(row.get("precipitation_raw_daily_mm"))
             irrigation = self.positive_kornix_value(row.get("irrigation_raw_daily_mm"))
@@ -960,17 +983,18 @@ class FieldIndexChartDialog(QDialog):
             axis.plot(line_dates, line_values, color="#1f77b4", linewidth=1.6, label="Влажность VV" + (" (сплайн)" if self.smooth_moisture else ""))
         kornix_plotted = False
         for label, column in self.radar_kornix_series.items():
-            values = [
-                (dt.date.fromisoformat(row["day"]), float(row[column]))
-                for row in self.rows_in_period(kornix_rows, "day", satellite_period)
-                if row.get(column) not in ("", None)
-            ]
-            if values:
-                dates, moisture = zip(*values)
-                line = robust_spline(list(zip(dates, moisture))) if self.smooth_moisture else list(zip(dates, moisture))
-                line_dates, line_values = zip(*line)
-                axis.plot(line_dates, line_values, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.6, label=label + (" (сплайн)" if self.smooth_moisture else ""))
-                kornix_plotted = True
+            for variant in settings.KORNIX_ROW_SPACING_VARIANTS:
+                values = [
+                    (dt.date.fromisoformat(row["day"]), float(row[column]))
+                    for row in self.rows_in_period(kornix_rows, "day", satellite_period)
+                    if row.get("row_spacing_variant") == variant and row.get(column) not in ("", None)
+                ]
+                if values:
+                    dates, moisture = zip(*values)
+                    line = robust_spline(list(zip(dates, moisture))) if self.smooth_moisture else list(zip(dates, moisture))
+                    line_dates, line_values = zip(*line)
+                    axis.plot(line_dates, line_values, color=settings.KORNIX_CHART_COLORS[column], linewidth=1.6, linestyle="-" if variant == "65" else "--", label=f"{label} ({variant} см)" + (" (сплайн)" if self.smooth_moisture else ""))
+                    kornix_plotted = True
         if not radar_plotted and not kornix_plotted:
             axis.text(0.5, 0.5, "Нет данных Sentinel-1 или КОРНИКС", ha="center", va="center", transform=axis.transAxes)
         axis.set_xlabel("Дата")

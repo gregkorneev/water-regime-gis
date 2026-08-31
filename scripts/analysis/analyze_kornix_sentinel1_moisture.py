@@ -15,12 +15,12 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily.csv"
+DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily_65_90.csv"
 DEFAULT_RADAR = ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 DEFAULT_OUTPUT = ROOT / "results/data/sp_kornix_sentinel1_moisture.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_sentinel1_moisture.json"
 METHOD = "ivanov_n4l_meteo_soil"
-MOISTURE = "soil_surface_0_10_theta"
+MOISTURE = "soil_layer_0_10_theta_m3_m3"
 WATER_COLUMNS = ("precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
 
 
@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--kornix-csv", type=Path, default=DEFAULT_KORNIX)
     parser.add_argument("--radar-csv", type=Path, default=DEFAULT_RADAR)
     parser.add_argument("--method", default=METHOD)
+    parser.add_argument("--variant", choices=("65", "90"), default="65", help="Междурядье КОРНИКС в сантиметрах.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--self-test", action="store_true")
@@ -56,15 +57,15 @@ def water_sum(daily: dict[date, float], day: date, days: int) -> float:
     return sum(daily.get(day - timedelta(offset), 0.0) for offset in range(days))
 
 
-def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str) -> list[dict]:
+def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str, variant: str) -> list[dict]:
     daily, moisture = defaultdict(dict), {}
     for row in kornix_rows:
         if row.get("method_code") != method:
             continue
         field_id, day = normalize_field_id(row.get("field_short_name", "")), date.fromisoformat(row["day"])
-        daily[field_id, "precipitation"][day] = number(row.get(WATER_COLUMNS[0]))
-        daily[field_id, "irrigation"][day] = number(row.get(WATER_COLUMNS[1]))
-        moisture[field_id, day] = number(row.get(MOISTURE))
+        daily[field_id, "precipitation"][day] = number(row.get(f"{WATER_COLUMNS[0]}_{variant}"))
+        daily[field_id, "irrigation"][day] = number(row.get(f"{WATER_COLUMNS[1]}_{variant}"))
+        moisture[field_id, day] = (number(row.get(f"{MOISTURE}_{variant}")), number(row.get(f"days_after_sowing_{variant}")))
 
     radar = defaultdict(dict)
     for row in radar_rows:
@@ -83,8 +84,9 @@ def matched_rows(kornix_rows: list[dict], radar_rows: list[dict], method: str) -
         rows.append({
             "field_id": field_id,
             "day": day.isoformat(),
-            "days_after_sowing": number(row.get("days_after_sowing")),
-            "kornix_moisture_0_10": moisture[field_id, day],
+            "row_spacing_variant": variant,
+            "days_after_sowing": moisture[field_id, day][1],
+            "kornix_moisture_0_10": moisture[field_id, day][0],
             "sentinel1_vv_db": values["VV"],
             "sentinel1_vh_db": values["VH"],
             "precipitation_3d_mm": water_sum(precipitation, day, 3),
@@ -185,8 +187,9 @@ def main() -> int:
         self_test()
         print("Self-test OK")
         return 0
-    rows = matched_rows(read_csv(args.kornix_csv), read_csv(args.radar_csv), args.method)
+    rows = matched_rows(read_csv(args.kornix_csv), read_csv(args.radar_csv), args.method, args.variant)
     report = analyze(rows)
+    report["row_spacing_variant"] = args.variant
     write_csv(args.output, rows)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

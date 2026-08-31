@@ -16,7 +16,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MERGED = ROOT / "results/data/sp_kornix_sentinel_daily.csv"
-DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily.csv"
+DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/sp_all_fields_all_methods_daily_65_90.csv"
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_lag.json"
 DEFAULT_FIELD_REPORT = ROOT / "results/tables/sp_kornix_fcover_field_lags.csv"
 DEFAULT_WARP_REPORT = ROOT / "results/tables/sp_kornix_fcover_piecewise_warp.csv"
@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--merged-csv", type=Path, default=DEFAULT_MERGED)
     parser.add_argument("--kornix-csv", type=Path, default=DEFAULT_KORNIX)
     parser.add_argument("--method", default=METHOD)
+    parser.add_argument("--variant", choices=("65", "90"), default="65", help="Междурядье КОРНИКС в сантиметрах.")
     parser.add_argument("--lag-min", type=int, default=-30)
     parser.add_argument("--lag-max", type=int, default=30)
     parser.add_argument("--bootstrap", type=int, default=2000)
@@ -71,14 +72,14 @@ def observations(merged_rows: list[dict]) -> list[dict]:
     return result
 
 
-def daily_cover(rows: list[dict], method: str) -> dict[str, dict[dt.date, tuple[float, float]]]:
+def daily_cover(rows: list[dict], method: str, variant: str) -> dict[str, dict[dt.date, tuple[float, float]]]:
     result: dict[str, dict[dt.date, tuple[float, float]]] = defaultdict(dict)
     for row in rows:
         if row.get("method_code") != method:
             continue
         try:
             result[normalize_field_id(row["field_short_name"])][dt.date.fromisoformat(row["day"])] = (
-                float(row["canopy_cover_fraction_derived"]), float(row["days_after_sowing"])
+                float(row[f"ground_cover_fraction_row_geometry_{variant}"]), float(row[f"days_after_sowing_{variant}"])
             )
         except (KeyError, TypeError, ValueError):
             continue
@@ -319,7 +320,7 @@ def main() -> int:
     if args.lag_max < args.lag_min:
         raise ValueError("--lag-max must be at least --lag-min")
     obs = observations(read_csv(args.merged_csv))
-    cover = daily_cover(read_csv(args.kornix_csv), args.method)
+    cover = daily_cover(read_csv(args.kornix_csv), args.method, args.variant)
     lags = range(args.lag_min, args.lag_max + 1)
     profile = lag_profile(obs, cover, lags)
     optimum = best_lag(profile)
@@ -327,6 +328,7 @@ def main() -> int:
     warp_rows, warp = piecewise_time_warp(obs, cover, args.bootstrap, args.seed)
     report = {
         "method_code": args.method,
+        "row_spacing_variant": args.variant,
         "sign_convention": "lag=-12 means FCover(t) is compared with Kornix canopy cover(t-12), equivalent to shifting the Kornix curve 12 days right.",
         "observations": len(obs),
         "fields": len({row['field_id'] for row in obs}),

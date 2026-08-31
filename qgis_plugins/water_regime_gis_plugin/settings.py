@@ -30,6 +30,7 @@ SP_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sp_zonal_means.csv"
 SENTINEL1_ZONAL_MEANS_CSV = PROJECT_ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 KORNIX_BY_FIELD_DIR = PROJECT_ROOT / "data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field"
 KORNIX_METHOD = "ivanov_n4l_meteo_soil"
+KORNIX_ROW_SPACING_VARIANTS = ("65", "90")
 ANALYSIS_EXCLUDED_FIELDS = {"SP_7_3"}
 AVERAGE_CHART_EXCLUDED_FIELDS = ANALYSIS_EXCLUDED_FIELDS | {"SP_2_7", "SP_4_3", "SP_6_6", "SP_6_7"}
 RADAR_MOISTURE_RANGE = (0.153527, 0.367581)
@@ -44,7 +45,7 @@ CHART_INDEX_COLORS = {
 }
 RADAR_CHART_SERIES = {"VV", "VH"}
 KORNIX_CHART_SERIES = {
-    "Покрытие": "canopy_cover_fraction_derived",
+    "Покрытие рядов": "ground_cover_fraction_row_geometry",
     "FCover expected (КОРНИКС)": "satellite_fcover_expected",
     "Ks": "water_stress_coefficient_ks",
     "Влага 0–10 см": "soil_surface_0_10_theta",
@@ -53,12 +54,12 @@ KORNIX_CHART_SERIES = {
 AVERAGE_CHART_KORNIX_SERIES = {
     label: column
     for label, column in KORNIX_CHART_SERIES.items()
-    if column not in {"canopy_cover_fraction_derived", "soil_surface_0_10_theta"}
+    if column not in {"ground_cover_fraction_row_geometry", "soil_surface_0_10_theta"}
 }
 AVERAGE_CHART_RADAR_KORNIX_SERIES = {"Влага КОРНИКС 0–10 см": "soil_surface_0_10_theta"}
 AVERAGE_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}
 KORNIX_CHART_COLORS = {
-    "canopy_cover_fraction_derived": "#1f77b4",
+    "ground_cover_fraction_row_geometry": "#1f77b4",
     "satellite_fcover_expected": FCOVER_COLOR,
     "water_stress_coefficient_ks": "#ff7f0e",
     "soil_surface_0_10_theta": "#d62728",

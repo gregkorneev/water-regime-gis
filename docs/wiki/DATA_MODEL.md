@@ -14,11 +14,12 @@
 - `data/interim/external_timeseries/<timestamp>/` — неизменяемая выгрузка CSV или ZIP внешнего сервиса; `latest.json` хранит URL, период и список CSV последней выгрузки. Для запуска автоматического обновления в одном из CSV обязательна колонка `day` или `date` с датой ISO-8601.
 - `data/interim/satellite/<scene_id>/*.tif` — обрезанные каналы;
 - `data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/` —
-  эталонная поставка v006 суточных рядов КОРНИКС по 37 полям SP за 2026-04-01—2026-08-27:
-  `sp_all_fields_all_methods_daily.csv`, 37 файлов `by_field/`, словарь
-  `series_catalog.csv`, методика и `manifest.json` с SHA-256. Ключ строки:
-  `field_short_name + method_code + day`; `field_short_name` имеет вид `1.1`,
-  а `field_long_name` — `SP:1.1`; доступно четыре метода водного баланса.
+  эталонная сравнительная поставка v006 суточных рядов КОРНИКС по 37 полям SP
+  за 2026-04-01—2026-08-27: `sp_all_fields_all_methods_daily_65_90.csv`,
+  37 файлов `by_field/*_daily_65_90.csv`, словарь `series_catalog_65_90.csv`,
+  методика и `manifest.json` с SHA-256. В каждой записи сохранены независимые
+  варианты междурядья 65 и 90 см с суффиксами `_65`/`_90`; общий ключ строки —
+  `field_short_name + method_code + day`.
 - `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и минимальные прямоугольники.
 
 ## Результаты
@@ -79,9 +80,11 @@
 
 Для каждого рассчитанного индекса отчет содержит `valid_pixel_count`, `nodata_pixel_count`, `minimum`, `maximum`, `mean` и `standard_deviation`.
 
-QGIS-график SP дополнительно читает отдельный CSV КОРНИКС v006 из
-`data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field/SP_<группа>_<поле>_daily.csv`;
-для визуализации используются записи `ivanov_n4l_meteo_soil`.
+QGIS-график SP читает CSV КОРНИКС v006 из
+`data/interim/kornix_timeseries/sp_all_calculation_timeseries_20260401_20260827_v006/by_field/SP_<группа>_<поле>_daily_65_90.csv`.
+Для `ivanov_n4l_meteo_soil` он показывает оба варианта: 65 см сплошной, 90 см
+пунктирной линией; главным аналогом FCover является
+`ground_cover_fraction_row_geometry`.
 
 Для кнопки `Средний график` плагин читает эти же исходные файлы напрямую, не
 создавая отдельной производной таблицы: данные остаются актуальными на момент

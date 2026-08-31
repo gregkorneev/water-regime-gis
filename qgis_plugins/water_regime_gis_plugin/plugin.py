@@ -119,7 +119,7 @@ class WaterRegimeDock(QDockWidget):
         self.chart_button = self.add_button(actions, 4, 1, "График по полю", self.enable_field_chart_tool)
         self.average_chart_button = self.add_button(actions, 5, 0, "Средний график", self.open_average_chart)
         self.experiment_charts_button = self.add_button(actions, 5, 1, "Диаграммы эксперимента", self.open_experiment_charts)
-        self.save_experiment_json_button = self.add_button(actions, 6, 0, "Сохранить JSON эксперимента…", self.save_experiment_json)
+        self.save_experiment_json_button = self.add_button(actions, 6, 0, "Сохранить JSON…", self.save_experiment_json)
 
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
@@ -367,13 +367,21 @@ class WaterRegimeDock(QDockWidget):
         )
 
     def save_experiment_json(self):
-        source = settings.EXPERIMENT_SUMMARY_JSON
+        from qgis.PyQt.QtWidgets import QInputDialog
+        options = {
+            "Итог эксперимента Sentinel-1/Sentinel-2": settings.EXPERIMENT_SUMMARY_JSON,
+            "Протокол рядов КОРНИКС 90 см для LLM": settings.KORNIX_SERIES_PROTOCOL_JSON,
+        }
+        label, accepted = QInputDialog.getItem(self, "Выберите JSON", "Сохранить:", list(options), 0, False)
+        if not accepted:
+            return
+        source = options[label]
         if not source.exists():
-            self.notify("Сначала запустите «Диаграммы эксперимента», чтобы создать JSON.", Qgis.Warning)
+            self.notify("Сначала запустите «Диаграммы эксперимента», чтобы подготовить JSON.", Qgis.Warning)
             return
         destination, _ = QFileDialog.getSaveFileName(
             self,
-            "Сохранить итог эксперимента",
+            "Сохранить JSON",
             str(Path.home() / source.name),
             "JSON (*.json)",
         )
@@ -386,8 +394,8 @@ class WaterRegimeDock(QDockWidget):
         except OSError as error:
             self.notify(f"Не удалось сохранить JSON: {error}", Qgis.Critical)
             return
-        self.log(f"JSON эксперимента сохранён: {target}")
-        self.notify(f"JSON эксперимента сохранён: {target.name}")
+        self.log(f"JSON сохранён: {target}")
+        self.notify(f"JSON сохранён: {target.name}")
 
     def show_experiment_charts(self):
         paths = sorted(settings.EXPERIMENT_FIGURES_DIR.glob("sp_s1_s2_surface_validation*.png"))

@@ -1,0 +1,2029 @@
+{
+  "purpose": "Сопоставление всех числовых рядов КОРНИКС выбранного варианта с FCOVER Sentinel-2 в ту же дату; лаг не применяется.",
+  "observations": 419,
+  "fields": 36,
+  "fcover_candidate_series": [
+    "satellite_fcover_expected_90",
+    "ground_cover_fraction_row_geometry_90",
+    "canopy_cover_fraction_derived_90"
+  ],
+  "fcover_candidates_identical_on_common_pairs": true,
+  "fcover_candidates_common_pair_count": 419,
+  "series_ranked_by_pooled_correlation": [
+    {
+      "series": "soil_lower_zr_100_theta_sat_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8982430685946478,
+      "pooled_r_squared": 0.8068406102783291,
+      "median_within_field_pearson_r": 0.9911076713978054
+    },
+    {
+      "series": "soil_water_content_profile_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8951546494126997,
+      "pooled_r_squared": 0.8013018463651733,
+      "median_within_field_pearson_r": 0.9828773991987494
+    },
+    {
+      "series": "soil_root_effective_10_zr_stock_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8951546494126997,
+      "pooled_r_squared": 0.8013018463651733,
+      "median_within_field_pearson_r": 0.9828773991987491
+    },
+    {
+      "series": "soil_water_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8951546494126996,
+      "pooled_r_squared": 0.8013018463651732,
+      "median_within_field_pearson_r": 0.9828773991987492
+    },
+    {
+      "series": "soil_water_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8904756953447638,
+      "pooled_r_squared": 0.7929469639997405,
+      "median_within_field_pearson_r": 0.9769065105580041
+    },
+    {
+      "series": "soil_root_effective_10_zr_thickness_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700747,
+      "pooled_r_squared": 0.791483990025861,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "root_zone_depth_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700745,
+      "pooled_r_squared": 0.7914839900258606,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "soil_root_effective_10_zr_depth_to_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700745,
+      "pooled_r_squared": 0.7914839900258606,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "soil_root_total_0_zr_depth_to_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700745,
+      "pooled_r_squared": 0.7914839900258606,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "soil_root_total_0_zr_thickness_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700745,
+      "pooled_r_squared": 0.7914839900258606,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "soil_lower_zr_100_depth_from_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700745,
+      "pooled_r_squared": 0.7914839900258606,
+      "median_within_field_pearson_r": 0.9777437472914791
+    },
+    {
+      "series": "available_water_content_taw_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700737,
+      "pooled_r_squared": 0.7914839900258592,
+      "median_within_field_pearson_r": 0.977743747291479
+    },
+    {
+      "series": "total_available_water_taw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700737,
+      "pooled_r_squared": 0.7914839900258592,
+      "median_within_field_pearson_r": 0.977743747291479
+    },
+    {
+      "series": "readily_available_water_raw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8896538596700737,
+      "pooled_r_squared": 0.7914839900258592,
+      "median_within_field_pearson_r": 0.977743747291479
+    },
+    {
+      "series": "soil_root_total_0_zr_stock_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8826656119110304,
+      "pooled_r_squared": 0.7790985824502737,
+      "median_within_field_pearson_r": 0.9670246111026564
+    },
+    {
+      "series": "productive_water_reserve_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.878976465048888,
+      "pooled_r_squared": 0.7725996261098391,
+      "median_within_field_pearson_r": 0.959472405808516
+    },
+    {
+      "series": "available_water_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.878976465048888,
+      "pooled_r_squared": 0.7725996261098391,
+      "median_within_field_pearson_r": 0.959472405808516
+    },
+    {
+      "series": "current_available_water_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.878976465048888,
+      "pooled_r_squared": 0.7725996261098391,
+      "median_within_field_pearson_r": 0.959472405808516
+    },
+    {
+      "series": "soil_water_available_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.878976465048888,
+      "pooled_r_squared": 0.7725996261098391,
+      "median_within_field_pearson_r": 0.9594724058085159
+    },
+    {
+      "series": "soil_water_productive_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.878976465048888,
+      "pooled_r_squared": 0.7725996261098391,
+      "median_within_field_pearson_r": 0.9594724058085159
+    },
+    {
+      "series": "soil_root_total_0_zr_theta_wp_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8787857348143542,
+      "pooled_r_squared": 0.7722643677132044,
+      "median_within_field_pearson_r": 0.9583291027775809
+    },
+    {
+      "series": "soil_root_total_0_zr_theta_mg_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8787857348143542,
+      "pooled_r_squared": 0.7722643677132044,
+      "median_within_field_pearson_r": 0.9583291027775812
+    },
+    {
+      "series": "soil_root_total_0_zr_theta_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8787857348143535,
+      "pooled_r_squared": 0.7722643677132033,
+      "median_within_field_pearson_r": 0.9583291027775809
+    },
+    {
+      "series": "soil_root_effective_10_zr_theta_wp_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8734999407227817,
+      "pooled_r_squared": 0.7630021464427031,
+      "median_within_field_pearson_r": 0.9495080920855239
+    },
+    {
+      "series": "soil_root_effective_10_zr_theta_mg_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8734999407227816,
+      "pooled_r_squared": 0.7630021464427029,
+      "median_within_field_pearson_r": 0.9495080920855234
+    },
+    {
+      "series": "soil_root_effective_10_zr_theta_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8734999407227805,
+      "pooled_r_squared": 0.763002146442701,
+      "median_within_field_pearson_r": 0.9495080920855231
+    },
+    {
+      "series": "precipitation_raw_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8662383523690075,
+      "pooled_r_squared": 0.7503688831149727,
+      "median_within_field_pearson_r": 0.938936316847657
+    },
+    {
+      "series": "precipitation_effective_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8662383523690075,
+      "pooled_r_squared": 0.7503688831149727,
+      "median_within_field_pearson_r": 0.938936316847657
+    },
+    {
+      "series": "positive_temperature_sum_from_sowing_c_day_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8582558095260503,
+      "pooled_r_squared": 0.7366030345852159,
+      "median_within_field_pearson_r": 0.9532828970055853
+    },
+    {
+      "series": "actual_evapotranspiration_native_cumulative_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.85503018162677,
+      "pooled_r_squared": 0.7310766114927073,
+      "median_within_field_pearson_r": 0.9424690454199495
+    },
+    {
+      "series": "actual_evapotranspiration_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.85503018162677,
+      "pooled_r_squared": 0.7310766114927073,
+      "median_within_field_pearson_r": 0.9424690454199495
+    },
+    {
+      "series": "actual_evapotranspiration_cumulative_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8550301816267699,
+      "pooled_r_squared": 0.7310766114927072,
+      "median_within_field_pearson_r": 0.9424690454199496
+    },
+    {
+      "series": "days_after_sowing_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8368211005264672,
+      "pooled_r_squared": 0.7002695542863278,
+      "median_within_field_pearson_r": 0.9210014634000292
+    },
+    {
+      "series": "actual_transpiration_cumulative_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8298723275379452,
+      "pooled_r_squared": 0.6886880800132466,
+      "median_within_field_pearson_r": 0.9308948649888542
+    },
+    {
+      "series": "actual_transpiration_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.8298723275379452,
+      "pooled_r_squared": 0.6886880800132466,
+      "median_within_field_pearson_r": 0.9308948649888541
+    },
+    {
+      "series": "thermal_time_after_sowing_gdd_90",
+      "kind": "other_model_variable",
+      "pair_count": 263,
+      "field_count": 34,
+      "pooled_pearson_r": 0.7961740714700183,
+      "pooled_r_squared": 0.6338931520811458,
+      "median_within_field_pearson_r": 0.9231738963390836
+    },
+    {
+      "series": "actual_soil_evaporation_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7939004569368242,
+      "pooled_r_squared": 0.6302779355244983,
+      "median_within_field_pearson_r": 0.8703036933074668
+    },
+    {
+      "series": "canopy_cover_fraction_derived_90",
+      "kind": "fcover_candidate",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7634036011597888,
+      "pooled_r_squared": 0.5827850582637338,
+      "median_within_field_pearson_r": 0.9435483187880089
+    },
+    {
+      "series": "ground_cover_fraction_row_geometry_90",
+      "kind": "fcover_candidate",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7634036011597888,
+      "pooled_r_squared": 0.5827850582637338,
+      "median_within_field_pearson_r": 0.9435483187880089
+    },
+    {
+      "series": "satellite_fcover_expected_90",
+      "kind": "fcover_candidate",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7634036011597888,
+      "pooled_r_squared": 0.5827850582637338,
+      "median_within_field_pearson_r": 0.9435483187880089
+    },
+    {
+      "series": "soil_layer_0_10_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7504745133929506,
+      "pooled_r_squared": 0.563211995252386,
+      "median_within_field_pearson_r": 0.9126614713338292
+    },
+    {
+      "series": "relative_humidity_mean_pct_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.743555601751302,
+      "pooled_r_squared": 0.5528749328957407,
+      "median_within_field_pearson_r": 0.7819275031571675
+    },
+    {
+      "series": "soil_layer_40_50_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7397610606455376,
+      "pooled_r_squared": 0.5472464268474108,
+      "median_within_field_pearson_r": 0.9022660596765711
+    },
+    {
+      "series": "actual_transpiration_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7216364467242221,
+      "pooled_r_squared": 0.520759161240761,
+      "median_within_field_pearson_r": 0.8971994878356672
+    },
+    {
+      "series": "actual_transpiration_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7216364467242221,
+      "pooled_r_squared": 0.520759161240761,
+      "median_within_field_pearson_r": 0.8971994878356672
+    },
+    {
+      "series": "soil_layer_30_40_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7143606747293691,
+      "pooled_r_squared": 0.5103111735997996,
+      "median_within_field_pearson_r": 0.8982759172229204
+    },
+    {
+      "series": "potential_transpiration_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.7124388743999553,
+      "pooled_r_squared": 0.5075691497562753,
+      "median_within_field_pearson_r": 0.8972302247286872
+    },
+    {
+      "series": "irrigation_raw_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 35,
+      "pooled_pearson_r": 0.6941184234973141,
+      "pooled_r_squared": 0.48180038583839674,
+      "median_within_field_pearson_r": 0.9468512720405627
+    },
+    {
+      "series": "irrigation_effective_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 35,
+      "pooled_pearson_r": 0.6941184234973141,
+      "pooled_r_squared": 0.48180038583839674,
+      "median_within_field_pearson_r": 0.9468512720405627
+    },
+    {
+      "series": "deep_drainage_below_profile_mm_cumulative_from_export_start_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6771944215255834,
+      "pooled_r_squared": 0.45859228454536954,
+      "median_within_field_pearson_r": 0.735332537681199
+    },
+    {
+      "series": "soil_layer_20_30_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6728850032909648,
+      "pooled_r_squared": 0.4527742276538817,
+      "median_within_field_pearson_r": 0.8741236302237487
+    },
+    {
+      "series": "soil_layer_10_20_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6684525432841605,
+      "pooled_r_squared": 0.44682880262306246,
+      "median_within_field_pearson_r": 0.8590590207801385
+    },
+    {
+      "series": "soil_root_total_0_zr_theta_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6679580377589509,
+      "pooled_r_squared": 0.44616794020678807,
+      "median_within_field_pearson_r": 0.7066537010490477
+    },
+    {
+      "series": "soil_root_total_0_zr_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6364357219975326,
+      "pooled_r_squared": 0.40505042823452064,
+      "median_within_field_pearson_r": 0.6665940618509443
+    },
+    {
+      "series": "transpiration_fraction_of_actual_et_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.6010562831221657,
+      "pooled_r_squared": 0.3612686554806331,
+      "median_within_field_pearson_r": 0.7270776657134925
+    },
+    {
+      "series": "soil_layer_0_10_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5955212482339891,
+      "pooled_r_squared": 0.3546455570981685,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_surface_0_10_theta_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.595521248233989,
+      "pooled_r_squared": 0.35464555709816836,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_layer_0_10_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.595521248233989,
+      "pooled_r_squared": 0.35464555709816836,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_surface_0_10_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5955212482339889,
+      "pooled_r_squared": 0.3546455570981682,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_surface_0_10_stock_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5955212482339888,
+      "pooled_r_squared": 0.3546455570981681,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_layer_0_10_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5955212482339888,
+      "pooled_r_squared": 0.3546455570981681,
+      "median_within_field_pearson_r": 0.6219597470368528
+    },
+    {
+      "series": "soil_layer_0_10_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5955212482339888,
+      "pooled_r_squared": 0.3546455570981681,
+      "median_within_field_pearson_r": 0.6219597470368526
+    },
+    {
+      "series": "soil_root_effective_10_zr_theta_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5799877717758865,
+      "pooled_r_squared": 0.33638581540955775,
+      "median_within_field_pearson_r": 0.6108455654967369
+    },
+    {
+      "series": "soil_layer_0_10_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5752279987406707,
+      "pooled_r_squared": 0.330887250535197,
+      "median_within_field_pearson_r": 0.6037027704888978
+    },
+    {
+      "series": "actual_to_potential_transpiration_ratio_90",
+      "kind": "other_model_variable",
+      "pair_count": 184,
+      "field_count": 30,
+      "pooled_pearson_r": 0.5723468540758316,
+      "pooled_r_squared": 0.3275809213705013,
+      "median_within_field_pearson_r": 0.8146717601959865
+    },
+    {
+      "series": "soil_root_effective_10_zr_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.5152583948927473,
+      "pooled_r_squared": 0.2654912135074503,
+      "median_within_field_pearson_r": 0.5409576875217708
+    },
+    {
+      "series": "surface_evaporation_reduction_kr_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.4648375163719041,
+      "pooled_r_squared": 0.21607391662680023,
+      "median_within_field_pearson_r": 0.5119006314960333
+    },
+    {
+      "series": "soil_layer_80_100_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.450068741749355,
+      "pooled_r_squared": 0.20256187229984762,
+      "median_within_field_pearson_r": 0.43287979601056287
+    },
+    {
+      "series": "soil_layer_60_80_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.43405137045783027,
+      "pooled_r_squared": 0.1884005921963206,
+      "median_within_field_pearson_r": 0.40717951985897655
+    },
+    {
+      "series": "actual_to_potential_et_ratio_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.3982785617408548,
+      "pooled_r_squared": 0.1586258127423639,
+      "median_within_field_pearson_r": 0.4241744923416434
+    },
+    {
+      "series": "soil_layer_10_20_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.37539330011946603,
+      "pooled_r_squared": 0.14092012977458349,
+      "median_within_field_pearson_r": 0.37075784843301907
+    },
+    {
+      "series": "precipitation_raw_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.36136900961500185,
+      "pooled_r_squared": 0.1305875611101273,
+      "median_within_field_pearson_r": 0.45556912763783325
+    },
+    {
+      "series": "precipitation_effective_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.36136900961500185,
+      "pooled_r_squared": 0.1305875611101273,
+      "median_within_field_pearson_r": 0.45556912763783325
+    },
+    {
+      "series": "soil_layer_50_60_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.31387386183484944,
+      "pooled_r_squared": 0.09851680114312215,
+      "median_within_field_pearson_r": 0.27628174706237824
+    },
+    {
+      "series": "actual_evapotranspiration_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.3133806511099348,
+      "pooled_r_squared": 0.09820743249008668,
+      "median_within_field_pearson_r": 0.3455055339301216
+    },
+    {
+      "series": "actual_evapotranspiration_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.31338065110993457,
+      "pooled_r_squared": 0.09820743249008654,
+      "median_within_field_pearson_r": 0.3455055339301214
+    },
+    {
+      "series": "soil_layer_10_20_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.27441225710105904,
+      "pooled_r_squared": 0.07530208684729772,
+      "median_within_field_pearson_r": 0.28422844891708
+    },
+    {
+      "series": "soil_layer_10_20_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.27441225710105904,
+      "pooled_r_squared": 0.07530208684729772,
+      "median_within_field_pearson_r": 0.2842284489170802
+    },
+    {
+      "series": "soil_layer_10_20_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.27441225710105904,
+      "pooled_r_squared": 0.07530208684729772,
+      "median_within_field_pearson_r": 0.2842284489170801
+    },
+    {
+      "series": "soil_layer_10_20_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.274412257101059,
+      "pooled_r_squared": 0.0753020868472977,
+      "median_within_field_pearson_r": 0.2842284489170801
+    },
+    {
+      "series": "weather_precipitation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 33,
+      "pooled_pearson_r": 0.26249719888159745,
+      "pooled_r_squared": 0.06890477942068493,
+      "median_within_field_pearson_r": 0.2911721817692053
+    },
+    {
+      "series": "weather_precipitation_effective_input_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 33,
+      "pooled_pearson_r": 0.26249719888159745,
+      "pooled_r_squared": 0.06890477942068493,
+      "median_within_field_pearson_r": 0.2911721817692053
+    },
+    {
+      "series": "soil_layer_20_30_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.26050744761641303,
+      "pooled_r_squared": 0.06786413026361818,
+      "median_within_field_pearson_r": 0.2581192534597389
+    },
+    {
+      "series": "soil_layer_20_30_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.21103976326848314,
+      "pooled_r_squared": 0.04453778168041741,
+      "median_within_field_pearson_r": 0.20920799181608735
+    },
+    {
+      "series": "soil_layer_20_30_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.21103976326848312,
+      "pooled_r_squared": 0.044537781680417395,
+      "median_within_field_pearson_r": 0.20920799181608715
+    },
+    {
+      "series": "soil_layer_20_30_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.2110397632684831,
+      "pooled_r_squared": 0.04453778168041738,
+      "median_within_field_pearson_r": 0.2092079918160871
+    },
+    {
+      "series": "soil_layer_20_30_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.2110397632684831,
+      "pooled_r_squared": 0.04453778168041738,
+      "median_within_field_pearson_r": 0.20920799181608724
+    },
+    {
+      "series": "soil_lower_zr_100_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.20514501862235143,
+      "pooled_r_squared": 0.04208447866556492,
+      "median_within_field_pearson_r": 0.20623811411013127
+    },
+    {
+      "series": "soil_water_depletion_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.19931925932117783,
+      "pooled_r_squared": 0.03972816713634294,
+      "median_within_field_pearson_r": 0.26686069962177283
+    },
+    {
+      "series": "water_demand_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.19931925932117767,
+      "pooled_r_squared": 0.03972816713634287,
+      "median_within_field_pearson_r": 0.26686069962177233
+    },
+    {
+      "series": "wind_mean_mps_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1711524993949556,
+      "pooled_r_squared": 0.02929317804914028,
+      "median_within_field_pearson_r": 0.13910003444760727
+    },
+    {
+      "series": "soil_layer_30_40_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1623022272180372,
+      "pooled_r_squared": 0.026342012959935372,
+      "median_within_field_pearson_r": 0.14889495480788345
+    },
+    {
+      "series": "soil_layer_30_40_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1548837915227616,
+      "pooled_r_squared": 0.02398898887646628,
+      "median_within_field_pearson_r": 0.14589505218819254
+    },
+    {
+      "series": "soil_layer_30_40_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1548837915227616,
+      "pooled_r_squared": 0.02398898887646628,
+      "median_within_field_pearson_r": 0.14589505218819243
+    },
+    {
+      "series": "soil_layer_30_40_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.15488379152276152,
+      "pooled_r_squared": 0.023988988876466253,
+      "median_within_field_pearson_r": 0.14589505218819263
+    },
+    {
+      "series": "soil_layer_30_40_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1548837915227615,
+      "pooled_r_squared": 0.023988988876466246,
+      "median_within_field_pearson_r": 0.14589505218819218
+    },
+    {
+      "series": "water_stress_coefficient_ks_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": 0.15376997290120736,
+      "pooled_r_squared": 0.023645204566038046,
+      "median_within_field_pearson_r": 0.23877661431272473
+    },
+    {
+      "series": "water_stress_coefficient_typed_ks_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 21,
+      "pooled_pearson_r": 0.15376997290120697,
+      "pooled_r_squared": 0.023645204566037928,
+      "median_within_field_pearson_r": 0.225569003262535
+    },
+    {
+      "series": "air_temperature_min_c_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.15374121581445455,
+      "pooled_r_squared": 0.02363636144010669,
+      "median_within_field_pearson_r": 0.1567011917238037
+    },
+    {
+      "series": "soil_layer_40_50_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.1146253922714403,
+      "pooled_r_squared": 0.013138980553381564,
+      "median_within_field_pearson_r": 0.09049758748505593
+    },
+    {
+      "series": "soil_layer_40_50_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.11462539227144024,
+      "pooled_r_squared": 0.013138980553381552,
+      "median_within_field_pearson_r": 0.09049758748505576
+    },
+    {
+      "series": "soil_layer_40_50_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.11462539227144015,
+      "pooled_r_squared": 0.013138980553381533,
+      "median_within_field_pearson_r": 0.09049758748505551
+    },
+    {
+      "series": "soil_layer_40_50_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.11462539227144015,
+      "pooled_r_squared": 0.013138980553381533,
+      "median_within_field_pearson_r": 0.09049758748505538
+    },
+    {
+      "series": "soil_layer_40_50_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.10731240147378812,
+      "pooled_r_squared": 0.011515951510071483,
+      "median_within_field_pearson_r": 0.10572259939702341
+    },
+    {
+      "series": "soil_layer_40_50_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.09385184405475605,
+      "pooled_r_squared": 0.008808168632478248,
+      "median_within_field_pearson_r": 0.07175021652461112
+    },
+    {
+      "series": "soil_layer_50_60_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.06699017512014961,
+      "pooled_r_squared": 0.004487683562628312,
+      "median_within_field_pearson_r": 0.05173034916147409
+    },
+    {
+      "series": "soil_layer_50_60_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.0669901751201496,
+      "pooled_r_squared": 0.00448768356262831,
+      "median_within_field_pearson_r": 0.05173034916147401
+    },
+    {
+      "series": "soil_layer_50_60_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.06699017512014958,
+      "pooled_r_squared": 0.004487683562628309,
+      "median_within_field_pearson_r": 0.051730349161474065
+    },
+    {
+      "series": "soil_layer_50_60_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.06699017512014949,
+      "pooled_r_squared": 0.004487683562628296,
+      "median_within_field_pearson_r": 0.051730349161473885
+    },
+    {
+      "series": "soil_layer_50_60_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.01802226003368106,
+      "pooled_r_squared": 0.00032480185672161763,
+      "median_within_field_pearson_r": -0.0016786885714897208
+    },
+    {
+      "series": "soil_layer_60_80_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": 0.00969202147952764,
+      "pooled_r_squared": 9.393528035962515e-05,
+      "median_within_field_pearson_r": 0.028870253866743897
+    },
+    {
+      "series": "balance_residual_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 35,
+      "pooled_pearson_r": 0.00942122928549843,
+      "pooled_r_squared": 8.875956124993326e-05,
+      "median_within_field_pearson_r": 0.049364588177415486
+    },
+    {
+      "series": "soil_surface_0_10_theta_wp_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_0_10_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_0_10_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_10_20_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_10_20_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_20_30_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 22,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 5.9981230437088815e-18
+    },
+    {
+      "series": "soil_layer_30_40_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_40_50_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_50_60_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_50_60_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 22,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 5.9981230437088815e-18
+    },
+    {
+      "series": "soil_layer_50_60_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_60_80_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_60_80_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 22,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 5.9981230437088815e-18
+    },
+    {
+      "series": "soil_layer_60_80_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_80_100_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 15,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_80_100_theta_wp_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 22,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 5.9981230437088815e-18
+    },
+    {
+      "series": "soil_layer_80_100_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": 1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_40_50_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 32,
+      "pooled_pearson_r": 3.479919758263038e-17,
+      "pooled_r_squared": 1.2109841523949479e-33,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_30_40_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 32,
+      "pooled_pearson_r": -3.479919758263038e-17,
+      "pooled_r_squared": 1.2109841523949479e-33,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_30_40_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": -3.479919758263038e-17,
+      "pooled_r_squared": 1.2109841523949479e-33,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_40_50_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": -3.479919758263038e-17,
+      "pooled_r_squared": 1.2109841523949479e-33,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "row_spacing_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 18,
+      "pooled_pearson_r": -3.479919758263038e-17,
+      "pooled_r_squared": 1.2109841523949479e-33,
+      "median_within_field_pearson_r": -5.9981230437088815e-18
+    },
+    {
+      "series": "soil_surface_0_10_depth_to_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 28,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_surface_0_10_thickness_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 28,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_surface_0_10_theta_sat_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_root_effective_10_zr_depth_from_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 28,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_0_10_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_0_10_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 28,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_10_20_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 29,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_20_30_theta_sat_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": -1.794333625354379e-16,
+      "pooled_r_squared": 3.219633159077389e-32,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_60_80_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.007294644130564146,
+      "pooled_r_squared": 5.321183299157394e-05,
+      "median_within_field_pearson_r": -0.028870253866743852
+    },
+    {
+      "series": "soil_layer_60_80_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.007294644130564172,
+      "pooled_r_squared": 5.321183299157432e-05,
+      "median_within_field_pearson_r": -0.02887025386674387
+    },
+    {
+      "series": "soil_layer_60_80_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.007294644130564199,
+      "pooled_r_squared": 5.3211832991574714e-05,
+      "median_within_field_pearson_r": -0.02887025386674427
+    },
+    {
+      "series": "soil_layer_60_80_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.007294644130564268,
+      "pooled_r_squared": 5.321183299157572e-05,
+      "median_within_field_pearson_r": -0.028870253866743585
+    },
+    {
+      "series": "air_temperature_mean_c_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.020866557167857156,
+      "pooled_r_squared": 0.00043541320803945085,
+      "median_within_field_pearson_r": -0.037977313838898866
+    },
+    {
+      "series": "soil_layer_80_100_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.02160517274533235,
+      "pooled_r_squared": 0.00046678348935565183,
+      "median_within_field_pearson_r": -0.004657990672200881
+    },
+    {
+      "series": "soil_lower_zr_100_theta_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.05403408756520438,
+      "pooled_r_squared": 0.0029196826190041746,
+      "median_within_field_pearson_r": -0.07581524202563875
+    },
+    {
+      "series": "shortwave_radiation_mj_m2_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.055885107724356946,
+      "pooled_r_squared": 0.00312314526536298,
+      "median_within_field_pearson_r": -0.053402031372369825
+    },
+    {
+      "series": "soil_layer_50_60_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.0669901751201496,
+      "pooled_r_squared": 0.00448768356262831,
+      "median_within_field_pearson_r": -0.05173034916147411
+    },
+    {
+      "series": "soil_layer_80_100_stock_end_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.08262415901618736,
+      "pooled_r_squared": 0.006826751653132215,
+      "median_within_field_pearson_r": -0.10395714222573008
+    },
+    {
+      "series": "soil_layer_80_100_paw_fraction_wp_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.08262415901618744,
+      "pooled_r_squared": 0.006826751653132229,
+      "median_within_field_pearson_r": -0.10395714222572985
+    },
+    {
+      "series": "soil_layer_80_100_theta_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.08262415901618747,
+      "pooled_r_squared": 0.006826751653132233,
+      "median_within_field_pearson_r": -0.10395714222573009
+    },
+    {
+      "series": "soil_layer_80_100_paw_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.08262415901618747,
+      "pooled_r_squared": 0.006826751653132233,
+      "median_within_field_pearson_r": -0.10395714222572944
+    },
+    {
+      "series": "soil_layer_60_80_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.0846186369849183,
+      "pooled_r_squared": 0.007160313725185383,
+      "median_within_field_pearson_r": -0.10315505593156198
+    },
+    {
+      "series": "soil_layer_30_40_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.10873734336510234,
+      "pooled_r_squared": 0.011823809842100165,
+      "median_within_field_pearson_r": -0.09484478227382469
+    },
+    {
+      "series": "irrigation_raw_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 8,
+      "pooled_pearson_r": -0.11307192099617278,
+      "pooled_r_squared": 0.012785259317764738,
+      "median_within_field_pearson_r": -0.236309918438046
+    },
+    {
+      "series": "irrigation_effective_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 8,
+      "pooled_pearson_r": -0.11307192099617278,
+      "pooled_r_squared": 0.012785259317764738,
+      "median_within_field_pearson_r": -0.236309918438046
+    },
+    {
+      "series": "soil_layer_40_50_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.11371569723615851,
+      "pooled_r_squared": 0.012931259797905669,
+      "median_within_field_pearson_r": -0.09049758748505551
+    },
+    {
+      "series": "soil_layer_0_10_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.12556892934657843,
+      "pooled_r_squared": 0.015767556017246005,
+      "median_within_field_pearson_r": -0.12282573843844061
+    },
+    {
+      "series": "deep_percolation_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.13189137343915816,
+      "pooled_r_squared": 0.017395334387667476,
+      "median_within_field_pearson_r": -0.1567438794623165
+    },
+    {
+      "series": "deep_drainage_below_profile_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.13189137343915816,
+      "pooled_r_squared": 0.017395334387667476,
+      "median_within_field_pearson_r": -0.15674387946231655
+    },
+    {
+      "series": "drainage_runoff_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.13189137343915816,
+      "pooled_r_squared": 0.017395334387667476,
+      "median_within_field_pearson_r": -0.15674387946231655
+    },
+    {
+      "series": "air_temperature_max_c_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.15033763291729632,
+      "pooled_r_squared": 0.022601403871175738,
+      "median_within_field_pearson_r": -0.17566504073069594
+    },
+    {
+      "series": "model_water_stress_index_1_minus_ks_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": -0.15376997290120734,
+      "pooled_r_squared": 0.02364520456603804,
+      "median_within_field_pearson_r": -0.2387766143127247
+    },
+    {
+      "series": "soil_layer_30_40_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.15478990923781555,
+      "pooled_r_squared": 0.023959916001851177,
+      "median_within_field_pearson_r": -0.14589505218819251
+    },
+    {
+      "series": "soil_layer_80_100_stock_start_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.15903234590228574,
+      "pooled_r_squared": 0.02529128704318426,
+      "median_within_field_pearson_r": -0.16915932536690786
+    },
+    {
+      "series": "soil_layer_20_30_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.21081754102085296,
+      "pooled_r_squared": 0.04444403560207902,
+      "median_within_field_pearson_r": -0.20920799181608712
+    },
+    {
+      "series": "potential_crop_evapotranspiration_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.22189426825433856,
+      "pooled_r_squared": 0.04923706628412836,
+      "median_within_field_pearson_r": -0.1729837120799787
+    },
+    {
+      "series": "soil_layer_10_20_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.2744122571010591,
+      "pooled_r_squared": 0.07530208684729776,
+      "median_within_field_pearson_r": -0.28422844891708016
+    },
+    {
+      "series": "actual_soil_evaporation_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.28959026165737306,
+      "pooled_r_squared": 0.08386251964678579,
+      "median_within_field_pearson_r": -0.2885867524954706
+    },
+    {
+      "series": "actual_soil_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.28959026165737306,
+      "pooled_r_squared": 0.08386251964678579,
+      "median_within_field_pearson_r": -0.2885867524954706
+    },
+    {
+      "series": "soil_layer_0_10_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.28959026165737306,
+      "pooled_r_squared": 0.08386251964678579,
+      "median_within_field_pearson_r": -0.2885867524954706
+    },
+    {
+      "series": "evapotranspiration_deficit_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.40981424344447503,
+      "pooled_r_squared": 0.16794771412996745,
+      "median_within_field_pearson_r": -0.42453266074568013
+    },
+    {
+      "series": "soil_layer_20_30_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.4169620618942498,
+      "pooled_r_squared": 0.17385736105910418,
+      "median_within_field_pearson_r": -0.43738482168174453
+    },
+    {
+      "series": "soil_water_depletion_fraction_taw_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.5063677047095483,
+      "pooled_r_squared": 0.2564082523728163,
+      "median_within_field_pearson_r": -0.5273035886552198
+    },
+    {
+      "series": "eto_daily_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.5479699391926547,
+      "pooled_r_squared": 0.3002710542588017,
+      "median_within_field_pearson_r": -0.5685649142234153
+    },
+    {
+      "series": "eto_simple_weather_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.552754639989858,
+      "pooled_r_squared": 0.3055376920303175,
+      "median_within_field_pearson_r": -0.5741811354571169
+    },
+    {
+      "series": "eto_reference_weather_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.552754639989858,
+      "pooled_r_squared": 0.3055376920303175,
+      "median_within_field_pearson_r": -0.5741811354571169
+    },
+    {
+      "series": "eto_aquacrop_weather_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.5527546399898582,
+      "pooled_r_squared": 0.3055376920303177,
+      "median_within_field_pearson_r": -0.5741811354571178
+    },
+    {
+      "series": "soil_layer_0_10_depletion_from_fc_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.595521248233989,
+      "pooled_r_squared": 0.35464555709816836,
+      "median_within_field_pearson_r": -0.6219597470368528
+    },
+    {
+      "series": "evaporation_fraction_of_actual_et_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.6010562831221656,
+      "pooled_r_squared": 0.3612686554806329,
+      "median_within_field_pearson_r": -0.7270776657134925
+    },
+    {
+      "series": "soil_layer_10_20_stock_change_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.6776011941011495,
+      "pooled_r_squared": 0.45914337824730367,
+      "median_within_field_pearson_r": -0.7249699162244987
+    },
+    {
+      "series": "potential_soil_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.7341952153880914,
+      "pooled_r_squared": 0.5390426142987659,
+      "median_within_field_pearson_r": -0.795569524142028
+    },
+    {
+      "series": "soil_evaporation_coefficient_ke_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.7541441525372173,
+      "pooled_r_squared": 0.5687334028060778,
+      "median_within_field_pearson_r": -0.9128716890978259
+    },
+    {
+      "series": "canopy_open_fraction_derived_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.7634036011597888,
+      "pooled_r_squared": 0.5827850582637338,
+      "median_within_field_pearson_r": -0.9435483187880089
+    },
+    {
+      "series": "soil_lower_zr_100_stock_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8729320212229356,
+      "pooled_r_squared": 0.7620103136763596,
+      "median_within_field_pearson_r": -0.9453486038871264
+    },
+    {
+      "series": "soil_root_effective_10_zr_theta_sat_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8817618939972683,
+      "pooled_r_squared": 0.7775040377056499,
+      "median_within_field_pearson_r": -0.9619771791511909
+    },
+    {
+      "series": "soil_root_total_0_zr_theta_sat_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8839105429351835,
+      "pooled_r_squared": 0.7812978479119708,
+      "median_within_field_pearson_r": -0.9664660435087875
+    },
+    {
+      "series": "soil_lower_zr_100_thickness_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8896538596700736,
+      "pooled_r_squared": 0.791483990025859,
+      "median_within_field_pearson_r": -0.9777437472914791
+    },
+    {
+      "series": "soil_lower_zr_100_theta_mg_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8938944649794239,
+      "pooled_r_squared": 0.7990473145208505,
+      "median_within_field_pearson_r": -0.9850696678751971
+    },
+    {
+      "series": "soil_lower_zr_100_theta_wp_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8938944649794243,
+      "pooled_r_squared": 0.7990473145208512,
+      "median_within_field_pearson_r": -0.9850696678751971
+    },
+    {
+      "series": "soil_lower_zr_100_theta_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 36,
+      "pooled_pearson_r": -0.8938944649794245,
+      "pooled_r_squared": 0.7990473145208515,
+      "median_within_field_pearson_r": -0.9850696678751975
+    },
+    {
+      "series": "lineage_depth_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "coverage_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "runoff_typed_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "profile_total_depth_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_surface_0_10_depth_from_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_surface_0_10_theta_fc_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 16,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_surface_0_10_theta_mg_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 30,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_root_total_0_zr_depth_from_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_lower_zr_100_depth_to_m_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_10_20_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_10_20_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_20_30_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_20_30_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_20_30_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_30_40_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_30_40_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_40_50_theta_fc_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 31,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": 0.0
+    },
+    {
+      "series": "soil_layer_40_50_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_50_60_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_50_60_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_50_60_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_60_80_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_60_80_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_60_80_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_80_100_theta_mg_m3_m3_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_80_100_root_uptake_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "soil_layer_80_100_evaporation_mm_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    },
+    {
+      "series": "row_closure_coefficient_90",
+      "kind": "other_model_variable",
+      "pair_count": 419,
+      "field_count": 0,
+      "pooled_pearson_r": null,
+      "pooled_r_squared": null,
+      "median_within_field_pearson_r": null
+    }
+  ],
+  "interpretation_rules": [
+    "Высокая корреляция рядов почвы, корней, времени после посева или накопленных величин не делает их измерением FCOVER: она может отражать общую фенологическую динамику.",
+    "Для кандидата на FCOVER одновременно оценивайте pooled_pearson_r, median_within_field_pearson_r и отдельный лаговый отчёт; одна корреляция не доказывает совпадение уровней.",
+    "Если fcover_candidates_identical_on_common_pairs=true, смена названия ряда не создаёт независимый способ расчёта покрытия."
+  ],
+  "method_code": "ivanov_n4l_meteo_soil",
+  "row_spacing_variant": "90",
+  "source_lag_report": "results/reports/sp_kornix_fcover_lag_90.json",
+  "same_day_lag_profile_row": {
+    "lag_days": 0,
+    "pair_count": 419,
+    "field_count": 36,
+    "pooled_r": 0.7634036011597888,
+    "median_field_r": 0.9435483187880089,
+    "positive_fields": 34
+  },
+  "best_lag_days": -12
+}

@@ -20,8 +20,14 @@ DEFAULT_KORNIX = ROOT / "data/interim/kornix_timeseries/sp_all_calculation_times
 DEFAULT_REPORT = ROOT / "results/reports/sp_kornix_fcover_lag.json"
 DEFAULT_FIELD_REPORT = ROOT / "results/tables/sp_kornix_fcover_field_lags.csv"
 DEFAULT_WARP_REPORT = ROOT / "results/tables/sp_kornix_fcover_piecewise_warp.csv"
+DEFAULT_PROTOCOL_REPORT = ROOT / "results/reports/sp_kornix_fcover_series_protocol.json"
 METHOD = "ivanov_n4l_meteo_soil"
 EXCLUDED_FIELDS = {"SP_7_3"}
+FCOVER_SERIES = (
+    "satellite_fcover_expected",
+    "ground_cover_fraction_row_geometry",
+    "canopy_cover_fraction_derived",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,6 +43,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     parser.add_argument("--field-report", type=Path, default=DEFAULT_FIELD_REPORT)
     parser.add_argument("--warp-report", type=Path, default=DEFAULT_WARP_REPORT)
+    parser.add_argument("--protocol-report", type=Path, default=DEFAULT_PROTOCOL_REPORT,
+                        help="JSON-протокол всех числовых рядов выбранного варианта для последующего анализа LLM.")
     parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
 
@@ -59,6 +67,14 @@ def corr(pairs: list[tuple[float, float]]) -> float | None:
     right -= right.mean()
     denominator = math.sqrt(float(left @ left) * float(right @ right))
     return float(left @ right) / denominator if denominator else None
+
+
+def number(value: str | None) -> float | None:
+    try:
+        result = float(value)
+        return result if math.isfinite(result) else None
+    except (TypeError, ValueError):
+        return None
 
 
 def observations(merged_rows: list[dict]) -> list[dict]:
@@ -90,6 +106,69 @@ def daily_cover(rows: list[dict], method: str, variant: str) -> dict[str, dict[d
         except (KeyError, TypeError, ValueError):
             continue
     return result
+
+
+def same_day_series_protocol(obs: list[dict], rows: list[dict], method: str, variant: str) -> dict:
+    """Describe every numeric *_variant series on exact Sentinel-2 FCOVER dates."""
+    observed = {(row["field_id"], row["day"]): row["fcover"] for row in obs}
+    suffix = f"_{variant}"
+    pairs, values = defaultdict(list), defaultdict(dict)
+    for row in rows:
+        if row.get("method_code") != method:
+            continue
+        field = normalize_field_id(row.get("field_short_name") or "")
+        try:
+            day = dt.date.fromisoformat(row.get("day") or "")
+        except ValueError:
+            continue
+        fcover = observed.get((field, day))
+        if fcover is None:
+            continue
+        for name, raw_value in row.items():
+            if not name.endswith(suffix):
+                continue
+            value = number(raw_value)
+            if value is not None:
+                pairs[name].append((value, fcover, field))
+                values[name][field, day] = value
+
+    series = []
+    for name, matched in pairs.items():
+        value_pairs = [(value, fcover) for value, fcover, _ in matched]
+        per_field = defaultdict(list)
+        for value, fcover, field in matched:
+            per_field[field].append((value, fcover))
+        field_r = [value for value in (corr(field_pairs) for field_pairs in per_field.values()) if value is not None]
+        pooled_r = corr(value_pairs)
+        series.append({
+            "series": name,
+            "kind": "fcover_candidate" if name.removesuffix(suffix) in FCOVER_SERIES else "other_model_variable",
+            "pair_count": len(value_pairs),
+            "field_count": len(field_r),
+            "pooled_pearson_r": pooled_r,
+            "pooled_r_squared": pooled_r ** 2 if pooled_r is not None else None,
+            "median_within_field_pearson_r": float(np.median(field_r)) if field_r else None,
+        })
+    series.sort(key=lambda row: (row["pooled_pearson_r"] is not None, row["pooled_pearson_r"] or -2), reverse=True)
+    cover_names = [f"{name}{suffix}" for name in FCOVER_SERIES]
+    common = set.intersection(*(set(values[name]) for name in cover_names)) if all(name in values for name in cover_names) else set()
+    identical = bool(common) and all(
+        values[cover_names[0]][key] == values[name][key] for key in common for name in cover_names[1:]
+    )
+    return {
+        "purpose": "Сопоставление всех числовых рядов КОРНИКС выбранного варианта с FCOVER Sentinel-2 в ту же дату; лаг не применяется.",
+        "observations": len(obs),
+        "fields": len({row["field_id"] for row in obs}),
+        "fcover_candidate_series": cover_names,
+        "fcover_candidates_identical_on_common_pairs": identical,
+        "fcover_candidates_common_pair_count": len(common),
+        "series_ranked_by_pooled_correlation": series,
+        "interpretation_rules": [
+            "Высокая корреляция рядов почвы, корней, времени после посева или накопленных величин не делает их измерением FCOVER: она может отражать общую фенологическую динамику.",
+            "Для кандидата на FCOVER одновременно оценивайте pooled_pearson_r, median_within_field_pearson_r и отдельный лаговый отчёт; одна корреляция не доказывает совпадение уровней.",
+            "Если fcover_candidates_identical_on_common_pairs=true, смена названия ряда не создаёт независимый способ расчёта покрытия.",
+        ],
+    }
 
 
 def paired_by_lag(obs: list[dict], cover: dict[str, dict[dt.date, tuple[float, float]]], lag: int) -> dict[str, list[tuple[float, float, float, float]]]:
@@ -315,6 +394,14 @@ def self_test() -> None:
     assert round(corr([(1, 1), (2, 2), (3, 3)]), 6) == 1.0
     assert np.allclose(affine_fit([(1, 0), (3, 1)]), (1.0, 2.0))
     assert crossing_day([(dt.date(2026, 1, 1), 0), (dt.date(2026, 1, 11), 1)], .5) == dt.date(2026, 1, 6).toordinal()
+    protocol = same_day_series_protocol(
+        [{"field_id": "SP_1_1", "day": dt.date(2026, 1, 1), "fcover": .5}],
+        [{"field_short_name": "SP:1.1", "day": "2026-01-01", "method_code": METHOD,
+          "satellite_fcover_expected_90": ".4", "ground_cover_fraction_row_geometry_90": ".4",
+          "canopy_cover_fraction_derived_90": ".4", "soil_water_end_mm_90": "12"}],
+        METHOD, "90",
+    )
+    assert protocol["fcover_candidates_identical_on_common_pairs"] and len(protocol["series_ranked_by_pooled_correlation"]) == 4
 
 
 def main() -> int:
@@ -326,7 +413,8 @@ def main() -> int:
     if args.lag_max < args.lag_min:
         raise ValueError("--lag-max must be at least --lag-min")
     obs = observations(read_csv(args.merged_csv))
-    cover = daily_cover(read_csv(args.kornix_csv), args.method, args.variant)
+    kornix_rows = read_csv(args.kornix_csv)
+    cover = daily_cover(kornix_rows, args.method, args.variant)
     lags = range(args.lag_min, args.lag_max + 1)
     profile = lag_profile(obs, cover, lags)
     optimum = best_lag(profile)
@@ -351,8 +439,18 @@ def main() -> int:
     write_csv(args.warp_report, warp_rows)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    protocol = same_day_series_protocol(obs, kornix_rows, args.method, args.variant)
+    protocol.update({
+        "method_code": args.method,
+        "row_spacing_variant": args.variant,
+        "source_lag_report": str(args.report),
+        "same_day_lag_profile_row": next(row for row in profile if row["lag_days"] == 0),
+        "best_lag_days": optimum,
+    })
+    args.protocol_report.parent.mkdir(parents=True, exist_ok=True)
+    args.protocol_report.write_text(json.dumps(protocol, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     best = next(row for row in profile if row["lag_days"] == optimum)
-    print(f"Best lag: {optimum:+d} days; pooled r={best['pooled_r']:.3f}; report: {args.report}")
+    print(f"Best lag: {optimum:+d} days; pooled r={best['pooled_r']:.3f}; report: {args.report}; protocol: {args.protocol_report}")
     return 0
 
 

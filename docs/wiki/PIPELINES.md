@@ -199,6 +199,22 @@ python3 scripts/analysis/merge_kornix_sentinel.py
 Локальные множители растяжения сохраняются в
 `results/tables/sp_kornix_fcover_piecewise_warp.csv`.
 
+Тот же запуск создаёт машиночитаемый протокол
+`results/reports/sp_kornix_fcover_series_protocol.json`. В нём перечислены все
+числовые ряды выбранного варианта междурядья, их Pearson `r` и `R²` с FCOVER
+Sentinel-2 строго в ту же дату, медиана внутриполевых корреляций, число пар и
+полей. Протокол отдельно помечает три кандидата на покрытие и фиксирует,
+идентичны ли они на общих парах. Он предназначен для последующего анализа LLM;
+встроенные правила запрещают трактовать корреляцию почвенных или фенологических
+показателей как прямое измерение FCOVER.
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/analysis/analyze_kornix_fcover_lag.py \
+  --variant 90 \
+  --report results/reports/sp_kornix_fcover_lag_90.json \
+  --protocol-report results/reports/sp_kornix_fcover_series_protocol_90.json
+```
+
 ### 4.7. Прямое сравнение ожидаемого и спутникового FCover
 
 `scripts/analysis/compare_kornix_expected_fcover.py` использует уже

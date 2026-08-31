@@ -62,6 +62,14 @@ AVERAGE_CHART_KORNIX_SERIES = {
     if column not in {"ground_cover_fraction_row_geometry", "soil_surface_0_10_theta"}
 }
 AVERAGE_CHART_RADAR_KORNIX_SERIES = {"Влага КОРНИКС 0–10 см": "soil_surface_0_10_theta"}
+MODEL_STATE_CHART_ROW_SPACING = "90"
+MODEL_STATE_CHART_FCOVER_COLUMN = "satellite_fcover_expected"
+MODEL_STATE_CHART_MOISTURE_COLUMN = "soil_layer_0_10_theta_m3_m3"
+MODEL_STATE_CHART_DEPTH_SERIES = {
+    "Влага 0–10 см": "soil_layer_0_10_theta_m3_m3",
+    "Влага 10–20 см": "soil_layer_10_20_theta_m3_m3",
+    "Влага 20–30 см": "soil_layer_20_30_theta_m3_m3",
+}
 # FCover Sentinel-2 is aligned with the expected KORNIX FCover after this visual shift.
 # It applies to the charts only; source KORNIX dates are never rewritten.
 KORNIX_CHART_DATE_OFFSETS = {"satellite_fcover_expected": 12}

@@ -35,6 +35,8 @@ def main() -> int:
     assert "Загрузить ряды из сервиса" in plugin
     assert "Обновить Sentinel-1/2" in plugin
     assert "Диаграммы эксперимента" in plugin
+    assert "Графики модели и Sentinel" in plugin
+    assert "ModelStateChartsDialog" in plugin
     assert "ExperimentChartsDialog" in plugin
     assert "FitImageLabel" in plugin
     assert "KORNIX_CHART_DATE_OFFSETS" in plugin

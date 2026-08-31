@@ -39,6 +39,17 @@ class AggregateSeriesTest(unittest.TestCase):
         self.assertIn("soil_surface_0_10_theta", settings.AVERAGE_CHART_RADAR_KORNIX_SERIES.values())
         self.assertEqual(settings.AVERAGE_CHART_DATE_OFFSETS["satellite_fcover_expected"], 12)
 
+    def test_model_state_charts_use_standard_90cm_and_three_upper_layers(self):
+        self.assertEqual(settings.MODEL_STATE_CHART_ROW_SPACING, "90")
+        self.assertEqual(
+            tuple(settings.MODEL_STATE_CHART_DEPTH_SERIES.values()),
+            (
+                "soil_layer_0_10_theta_m3_m3",
+                "soil_layer_10_20_theta_m3_m3",
+                "soil_layer_20_30_theta_m3_m3",
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -120,6 +120,9 @@ class WaterRegimeDock(QDockWidget):
         self.average_chart_button = self.add_button(actions, 5, 0, "Средний график", self.open_average_chart)
         self.experiment_charts_button = self.add_button(actions, 5, 1, "Диаграммы эксперимента", self.open_experiment_charts)
         self.save_experiment_json_button = self.add_button(actions, 6, 0, "Сохранить JSON…", self.save_experiment_json)
+        self.model_state_charts_button = self.add_button(
+            actions, 6, 1, "Графики модели и Sentinel", self.open_model_state_charts
+        )
 
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
@@ -366,6 +369,24 @@ class WaterRegimeDock(QDockWidget):
             timeout=900,
         )
 
+    def open_model_state_charts(self):
+        """Rebuild the two requested summary charts from the current local files."""
+        field_ids = self.kornix_field_ids()
+        satellite_rows = self.average_satellite_rows(field_ids)
+        model_rows = self.average_kornix_rows(field_ids)
+        radar_rows = self.average_radar_rows(field_ids)
+        if not model_rows:
+            self.notify("Нет актуальных рядов расчётной модели для графиков.", Qgis.Warning)
+            return
+        dialog = ModelStateChartsDialog(
+            self.iface.mainWindow(), len(field_ids), satellite_rows, model_rows, radar_rows
+        )
+        dialog.setAttribute(Qt.WA_DeleteOnClose)
+        dialog.show()
+        self.chart_dialogs.append(dialog)
+        dialog.destroyed.connect(lambda *_: self.chart_dialogs.remove(dialog) if dialog in self.chart_dialogs else None)
+        self.log(f"Заново построены два графика модели и Sentinel-1 по {len(field_ids)} полям (90 см).")
+
     def save_experiment_json(self):
         from qgis.PyQt.QtWidgets import QInputDialog
         options = {
@@ -437,7 +458,8 @@ class WaterRegimeDock(QDockWidget):
         rows = []
         columns = tuple(dict.fromkeys(
             (*settings.AVERAGE_CHART_KORNIX_SERIES.values(), *settings.AVERAGE_CHART_RADAR_KORNIX_SERIES.values(),
-             "precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
+             settings.MODEL_STATE_CHART_FCOVER_COLUMN, settings.MODEL_STATE_CHART_MOISTURE_COLUMN,
+             *settings.MODEL_STATE_CHART_DEPTH_SERIES.values(), "precipitation_raw_daily_mm", "irrigation_raw_daily_mm")
         ))
         for field_id in field_ids:
             path = settings.KORNIX_BY_FIELD_DIR / f"{field_id}_daily_65_90.csv"
@@ -740,6 +762,7 @@ class WaterRegimeDock(QDockWidget):
             self.chart_button,
             self.average_chart_button,
             self.experiment_charts_button,
+            self.model_state_charts_button,
         ):
             button.setEnabled(enabled)
 
@@ -1102,7 +1125,8 @@ class FieldIndexChartDialog(QDialog):
         if radar_plotted or kornix_plotted:
             axis.legend(loc="best")
 
-    def values_by_date(self, values):
+    @staticmethod
+    def values_by_date(values):
         import statistics
         from collections import defaultdict
 
@@ -1121,6 +1145,134 @@ class FieldIndexChartDialog(QDialog):
             for row in rows
             if start_date.isoformat() <= row.get(date_column, "") <= end_date.isoformat()
         ]
+
+
+class ModelStateChartsDialog(QDialog):
+    """Two current-data summaries for the soil–plant model, rain/irrigation and Sentinel data."""
+
+    def __init__(self, parent, field_count: int, satellite_rows: list[dict], model_rows: list[dict], radar_rows: list[dict]):
+        super().__init__(parent)
+        self.setWindowTitle("Графики расчётной модели и Sentinel")
+        self.resize(1080, 820)
+
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+        from matplotlib.figure import Figure
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(f"Среднее по {field_count} полям; расчётная модель, междурядье 90 см"))
+        figure = Figure(figsize=(10, 8), tight_layout=True)
+        canvas = FigureCanvasQTAgg(figure)
+        layout.addWidget(canvas)
+        self.plot_cover_and_depths(figure.add_subplot(211), satellite_rows, model_rows)
+        self.plot_moisture_and_radar(figure.add_subplot(212), model_rows, radar_rows)
+        canvas.draw()
+
+    @staticmethod
+    def values(rows, date_key: str, column: str, date_offset=0, variant=settings.MODEL_STATE_CHART_ROW_SPACING):
+        import datetime as dt
+
+        result = []
+        for row in rows:
+            if row.get("row_spacing_variant") != variant or row.get(column) in ("", None):
+                continue
+            try:
+                result.append((dt.date.fromisoformat(row[date_key]) + dt.timedelta(days=date_offset), float(row[column])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        return result
+
+    @staticmethod
+    def satellite_fcover(rows):
+        import datetime as dt
+
+        values = []
+        for row in rows:
+            if row.get("index") != "FCOVER" or row.get("zonal_mean") in ("", None):
+                continue
+            try:
+                values.append((dt.date.fromisoformat(row["scene_date"]), float(row["zonal_mean"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        return FieldIndexChartDialog.values_by_date(values)
+
+    @staticmethod
+    def water(rows):
+        values = {}
+        for date, precipitation in ModelStateChartsDialog.values(rows, "day", "precipitation_raw_daily_mm"):
+            values[date] = [precipitation, 0.0]
+        for date, irrigation in ModelStateChartsDialog.values(rows, "day", "irrigation_raw_daily_mm"):
+            values.setdefault(date, [0.0, 0.0])[1] = irrigation
+        return [(date, *values[date]) for date in sorted(values) if any(values[date])]
+
+    @staticmethod
+    def add_water(axis, rows):
+        water = ModelStateChartsDialog.water(rows)
+        if not water:
+            return None
+        dates, precipitation, irrigation = zip(*water)
+        water_axis = axis.twinx()
+        water_axis.bar(dates, precipitation, width=0.8, color="#17becf", alpha=0.45, label="Осадки")
+        water_axis.bar(dates, irrigation, width=0.8, bottom=precipitation, color="#8c564b", alpha=0.45, label="Полив")
+        water_axis.set_ylabel("Вода, мм/сут")
+        return water_axis
+
+    @staticmethod
+    def finish_axis(axis, water_axis, ylabel: str):
+        axis.set_ylabel(ylabel)
+        axis.grid(True, alpha=0.25)
+        handles, labels = axis.get_legend_handles_labels()
+        if water_axis:
+            water_handles, water_labels = water_axis.get_legend_handles_labels()
+            handles += water_handles
+            labels += water_labels
+        if handles:
+            axis.legend(handles, labels, loc="upper left", fontsize=8)
+
+    def plot_cover_and_depths(self, axis, satellite_rows, model_rows):
+        satellite = self.satellite_fcover(satellite_rows)
+        if satellite:
+            dates, values = zip(*satellite)
+            axis.plot(dates, values, "o-", color=settings.FCOVER_COLOR, linewidth=1.8, markersize=3, label="FCOVER Sentinel-2")
+        model_cover = self.values(
+            model_rows, "day", settings.MODEL_STATE_CHART_FCOVER_COLUMN,
+            settings.KORNIX_CHART_DATE_OFFSETS.get(settings.MODEL_STATE_CHART_FCOVER_COLUMN, 0),
+        )
+        if model_cover:
+            dates, values = zip(*model_cover)
+            axis.plot(dates, values, color="#1f77b4", linewidth=1.7, label="FCOVER расчётной модели (+12 сут.)")
+        for (label, column), color in zip(settings.MODEL_STATE_CHART_DEPTH_SERIES.items(), ("#d62728", "#ff7f0e", "#9467bd")):
+            values = self.values(model_rows, "day", column)
+            if values:
+                dates, numbers = zip(*values)
+                axis.plot(dates, numbers, color=color, linewidth=1.25, label=label)
+        water_axis = self.add_water(axis, model_rows)
+        axis.set_title("FCOVER, осадки/поливы и влажность по трём слоям")
+        self.finish_axis(axis, water_axis, "Доля / влажность, м³/м³")
+
+    def plot_moisture_and_radar(self, axis, model_rows, radar_rows):
+        model = self.values(model_rows, "day", settings.MODEL_STATE_CHART_MOISTURE_COLUMN)
+        if model:
+            dates, values = zip(*model)
+            axis.plot(dates, values, color="#d62728", linewidth=1.8, label="Расчётная влажность 0–10 см")
+        radar_values = []
+        for row in radar_rows:
+            if row.get("polarization", "VV").upper() != "VV" or row.get("zonal_mean_db") in ("", None):
+                continue
+            try:
+                import datetime as dt
+                radar_values.append((dt.date.fromisoformat(row["scene_date"]), float(row["zonal_mean_db"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        radar_values = FieldIndexChartDialog.values_by_date(radar_values)
+        if radar_values:
+            dates, values = zip(*radar_values)
+            proxy = relative_moisture_proxy(values, *settings.RADAR_MOISTURE_RANGE)
+            axis.plot(dates, proxy, "o-", color="#1f77b4", linewidth=1.5, markersize=3, label="Sentinel-1 VV (относительный показатель)")
+        water_axis = self.add_water(axis, model_rows)
+        axis.set_title("Осадки/поливы, влажность 0–10 см и Sentinel-1 VV")
+        axis.set_xlabel("Дата")
+        self.finish_axis(axis, water_axis, "Влажность, м³/м³")
+
 
 class CommandTask(QgsTask):
     def __init__(self, label, command, log_callback, finished_callback, after_success=None, timeout=300):

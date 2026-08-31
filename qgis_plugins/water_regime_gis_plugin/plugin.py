@@ -1228,6 +1228,14 @@ class ModelStateChartsDialog(QDialog):
         if handles:
             axis.legend(handles, labels, loc="upper left", fontsize=8)
 
+    @staticmethod
+    def limit_to_satellite_period(axis, observations):
+        """Keep model and water context inside the actually downloaded satellite period."""
+        if len(observations) < 2:
+            return
+        dates = [date for date, _ in observations]
+        axis.set_xlim(min(dates), max(dates))
+
     def plot_cover_and_depths(self, axis, satellite_rows, model_rows):
         satellite = self.satellite_fcover(satellite_rows)
         if satellite:
@@ -1248,6 +1256,7 @@ class ModelStateChartsDialog(QDialog):
         water_axis = self.add_water(axis, model_rows)
         axis.set_title("FCOVER, осадки/поливы и влажность по трём слоям")
         self.finish_axis(axis, water_axis, "Доля / влажность, м³/м³")
+        self.limit_to_satellite_period(axis, satellite)
 
     def plot_moisture_and_radar(self, axis, model_rows, radar_rows):
         model = self.values(model_rows, "day", settings.MODEL_STATE_CHART_MOISTURE_COLUMN)
@@ -1272,6 +1281,7 @@ class ModelStateChartsDialog(QDialog):
         axis.set_title("Осадки/поливы, влажность 0–10 см и Sentinel-1 VV")
         axis.set_xlabel("Дата")
         self.finish_axis(axis, water_axis, "Влажность, м³/м³")
+        self.limit_to_satellite_period(axis, radar_values)
 
 
 class CommandTask(QgsTask):

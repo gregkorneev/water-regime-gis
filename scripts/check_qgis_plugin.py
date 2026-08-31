@@ -37,7 +37,7 @@ def main() -> int:
     assert "Диаграммы эксперимента" in plugin
     assert "Графики модели и Sentinel" in plugin
     assert "ModelStateChartsDialog" in plugin
-    assert "limit_to_satellite_period" in plugin
+    assert "synchronize_satellite_period" in plugin
     assert "ExperimentChartsDialog" in plugin
     assert "FitImageLabel" in plugin
     assert "KORNIX_CHART_DATE_OFFSETS" in plugin

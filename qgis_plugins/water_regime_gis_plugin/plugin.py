@@ -369,6 +369,7 @@ class WaterRegimeDock(QDockWidget):
     def save_experiment_json(self):
         from qgis.PyQt.QtWidgets import QInputDialog
         options = {
+            "Полный протокол трёх этапов для LLM": settings.FULL_EXPERIMENT_PROTOCOL_JSON,
             "Итог эксперимента Sentinel-1/Sentinel-2": settings.EXPERIMENT_SUMMARY_JSON,
             "Протокол рядов КОРНИКС 90 см для LLM": settings.KORNIX_SERIES_PROTOCOL_JSON,
         }

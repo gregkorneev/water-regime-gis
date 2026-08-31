@@ -86,6 +86,10 @@
 - `results/reports/sp_s1_s2_surface_validation_summary.json` — единый итог
   четырёх вариантов, который обновляет кнопка QGIS `Диаграммы эксперимента`:
   дизайн, метрики M1–M3 Huber, бутстрепные интервалы и sensitivity-анализ.
+- `results/reports/sp_full_experiment_protocol.json` — единый экспорт для LLM
+  с тремя последовательными этапами: Sentinel-2/FCOVER без лага, лаг
+  КОРНИКС—FCOVER и валидация Sentinel-1. Каждый этап содержит свой полный
+  машиночитаемый отчёт и путь к источнику.
 - `results/figures/sp_s1_s2_surface_validation_65.png` — observed-vs-predicted
   диаграмма M3 и сравнение `R²_out` моделей M1–M3 на Huber grouped CV.
 - Суффиксы `_65_vh`, `_90` и `_65_fcover_r2_070` у одноимённых артефактов

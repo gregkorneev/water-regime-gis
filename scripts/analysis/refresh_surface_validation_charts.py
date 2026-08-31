@@ -13,6 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 VALIDATION = ROOT / "scripts/analysis/run_s1_s2_surface_validation.py"
 FCOVER_PROTOCOL = ROOT / "scripts/analysis/analyze_kornix_fcover_lag.py"
 SUMMARY = ROOT / "results/reports/sp_s1_s2_surface_validation_summary.json"
+FCOVER_SERIES_PROTOCOL = ROOT / "results/reports/sp_kornix_fcover_series_protocol_90.json"
+FCOVER_LAG_REPORT = ROOT / "results/reports/sp_kornix_fcover_lag_90.json"
+FULL_PROTOCOL = ROOT / "results/reports/sp_full_experiment_protocol.json"
 
 
 def write_summary() -> None:
@@ -53,6 +56,30 @@ def write_summary() -> None:
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def write_full_protocol() -> None:
+    """Bundle the three independent stages into one LLM-ready JSON artifact."""
+    stages = (
+        ("sentinel2_fcover", "Sentinel-2 / FCOVER без лага", FCOVER_SERIES_PROTOCOL),
+        ("kornix_fcover_lag", "Лаг КОРНИКС — FCOVER", FCOVER_LAG_REPORT),
+        ("sentinel1_validation", "Валидация Sentinel-1", SUMMARY),
+    )
+    FULL_PROTOCOL.write_text(json.dumps({
+        "schema_version": 1,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "purpose": "Единый протокол трёх этапов эксперимента для последующего анализа LLM.",
+        "stage_order": [identifier for identifier, _, _ in stages],
+        "interpretation_rules": [
+            "Sentinel-2 FCOVER — независимый спутниковый прокси, а не наземное измерение покрытия.",
+            "Лаг описывает согласование сезонных кривых и не должен применяться к исходным датам или строкам регрессии Sentinel-1.",
+            "Метрики Sentinel-1 относятся к прогнозам на отложенных полях; они не являются калибровкой абсолютной влажности почвы.",
+        ],
+        "stages": [
+            {"id": identifier, "title": title, "source_report": str(path.relative_to(ROOT)), "result": json.loads(path.read_text(encoding="utf-8"))}
+            for identifier, title, path in stages
+        ],
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def commands() -> list[list[str]]:
     common = [str(sys.executable), str(VALIDATION)]
     return [
@@ -70,6 +97,7 @@ def main() -> int:
         assert all(command[1] == str(VALIDATION) for command in commands()[:4])
         assert commands()[-1][1] == str(FCOVER_PROTOCOL)
         assert SUMMARY.name == "sp_s1_s2_surface_validation_summary.json"
+        assert FULL_PROTOCOL.name == "sp_full_experiment_protocol.json"
         print("Self-test OK")
         return 0
     all_commands = commands()
@@ -77,7 +105,9 @@ def main() -> int:
         print(f"PROGRESS {(index - 1) * 100 // len(all_commands)}")
         subprocess.run(command, cwd=ROOT, check=True)
     write_summary()
+    write_full_protocol()
     print(f"SUMMARY_JSON {SUMMARY}")
+    print(f"FULL_PROTOCOL_JSON {FULL_PROTOCOL}")
     print("PROGRESS 100")
     return 0
 

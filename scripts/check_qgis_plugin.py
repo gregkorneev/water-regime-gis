@@ -36,6 +36,7 @@ def main() -> int:
     assert "Обновить Sentinel-1/2" in plugin
     assert "Диаграммы эксперимента" in plugin
     assert "ExperimentChartsDialog" in plugin
+    assert "FitImageLabel" in plugin
     assert "REFRESH_EXPERIMENT_CHARTS_SCRIPT" in plugin
     assert "QProgressBar" in plugin
     assert "set_toolbar_action_color" in plugin

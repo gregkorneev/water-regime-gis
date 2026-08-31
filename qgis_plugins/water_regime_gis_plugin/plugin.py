@@ -824,14 +824,27 @@ class ExperimentChartsDialog(QDialog):
         self.resize(1120, 760)
         tabs = QTabWidget(self)
         for path in paths:
-            image = QLabel()
-            image.setPixmap(QPixmap(str(path)))
-            image.setAlignment(Qt.AlignCenter)
+            image = FitImageLabel(path)
             scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
             scroll.setWidget(image)
             tabs.addTab(scroll, path.stem.removeprefix("sp_s1_s2_surface_validation_"))
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
+
+
+class FitImageLabel(QLabel):
+    """Keep a chart fully visible while preserving its aspect ratio."""
+
+    def __init__(self, path: Path):
+        super().__init__()
+        self.source = QPixmap(str(path))
+        self.setAlignment(Qt.AlignCenter)
+
+    def resizeEvent(self, event):
+        if not self.source.isNull():
+            self.setPixmap(self.source.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        super().resizeEvent(event)
 
 
 class FieldIndexChartDialog(QDialog):

@@ -263,10 +263,10 @@ def save_figure(path: Path, predictions: list[dict], report: dict) -> None:
     left.scatter(actual, predicted, s=10, alpha=.45, color="#267a9e", edgecolors="none")
     limits = [min(actual.min(), predicted.min()), max(actual.max(), predicted.max())]
     left.plot(limits, limits, color="#555555", linewidth=1)
-    left.set(xlabel=f"Observed Sentinel-1 {report['s1_index']}", ylabel="Out-of-field prediction, dB", title="M3: observed vs predicted")
-    right.bar(("M1\nfCover", "M2\ntheta", "M3\ntheta + fCover"), values, color=("#d95f02", "#7570b3", "#1b9e77"))
+    left.set(xlabel=f"Наблюдаемый Sentinel-1 {report['s1_index'].replace('dB', 'дБ')}", ylabel="Предсказание на новых полях, дБ", title="M3: наблюдаемый и предсказанный Sentinel-1")
+    right.bar(("M1\nтолько fCover", "M2\nтолько влажность", "M3\nвлага + fCover"), values, color=("#d95f02", "#7570b3", "#1b9e77"))
     right.axhline(0, color="#555555", linewidth=1)
-    right.set(ylabel="R²_out", title="Huber grouped CV (36 fields)")
+    right.set(ylabel="R² вне обучения", title="Робастная межполевая проверка (36 полей)")
     path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(path, dpi=180)
     plt.close(figure)

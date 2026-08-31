@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -118,6 +119,7 @@ class WaterRegimeDock(QDockWidget):
         self.chart_button = self.add_button(actions, 4, 1, "График по полю", self.enable_field_chart_tool)
         self.average_chart_button = self.add_button(actions, 5, 0, "Средний график", self.open_average_chart)
         self.experiment_charts_button = self.add_button(actions, 5, 1, "Диаграммы эксперимента", self.open_experiment_charts)
+        self.save_experiment_json_button = self.add_button(actions, 6, 0, "Сохранить JSON эксперимента…", self.save_experiment_json)
 
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
@@ -363,6 +365,29 @@ class WaterRegimeDock(QDockWidget):
             after_success=self.show_experiment_charts,
             timeout=900,
         )
+
+    def save_experiment_json(self):
+        source = settings.EXPERIMENT_SUMMARY_JSON
+        if not source.exists():
+            self.notify("Сначала запустите «Диаграммы эксперимента», чтобы создать JSON.", Qgis.Warning)
+            return
+        destination, _ = QFileDialog.getSaveFileName(
+            self,
+            "Сохранить итог эксперимента",
+            str(Path.home() / source.name),
+            "JSON (*.json)",
+        )
+        if not destination:
+            return
+        target = Path(destination).with_suffix(".json")
+        try:
+            if target.resolve() != source.resolve():
+                shutil.copy2(source, target)
+        except OSError as error:
+            self.notify(f"Не удалось сохранить JSON: {error}", Qgis.Critical)
+            return
+        self.log(f"JSON эксперимента сохранён: {target}")
+        self.notify(f"JSON эксперимента сохранён: {target.name}")
 
     def show_experiment_charts(self):
         paths = sorted(settings.EXPERIMENT_FIGURES_DIR.glob("sp_s1_s2_surface_validation*.png"))

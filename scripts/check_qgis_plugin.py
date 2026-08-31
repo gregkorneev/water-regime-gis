@@ -40,6 +40,8 @@ def main() -> int:
     assert "KORNIX_CHART_DATE_OFFSETS" in plugin
     assert "REFRESH_EXPERIMENT_CHARTS_SCRIPT" in plugin
     assert "EXPERIMENT_SUMMARY_JSON" in plugin
+    assert "Сохранить JSON эксперимента" in plugin
+    assert "save_experiment_json" in plugin
     assert "QProgressBar" in plugin
     assert "set_toolbar_action_color" in plugin
     assert "QToolButton { color: #f2f2f2; }" in plugin

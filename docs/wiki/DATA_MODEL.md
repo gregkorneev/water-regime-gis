@@ -4,6 +4,9 @@
 
 - `data/aoi/selected_field_point.geojson` — выбранная точка, `EPSG:4326`.
 - `data/aoi/selected_field_area.geojson` — рабочая граница, `EPSG:4326`, с `analysis_crs` и `source`.
+- `data/processed/field_boundaries/KAA.gpkg` и `SP.gpkg` — канонические
+  версионируемые исходные контуры полей. В них находятся слои `kaa_fields` и
+  `sp_fields`; файлы сохраняются без изменения.
 - внешний GeoJSON границ полей — необязательный вход `split_field_boundaries.py`.
 
 `source = nspd_getfeatureinfo` означает кадастровый контур, `source = map_point_buffer` — временный буфер.
@@ -20,9 +23,6 @@
   методика и `manifest.json` с SHA-256. В каждой записи сохранены независимые
   варианты междурядья 65 и 90 см с суффиксами `_65`/`_90`; общий ключ строки —
   `field_short_name + method_code + day`.
-- `data/processed/field_boundaries/KAA.gpkg` и `SP.gpkg` — предоставленные
-  исходные полигональные контуры полей, содержащие слои `kaa_fields` и
-  `sp_fields` соответственно; сохраняются без изменения.
 - `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и
   минимальные прямоугольники, производные от исходных контуров.
 

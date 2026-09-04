@@ -66,7 +66,9 @@
   текущий QGIS-проект. Логика `График по полю` не изменялась.
 - Исходные контуры KAA и SP сохранены в Git как неизменяемые GeoPackage:
   `data/processed/field_boundaries/KAA.gpkg` (слой `kaa_fields`) и
-  `data/processed/field_boundaries/SP.gpkg` (слой `sp_fields`).
+  `data/processed/field_boundaries/SP.gpkg` (слой `sp_fields`). Это
+  канонические входы проекта; для скриптов передавать их явным `--input`, не
+  полагаться на устаревшие копии с Рабочего стола.
 - Личная среда: macOS, `/Applications/QGIS.app`, профиль `default`, репозиторий `/Users/korneev/Desktop/water-regime-gis`.
 - Плагин установлен симлинком через `python3 scripts/install_qgis_plugin.py`.
 - Observearth 1.0.2 и Isoliner 5.6.21 установлены в профиль QGIS.

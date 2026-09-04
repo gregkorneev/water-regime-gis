@@ -28,7 +28,24 @@
 
 ## 4.1. RGB-снимки Sentinel-2 и Sentinel-1 RTC
 
-`scripts/qgis/download_field_imagery.py` обходит объекты `/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg`. По умолчанию он ищет Sentinel-2 L2A и допускает только сцены с глобальной облачностью до 10%. Если на один календарный день опубликовано несколько обработок, сначала выбирается вариант с минимальным `s2:degraded_msi_data_percentage`, затем с меньшей облачностью и долей nodata. Скрипт загружает B04/B03/B02, обрезает их по геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск продолжает обработку, пропуская готовые даты.
+Канонические входы —
+`data/processed/field_boundaries/KAA.gpkg` и
+`data/processed/field_boundaries/SP.gpkg`. Для воспроизводимого запуска их
+нужно передавать скрипту явно через `--input`; исторические пути
+`/Users/korneev/Desktop/KAA.gpkg` и `/Users/korneev/Desktop/SP.gpkg` остаются
+только значениями по умолчанию для прежней локальной среды. Скрипт ищет
+Sentinel-2 L2A и допускает только сцены с глобальной облачностью до 10%. Если
+на один календарный день опубликовано несколько обработок, сначала выбирается
+вариант с минимальным `s2:degraded_msi_data_percentage`, затем с меньшей
+облачностью и долей nodata. Скрипт загружает B04/B03/B02, обрезает их по
+геометрии и сохраняет RGB GeoTIFF с разрешением 10 м. Повторный запуск
+продолжает обработку, пропуская готовые даты.
+
+```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/download_field_imagery.py \
+  --input data/processed/field_boundaries/KAA.gpkg \
+          data/processed/field_boundaries/SP.gpkg
+```
 
 Для Sentinel-1 используется та же возобновляемая команда с параметрами
 `--collection sentinel-1-rtc --asset vv vh --output-name sentinel_rtc.tif
@@ -146,7 +163,8 @@ Sentinel-2 верхней панели для выбранного поля. В�
 
 Ряды КОРНИКС визуализируются для метода `ivanov_n4l_meteo_soil` и явно подписаны как модельные, а не как независимые наземные наблюдения.
 
-При этой же команде для слоя `/Users/korneev/Desktop/SP.gpkg` создается
+При этой же команде для канонического слоя
+`data/processed/field_boundaries/SP.gpkg` создается
 временный слой подписей и выделения полей с данными. В каждой метке указаны `field_id`, культура,
 дата посева и сводка погодных forcing-данных КОРНИКС последнего доступного дня:
 средняя температура воздуха, осадки и ET₀. Подписи для полей вне 37 полей

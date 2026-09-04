@@ -20,7 +20,11 @@
   методика и `manifest.json` с SHA-256. В каждой записи сохранены независимые
   варианты междурядья 65 и 90 см с суффиксами `_65`/`_90`; общий ключ строки —
   `field_short_name + method_code + day`.
-- `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и минимальные прямоугольники.
+- `data/processed/field_boundaries/KAA.gpkg` и `SP.gpkg` — предоставленные
+  исходные полигональные контуры полей, содержащие слои `kaa_fields` и
+  `sp_fields` соответственно; сохраняются без изменения.
+- `data/processed/field_boundaries/*.geojson` — разделенные поля SP/KAA и
+  минимальные прямоугольники, производные от исходных контуров.
 
 ## Результаты
 

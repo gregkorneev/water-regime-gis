@@ -51,6 +51,10 @@
 - `outputs/reports/kaa_zonal_means.json` — параметры последнего расчета зональных средних KAA;
 - `outputs/reports/sp_zonal_means.csv` — зональные средние NDVI/NDMI/NDRE/SAVI/FCOVER
   по растрам SP; источник для объединения с КОРНИКС;
+- `outputs/reports/sp_zonal_means_statistics.json` — переносимый JSON со
+  статистикой `min`, `max`, `mean`, `median` по каждому полю SP, фактической
+  безоблачной дате с валидными пикселями и индексу NDVI/NDMI/NDRE/SAVI/FCOVER. Записи содержат также
+  идентификатор сцены, число валидных пикселей и облачность внутри поля;
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;
 - `results/tables/external_index_models.csv` — линейные модели внешняя числовая переменная → индекс Sentinel-2, построенные только по точным совпадениям `field_id + date`; для каждой связи хранятся коэффициенты, Pearson r, R² и число пар.

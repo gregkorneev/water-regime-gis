@@ -102,8 +102,13 @@ def main() -> int:
 
     write_csv(args.report.expanduser().resolve(), records)
     write_manifest(args.report.expanduser().resolve().with_suffix(".json"), args, records)
+    statistics_path = args.report.expanduser().resolve().with_name(
+        f"{args.report.stem}_statistics.json"
+    )
+    write_statistics_json(statistics_path, args, records)
     print(f"Rows: {len(records)}")
     print(f"Report: {args.report.expanduser().resolve()}")
+    print(f"Statistics: {statistics_path}")
     return 0
 
 
@@ -158,6 +163,8 @@ def zonal_records(
 
 
 def record(metadata: dict, analysis_path: Path, index_name: str, valid, invalid, aoi_cloud_cover: float) -> dict:
+    import numpy as np
+
     return {
         "dataset": metadata.get("dataset", ""),
         "field_id": metadata.get("field_id", ""),
@@ -165,6 +172,9 @@ def record(metadata: dict, analysis_path: Path, index_name: str, valid, invalid,
         "scene_id": metadata.get("scene_id", ""),
         "index": index_name,
         "zonal_mean": float(valid.mean()) if valid.size else "",
+        "zonal_min": float(valid.min()) if valid.size else "",
+        "zonal_max": float(valid.max()) if valid.size else "",
+        "zonal_median": float(np.median(valid)) if valid.size else "",
         "valid_pixel_count": int(valid.size),
         "nodata_pixel_count": int(invalid.sum()),
         "aoi_cloud_cover": aoi_cloud_cover,
@@ -194,6 +204,9 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         "scene_id",
         "index",
         "zonal_mean",
+        "zonal_min",
+        "zonal_max",
+        "zonal_median",
         "valid_pixel_count",
         "nodata_pixel_count",
         "aoi_cloud_cover",
@@ -201,9 +214,45 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     ]
     temporary = path.with_suffix(path.suffix + ".tmp")
     with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+    temporary.replace(path)
+
+
+def write_statistics_json(path: Path, args: argparse.Namespace, rows: list[dict]) -> None:
+    """Write portable per-field, per-date zonal statistics without local paths."""
+    payload = {
+        "schema_version": 1,
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "description": "Zonal statistics for cloud-filtered Sentinel-2 field patches with valid pixels.",
+        "filters": {
+            "cloud_mask_applied": not args.include_clouds,
+            "max_aoi_cloud_percent": args.max_aoi_cloud,
+            "invalid_pixels_excluded": True,
+        },
+        "statistics": ["min", "max", "mean", "median"],
+        "records": [
+            {
+                "dataset": row["dataset"],
+                "field_id": row["field_id"],
+                "scene_date": row["scene_date"],
+                "scene_id": row["scene_id"],
+                "index": row["index"],
+                "min": row["zonal_min"] if row["zonal_min"] != "" else None,
+                "max": row["zonal_max"] if row["zonal_max"] != "" else None,
+                "mean": row["zonal_mean"] if row["zonal_mean"] != "" else None,
+                "median": row["zonal_median"] if row["zonal_median"] != "" else None,
+                "valid_pixel_count": row["valid_pixel_count"],
+                "invalid_pixel_count": row["nodata_pixel_count"],
+                "aoi_cloud_cover_percent": row["aoi_cloud_cover"],
+            }
+            for row in rows
+            if row["valid_pixel_count"] > 0
+        ],
+    }
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
 
 
@@ -233,6 +282,11 @@ def self_test() -> None:
     assert np.allclose(savi, np.array([[6 / 13, 3 / 11]], dtype="float32"))
     assert scene_is_acceptable(20.0, 20.0)
     assert not scene_is_acceptable(20.1, 20.0)
+    row = record({}, Path("sample.tif"), "NDVI", np.array([0.1, 0.4, 0.7]), np.array([False, False, False]), 0)
+    assert np.isclose(row["zonal_min"], 0.1)
+    assert np.isclose(row["zonal_max"], 0.7)
+    assert np.isclose(row["zonal_mean"], 0.4)
+    assert np.isclose(row["zonal_median"], 0.4)
 
 
 if __name__ == "__main__":

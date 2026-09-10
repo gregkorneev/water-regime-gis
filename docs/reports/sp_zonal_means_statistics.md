@@ -3,8 +3,9 @@
 ## Назначение
 
 Файл [`outputs/reports/sp_zonal_means_statistics.json`](../../outputs/reports/sp_zonal_means_statistics.json)
-— переносимый экспорт результатов Sentinel-2 для полей SP. Одна запись — это
-один индекс для одного поля и фактической даты съёмки. Экспорт подходит для
+— переносимый экспорт зональных результатов Sentinel-2 и Sentinel-1 для полей
+SP. Массив `records` содержит индексы Sentinel-2; отдельный блок `sentinel1`
+содержит среднее обратное рассеяние Sentinel-1 в dB. Экспорт подходит для
 загрузки в другой проект, потому что не содержит абсолютных путей к локальным
 растрам или QGIS-проектам.
 
@@ -12,6 +13,11 @@
 «поле–дата», 17 уникальных дат в интервале 2026-04-22—2026-08-20. На каждую
 пару «поле–дата» приходятся пять индексов: `NDVI`, `NDMI`, `NDRE`, `SAVI` и
 `FCOVER`.
+
+Блок Sentinel-1 содержит 4 356 записей с валидными пикселями: 37 полей, 60 дат
+и две поляризации `VV`/`VH` на каждую из 2 178 доступных пар «поле–дата».
+Sentinel-1 не проходит
+облачный фильтр: радарная съёмка не зависит от облачности.
 
 ## Когда наблюдение попадает в файл
 
@@ -30,7 +36,7 @@ Sentinel-2.
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_at": "2026-09-06T10:58:34.953074+00:00",
   "description": "Zonal statistics for cloud-filtered Sentinel-2 field patches with valid pixels.",
   "filters": {
@@ -39,7 +45,13 @@ Sentinel-2.
     "invalid_pixels_excluded": true
   },
   "statistics": ["min", "max", "mean", "median"],
-  "records": []
+  "records": [],
+  "sentinel1": {
+    "units": "dB",
+    "aggregation": "10*log10(mean(linear RTC values))",
+    "polarizations": ["VV", "VH"],
+    "records": []
+  }
 }
 ```
 
@@ -51,6 +63,7 @@ Sentinel-2.
 | `filters` | object | Правила отбора сцены и пикселей, применённые при расчёте. |
 | `statistics` | array of string | Набор статистик, присутствующий в каждой записи. |
 | `records` | array of object | Собственно зональные статистики в длинном формате. |
+| `sentinel1` | object | Отдельный блок зональных средних Sentinel-1 в dB. |
 
 ### Объект `filters`
 
@@ -96,6 +109,45 @@ Sentinel-2.
 
 Для каждой записи выполняются проверки: `min ≤ median ≤ max` и `min ≤ mean ≤ max`.
 
+## Блок `sentinel1`
+
+Здесь Sentinel-1 отделён от `records`, поскольку радарный показатель имеет
+другую физическую природу и единицы измерения. Это не спектральный индекс и не
+сопоставим напрямую с `NDVI` или `FCOVER` без отдельной модели.
+
+| Поле | Тип | Смысл |
+| --- | --- | --- |
+| `units` | string | Единицы среднего обратного рассеяния: `dB`. |
+| `aggregation` | string | Формула зонального значения: `10*log10(mean(linear RTC values))`. |
+| `polarizations` | array of string | Доступные поляризации: `VV` и `VH`. |
+| `records` | array of object | Длинная таблица значений Sentinel-1. |
+
+Запись Sentinel-1 имеет следующий вид:
+
+```json
+{
+  "dataset": "sp",
+  "field_id": "SP_1_1",
+  "scene_date": "2026-04-06",
+  "scene_id": "S1C_IW_GRDH_1SDV_20260406T033655_20260406T033720_007090_00E5B7_rtc",
+  "polarization": "VV",
+  "mean_backscatter_db": -10.82,
+  "valid_pixel_count": 8034,
+  "invalid_pixel_count": 2575
+}
+```
+
+| Поле | Тип | Смысл |
+| --- | --- | --- |
+| `dataset`, `field_id`, `scene_date`, `scene_id` | string | Те же идентификаторы набора, поля, фактической даты и сцены, что и в Sentinel-2-записях. |
+| `polarization` | string | Поляризация радара: `VV` или `VH`. |
+| `mean_backscatter_db` | number | Зональное среднее обратное рассеяние в dB. Это единственная доступная статистика Sentinel-1 в текущем экспорте. |
+| `valid_pixel_count` | integer | Число RTC-пикселей, вошедших в среднее. |
+| `invalid_pixel_count` | integer | Число исключённых нулевых или `nodata`-пикселей. |
+
+Значения `mean_backscatter_db` не являются процентом влажности. На них влияют
+влажность, растительный покров, шероховатость поверхности и геометрия съёмки.
+
 ## Значения индексов
 
 `NDVI`, `NDMI`, `NDRE` и `SAVI` рассчитываются из отражательной способности
@@ -123,6 +175,12 @@ ndvi = [
     if row["field_id"] == "SP_1_1" and row["index"] == "NDVI"
 ]
 ndvi.sort(key=lambda row: row["scene_date"])
+
+vv = [
+    row for row in payload["sentinel1"]["records"]
+    if row["field_id"] == "SP_1_1" and row["polarization"] == "VV"
+]
+vv.sort(key=lambda row: row["scene_date"])
 ```
 
 Для табличной обработки удобен длинный формат `records`: его можно загрузить
@@ -148,5 +206,6 @@ QGIS-плагину; JSON предпочтительнее для перенос
 ```
 
 Команда перезапишет CSV, его служебный manifest и JSON-экспорт статистик. Она
-использует доступные локальные растры и их облачные маски; отсутствие нового
-набора сцен не компенсируется интерполяцией.
+использует доступные локальные растры и их облачные маски, а для блока
+`sentinel1` читает `outputs/reports/sentinel1_zonal_means.csv`. Отсутствие
+нового набора сцен не компенсируется интерполяцией.

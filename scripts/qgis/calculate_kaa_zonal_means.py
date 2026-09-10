@@ -20,6 +20,7 @@ from osgeo import gdal
 
 DEFAULT_IMAGERY = ROOT / "outputs/imagery"
 DEFAULT_REPORT = ROOT / "outputs/reports/kaa_zonal_means.csv"
+DEFAULT_SENTINEL1_REPORT = ROOT / "outputs/reports/sentinel1_zonal_means.csv"
 BANDS = {
     "Blue": 1,
     "Green": 2,
@@ -46,6 +47,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--imagery", type=Path, default=DEFAULT_IMAGERY)
     parser.add_argument("--dataset", nargs="+", default=["kaa"])
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
+    parser.add_argument(
+        "--sentinel1-report",
+        type=Path,
+        default=DEFAULT_SENTINEL1_REPORT,
+        help="Sentinel-1 zonal-means CSV to include in the statistics JSON.",
+    )
     parser.add_argument("--indices", nargs="+", default=[*FORMULAS, FCOVER])
     parser.add_argument("--limit", type=int, help="Process at most N raster patches.")
     parser.add_argument(
@@ -105,7 +112,8 @@ def main() -> int:
     statistics_path = args.report.expanduser().resolve().with_name(
         f"{args.report.stem}_statistics.json"
     )
-    write_statistics_json(statistics_path, args, records)
+    radar_rows = sentinel1_records(args.sentinel1_report, args.dataset)
+    write_statistics_json(statistics_path, args, records, radar_rows)
     print(f"Rows: {len(records)}")
     print(f"Report: {args.report.expanduser().resolve()}")
     print(f"Statistics: {statistics_path}")
@@ -220,10 +228,36 @@ def write_csv(path: Path, rows: list[dict]) -> None:
     temporary.replace(path)
 
 
-def write_statistics_json(path: Path, args: argparse.Namespace, rows: list[dict]) -> None:
+def sentinel1_records(path: Path, datasets: list[str]) -> list[dict]:
+    """Read valid Sentinel-1 field means from the existing radar export."""
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8", newline="") as handle:
+        source_rows = csv.DictReader(handle)
+        return [
+            {
+                "dataset": row["dataset"],
+                "field_id": row["field_id"],
+                "scene_date": row["scene_date"],
+                "scene_id": row["scene_id"],
+                "polarization": row["polarization"],
+                "mean_backscatter_db": float(row["zonal_mean_db"]),
+                "valid_pixel_count": int(row["valid_pixel_count"]),
+                "invalid_pixel_count": int(row["nodata_pixel_count"]),
+            }
+            for row in source_rows
+            if row.get("dataset") in datasets
+            and row.get("zonal_mean_db") not in (None, "")
+            and int(row["valid_pixel_count"] or 0) > 0
+        ]
+
+
+def write_statistics_json(
+    path: Path, args: argparse.Namespace, rows: list[dict], radar_rows: list[dict]
+) -> None:
     """Write portable per-field, per-date zonal statistics without local paths."""
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "description": "Zonal statistics for cloud-filtered Sentinel-2 field patches with valid pixels.",
         "filters": {
@@ -250,6 +284,12 @@ def write_statistics_json(path: Path, args: argparse.Namespace, rows: list[dict]
             for row in rows
             if row["valid_pixel_count"] > 0
         ],
+        "sentinel1": {
+            "units": "dB",
+            "aggregation": "10*log10(mean(linear RTC values))",
+            "polarizations": ["VV", "VH"],
+            "records": radar_rows,
+        },
     }
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -287,6 +327,8 @@ def self_test() -> None:
     assert np.isclose(row["zonal_max"], 0.7)
     assert np.isclose(row["zonal_mean"], 0.4)
     assert np.isclose(row["zonal_median"], 0.4)
+    radar = sentinel1_records(Path("missing.csv"), ["sp"])
+    assert radar == []
 
 
 if __name__ == "__main__":

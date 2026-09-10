@@ -5,7 +5,8 @@
 Файл [`outputs/reports/sp_zonal_means_statistics.json`](../../outputs/reports/sp_zonal_means_statistics.json)
 — переносимый экспорт зональных результатов Sentinel-2 и Sentinel-1 для полей
 SP. Массив `records` содержит индексы Sentinel-2; отдельный блок `sentinel1`
-содержит среднее обратное рассеяние Sentinel-1 в dB. Экспорт подходит для
+содержит `min`, `max`, `mean` и `median` обратного рассеяния Sentinel-1 в dB.
+Экспорт подходит для
 загрузки в другой проект, потому что не содержит абсолютных путей к локальным
 растрам или QGIS-проектам.
 
@@ -36,7 +37,7 @@ Sentinel-2.
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "generated_at": "2026-09-06T10:58:34.953074+00:00",
   "description": "Zonal statistics for cloud-filtered Sentinel-2 field patches with valid pixels.",
   "filters": {
@@ -49,6 +50,7 @@ Sentinel-2.
   "sentinel1": {
     "units": "dB",
     "aggregation": "10*log10(mean(linear RTC values))",
+    "statistics": ["min", "max", "mean", "median"],
     "polarizations": ["VV", "VH"],
     "records": []
   }
@@ -57,7 +59,7 @@ Sentinel-2.
 
 | Поле | Тип | Смысл |
 | --- | --- | --- |
-| `schema_version` | integer | Версия формата. В текущей поставке — `1`. При изменении структуры потребитель должен ориентироваться на это поле. |
+| `schema_version` | integer | Версия формата. В текущей поставке — `3`. При изменении структуры потребитель должен ориентироваться на это поле. |
 | `generated_at` | string, ISO 8601 | Время создания файла в UTC. Это служебная метка экспорта, а не время спутниковой съёмки. |
 | `description` | string | Краткое назначение набора. |
 | `filters` | object | Правила отбора сцены и пикселей, применённые при расчёте. |
@@ -117,8 +119,9 @@ Sentinel-2.
 
 | Поле | Тип | Смысл |
 | --- | --- | --- |
-| `units` | string | Единицы среднего обратного рассеяния: `dB`. |
-| `aggregation` | string | Формула зонального значения: `10*log10(mean(linear RTC values))`. |
+| `units` | string | Единицы всех радарных статистик: `dB`. |
+| `aggregation` | string | Формула поля `mean_backscatter_db`: `10*log10(mean(linear RTC values))`. |
+| `statistics` | array of string | Набор статистик каждой радарной записи: `min`, `max`, `mean`, `median`. |
 | `polarizations` | array of string | Доступные поляризации: `VV` и `VH`. |
 | `records` | array of object | Длинная таблица значений Sentinel-1. |
 
@@ -131,7 +134,10 @@ Sentinel-2.
   "scene_date": "2026-04-06",
   "scene_id": "S1C_IW_GRDH_1SDV_20260406T033655_20260406T033720_007090_00E5B7_rtc",
   "polarization": "VV",
+  "min_backscatter_db": -18.21,
+  "max_backscatter_db": -4.32,
   "mean_backscatter_db": -10.82,
+  "median_backscatter_db": -11.17,
   "valid_pixel_count": 8034,
   "invalid_pixel_count": 2575
 }
@@ -141,11 +147,13 @@ Sentinel-2.
 | --- | --- | --- |
 | `dataset`, `field_id`, `scene_date`, `scene_id` | string | Те же идентификаторы набора, поля, фактической даты и сцены, что и в Sentinel-2-записях. |
 | `polarization` | string | Поляризация радара: `VV` или `VH`. |
-| `mean_backscatter_db` | number | Зональное среднее обратное рассеяние в dB. Это единственная доступная статистика Sentinel-1 в текущем экспорте. |
-| `valid_pixel_count` | integer | Число RTC-пикселей, вошедших в среднее. |
+| `min_backscatter_db`, `max_backscatter_db` | number | Наименьшее и наибольшее обратное рассеяние среди валидных RTC-пикселей, переведённых в dB. |
+| `mean_backscatter_db` | number | Зональное среднее в dB: сначала рассчитывается среднее линейных RTC-значений, затем применяется `10·log10`. |
+| `median_backscatter_db` | number | Медиана валидных RTC-пикселей после перевода каждого из них в dB. |
+| `valid_pixel_count` | integer | Число RTC-пикселей, вошедших во все четыре статистики. |
 | `invalid_pixel_count` | integer | Число исключённых нулевых или `nodata`-пикселей. |
 
-Значения `mean_backscatter_db` не являются процентом влажности. На них влияют
+Для каждой записи выполняются проверки: `min_backscatter_db ≤ median_backscatter_db ≤ max_backscatter_db` и `min_backscatter_db ≤ mean_backscatter_db ≤ max_backscatter_db`. Значения радарных статистик не являются процентом влажности. На них влияют
 влажность, растительный покров, шероховатость поверхности и геометрия съёмки.
 
 ## Значения индексов
@@ -198,9 +206,12 @@ QGIS-плагину; JSON предпочтительнее для перенос
 
 Экспорт создаёт
 [`scripts/qgis/calculate_kaa_zonal_means.py`](../../scripts/qgis/calculate_kaa_zonal_means.py).
-Для повторного расчёта SP из корня репозитория:
+Сначала рассчитывается Sentinel-1 CSV, затем JSON объединяется с Sentinel-2:
 
 ```bash
+/Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_sentinel1_zonal_means.py \
+  --dataset sp --report outputs/reports/sentinel1_zonal_means.csv
+
 /Applications/QGIS.app/Contents/MacOS/python scripts/qgis/calculate_kaa_zonal_means.py \
   --dataset sp --report outputs/reports/sp_zonal_means.csv
 ```

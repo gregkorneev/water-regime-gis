@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from qgis_plugins.water_regime_gis_plugin.radar_series import (
+    backscatter_statistics_db,
     mean_backscatter_db,
     relative_moisture_proxy,
     robust_spline,
@@ -17,6 +18,14 @@ class RadarSeriesTest(unittest.TestCase):
         self.assertAlmostEqual(mean_db, 10.0 * np.log10(0.055))
         self.assertEqual((valid, nodata), (2, 2))
         self.assertEqual(rolling_median([1.0, 1.0, 9.0, 1.0, 1.0]), [1.0] * 5)
+
+    def test_backscatter_statistics_are_in_db_and_keep_linear_mean(self):
+        minimum, maximum, mean, median, valid, nodata = backscatter_statistics_db(
+            np.array([0.01, 0.1, 1.0, 0.0]), 0.0
+        )
+
+        self.assertEqual((minimum, maximum, median, valid, nodata), (-20.0, 0.0, -10.0, 3, 1))
+        self.assertAlmostEqual(mean, 10.0 * np.log10(0.37))
 
     def test_relative_moisture_proxy_normalizes_vv_signal(self):
         self.assertEqual(relative_moisture_proxy([-12.0, -8.0, -4.0]), [0.153527, 0.260554, 0.367581])

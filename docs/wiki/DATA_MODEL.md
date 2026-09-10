@@ -55,7 +55,8 @@
   статистикой `min`, `max`, `mean`, `median` по каждому полю SP, фактической
   безоблачной дате с валидными пикселями и индексу NDVI/NDMI/NDRE/SAVI/FCOVER. Записи содержат также
   идентификатор сцены, число валидных пикселей и облачность внутри поля. Блок
-  `sentinel1` дополняет его средним обратным рассеянием VV/VH в dB;
+  `sentinel1` дополняет его статистиками `min`, `max`, `mean`, `median`
+  обратного рассеяния VV/VH в dB;
   полная спецификация — в `docs/reports/sp_zonal_means_statistics.md`;
 - `outputs/reports/field_zonal_means.csv` — long-таблица зональных средних KAA/SP с колонками `dataset`, `field_id`, `scene_date`, `scene_id`, `index`, `zonal_mean`, `valid_pixel_count`, `nodata_pixel_count`, `aoi_cloud_cover`, `analysis_raster`; используется QGIS-плагином для интерактивных графиков по полю;
 - `results/data/prepared_satellite_data.csv` — wide-таблица KAA `field_id × scene_date × NDMI/NDRE/SAVI/NDVI`;

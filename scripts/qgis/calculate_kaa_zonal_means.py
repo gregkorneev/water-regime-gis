@@ -241,13 +241,19 @@ def sentinel1_records(path: Path, datasets: list[str]) -> list[dict]:
                 "scene_date": row["scene_date"],
                 "scene_id": row["scene_id"],
                 "polarization": row["polarization"],
+                "min_backscatter_db": float(row["zonal_min_db"]),
+                "max_backscatter_db": float(row["zonal_max_db"]),
                 "mean_backscatter_db": float(row["zonal_mean_db"]),
+                "median_backscatter_db": float(row["zonal_median_db"]),
                 "valid_pixel_count": int(row["valid_pixel_count"]),
                 "invalid_pixel_count": int(row["nodata_pixel_count"]),
             }
             for row in source_rows
             if row.get("dataset") in datasets
             and row.get("zonal_mean_db") not in (None, "")
+            and row.get("zonal_min_db") not in (None, "")
+            and row.get("zonal_max_db") not in (None, "")
+            and row.get("zonal_median_db") not in (None, "")
             and int(row["valid_pixel_count"] or 0) > 0
         ]
 
@@ -257,7 +263,7 @@ def write_statistics_json(
 ) -> None:
     """Write portable per-field, per-date zonal statistics without local paths."""
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "description": "Zonal statistics for cloud-filtered Sentinel-2 field patches with valid pixels.",
         "filters": {
@@ -287,6 +293,7 @@ def write_statistics_json(
         "sentinel1": {
             "units": "dB",
             "aggregation": "10*log10(mean(linear RTC values))",
+            "statistics": ["min", "max", "mean", "median"],
             "polarizations": ["VV", "VH"],
             "records": radar_rows,
         },

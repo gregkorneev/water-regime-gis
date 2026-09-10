@@ -18,7 +18,7 @@ configure_qgis_environment()
 
 from osgeo import gdal
 
-from qgis_plugins.water_regime_gis_plugin.radar_series import mean_backscatter_db
+from qgis_plugins.water_regime_gis_plugin.radar_series import backscatter_statistics_db
 
 
 DEFAULT_IMAGERY = ROOT / "outputs/imagery/sentinel1"
@@ -78,7 +78,7 @@ def zonal_records(metadata: dict, raster_path: Path) -> list[dict]:
     for band_number, fallback_name in enumerate(POLARIZATIONS, start=1):
         band = dataset.GetRasterBand(band_number)
         polarization = (band.GetDescription() or fallback_name).upper()
-        mean_db, valid_count, nodata_count = mean_backscatter_db(
+        minimum_db, maximum_db, mean_db, median_db, valid_count, nodata_count = backscatter_statistics_db(
             band.ReadAsArray(), band.GetNoDataValue()
         )
         rows.append(
@@ -89,6 +89,9 @@ def zonal_records(metadata: dict, raster_path: Path) -> list[dict]:
                 "scene_id": metadata.get("scene_id", ""),
                 "polarization": polarization,
                 "zonal_mean_db": "" if mean_db is None else mean_db,
+                "zonal_min_db": "" if minimum_db is None else minimum_db,
+                "zonal_max_db": "" if maximum_db is None else maximum_db,
+                "zonal_median_db": "" if median_db is None else median_db,
                 "valid_pixel_count": valid_count,
                 "nodata_pixel_count": nodata_count,
                 "radar_raster": str(raster_path),
@@ -106,13 +109,16 @@ def write_csv(path: Path, rows: list[dict]) -> None:
         "scene_id",
         "polarization",
         "zonal_mean_db",
+        "zonal_min_db",
+        "zonal_max_db",
+        "zonal_median_db",
         "valid_pixel_count",
         "nodata_pixel_count",
         "radar_raster",
     ]
     temporary = path.with_suffix(path.suffix + ".tmp")
     with temporary.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     temporary.replace(path)

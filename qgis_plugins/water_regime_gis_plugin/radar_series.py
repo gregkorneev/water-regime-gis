@@ -9,13 +9,26 @@ from scipy.interpolate import UnivariateSpline
 
 
 def mean_backscatter_db(array, nodata=None):
+    _, _, mean_db, _, valid_count, nodata_count = backscatter_statistics_db(array, nodata)
+    return mean_db, valid_count, nodata_count
+
+
+def backscatter_statistics_db(array, nodata=None):
     values = np.asarray(array, dtype=float)
     valid_mask = np.isfinite(values) & (values > 0)
     if nodata is not None and math.isfinite(nodata):
         valid_mask &= values != nodata
     valid = values[valid_mask]
     mean_db = 10.0 * math.log10(float(valid.mean())) if valid.size else None
-    return mean_db, int(valid.size), int(values.size - valid.size)
+    db_values = 10.0 * np.log10(valid) if valid.size else np.array([])
+    return (
+        float(db_values.min()) if valid.size else None,
+        float(db_values.max()) if valid.size else None,
+        mean_db,
+        float(np.median(db_values)) if valid.size else None,
+        int(valid.size),
+        int(values.size - valid.size),
+    )
 
 
 def rolling_median(values, window: int = 5):
